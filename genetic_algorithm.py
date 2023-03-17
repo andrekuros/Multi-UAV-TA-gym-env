@@ -10,7 +10,7 @@ def create_initial_population(population_size, num_genes):
 def fitness_function(env, chromosome):
     
     # Redefinir o ambiente   
-    env.reset(change_scene = False)    
+    env.reset(seed = 0)    
 
     # Converter o cromossomo em uma alocação de tarefas para os drones
     #task_allocation = chromosome_to_task_allocation(chromosome, env.NUM_DRONES, env.NUM_TARGETS)
@@ -35,9 +35,9 @@ def fitness_function(env, chromosome):
 
     
     # Normalizar as métricas (maior é melhor)
-    normalized_time = 300 / total_time
-    normalized_distance = 5000 / total_distance
-    normalized_load_balancing = 1 / load_balancing_std
+    normalized_time = 382 / total_time
+    normalized_distance = 7320 / total_distance
+    normalized_load_balancing = 314 / load_balancing_std
 
     # Combinação ponderada das métricas
     #fitness = 0.4 * normalized_time + 0.4 * normalized_distance + 0.2 * normalized_load_balancing

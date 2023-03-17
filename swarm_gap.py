@@ -17,10 +17,7 @@ class SwarmGap:
         
         self.token_exchange_list = np.random.permutation(np.arange(0, self.num_agents))
 
-    
-    
-    
-        
+   
     def process_token(self):
         
         if len(self.token_exchange_list) == 0:            
@@ -34,7 +31,7 @@ class SwarmGap:
         if len(pendingTasks) == 0:
             return
         
-        distances = np.linalg.norm(np.array([env.targets[task] for task in pendingTasks]) - drone, axis=1)       
+        distances = np.linalg.norm(np.array([env.targets[task].position for task in pendingTasks]) - drone.position, axis=1)       
         max_cap = np.max(1/distances)       
         capability = (1/distances) / max_cap
         
@@ -55,21 +52,25 @@ class SwarmGap:
 
    
 # Exemplo de uso
-env = DroneEnv(action_mode= "TaskAssign", render_enabled=False)
-env.reset(change_scene=True)
+env = DroneEnv(action_mode= "TaskAssign", num_drones=5, num_targets = 20, render_enabled=False)
+env.reset()
 
-swarm_gap = SwarmGap(env, exchange_interval=50)
+swarm_gap = SwarmGap(env, exchange_interval=8)
 
 totalMetrics = []
 # Testar o ambiente com ações calculadas
-for episode in range(100):
+for episode in range(50):
     
-    observation = env.reset(change_scene=True, seed = episode)
+   
+    observation = env.reset( seed = episode)
     done = False
-        
+      
+    #actions = env.generate_random_tasks_all() 
+    #env.step(actions)
     
+    print ("."  if (episode+1)%10 != 0 else str(episode+1), end="")      
     while not done :
-
+            
        if env.render_enabled:
            env.render()
            
@@ -77,9 +78,7 @@ for episode in range(100):
        
        if env.time_steps % swarm_gap.exchange_interval == 0:
            
-           actions = swarm_gap.process_token()
-                      
-       #print (actions)
+           actions = swarm_gap.process_token()                                                  
 
        observation, reward, done, info = env.step(actions)
        

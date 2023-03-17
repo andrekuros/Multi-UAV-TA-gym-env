@@ -18,7 +18,7 @@ mutation_prob = 0.2
 
 # Criar o ambiente
 env = DroneEnv(render_enabled=False,  action_mode= "TaskAssign")
-env.reset(change_scene=True, seed = 0)
+env.reset( seed = 0)
 
 # Executar o algoritmo genético e obter o melhor cromossomo
 best_chromosome = genetic_algorithm(
