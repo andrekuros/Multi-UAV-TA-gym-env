@@ -31,12 +31,12 @@ class TessiAgent:
     
 totalMetrics = []
 
-env = DroneEnv(action_mode= "TaskAssign", num_drones=5, num_targets = 20, render_enabled=False)
+env = DroneEnv(action_mode= "TaskAssign", num_drones=5, num_targets = 20, render_enabled=True)
 env.reset()
 agent = TessiAgent(num_drones=5, num_targets=20)
 
 
-for episode in range(100):
+for episode in range(2):
     observations = env.reset(seed = episode)
 
     done = False
@@ -57,8 +57,8 @@ for episode in range(100):
                                
         observation, reward, done, info = env.step(actions)
 
-        if done:
-            totalMetrics.append(info)
+        if done:           
+            totalMetrics.append( info )
 
 
         if env.render_enabled:            

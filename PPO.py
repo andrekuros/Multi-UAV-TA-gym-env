@@ -6,7 +6,7 @@ from stable_baselines3.common.env_checker import check_env
 from DroneEnv import DroneEnv
 
 # Criar o ambiente DroneEnv no modo "TaskAssign"
-env = DroneEnv(action_mode="TaskAssign",  render_enabled=False)
+env = DroneEnv(action_mode="DroneControl",  render_enabled=False)
 
 # Verificar a validade do ambiente
 check_env(env)

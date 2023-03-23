@@ -6,6 +6,7 @@ import numpy as np
 import random
 import pandas as pd
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 from DroneEnvComponents import Drone, Target
 
@@ -99,7 +100,11 @@ class DroneEnv(gym.Env):
         
         # Concatenar as posições dos drones e alvos em um único array
         self.all_drone_positions = np.vstack([drone.position for drone in self.drones])
-        observation = np.concatenate((self.all_drone_positions, self.all_drone_positions))
+        
+        if self.action_mode == "DroneControl":
+            observation = np.concatenate((self.all_drone_positions, self.all_drone_positions))
+        if self.action_mode == "TaskAssign":
+            observation = np.concatenate((self.all_drone_positions, self.all_drone_positions))
         
         return observation
 
@@ -216,6 +221,12 @@ class DroneEnv(gym.Env):
         min_distances = [min(np.linalg.norm(drone.position - target.position) for target in self.targets) for drone in self.drones]
         return -np.sum(min_distances)
 
+    def _get_observation(self,mode="DroneControl"):
+        
+        return np.concatenate((self.all_drone_positions, self.all_drone_positions))
+        
+        
+        
     def _check_done(self):
         # Verificar se todos os drones estão próximos de um alvo
         #done = all(any(np.linalg.norm(drone - target) < 10 for target in self.targets) for drone in self.drones)
@@ -281,41 +292,59 @@ class DroneEnv(gym.Env):
         }
     
     
-    def plot_metrics(self, df, num_drones, num_tasks, algorithm):
-        # Calcular médias e desvios padrão
-        df.total_time =  df.total_time 
-        df.total_distance =  df.total_distance 
-        #df.load_balancing = df.load_balancing
-        df.load_balancing_std =  df.load_balancing_std 
+
+
+
+
+    def plot_metrics(self, df, num_drones, num_tasks):
+        # Group data by algorithm and calculate means and standard deviations
+        grouped = df.groupby('Algorithm')
+        means = grouped.mean()
+        std_devs = grouped.std()
         
         
-        means = df.mean()
-        std_devs = df.std()        
-        
-        # Criar gráfico de barras com barras de erro
-        fig, ax = plt.subplots()
-        index = np.arange(len(means))
-        bar_width = 0.7
-        opacity = 0.8
+        # Calculate the number of algorithms and metrics
+        num_algorithms = len(grouped)
+        num_metrics = len(df.columns) - 1
     
-        plt.bar(index, means, bar_width, alpha=opacity, color='b', label='Média', yerr=std_devs, capsize=5)
+        palette = sns.color_palette("Set1",n_colors=num_algorithms)
+              
+        
+        # Create a single plot
+        fig, ax = plt.subplots(figsize=(10, 5))
     
-        plt.xlabel('Métricas')
-        plt.ylabel('Valores')
-        plt.title(f'Task Allocation {algorithm} :  ({num_drones} drones, {num_tasks} tarefas)')
-        plt.xticks(index, df.columns)
-        plt.legend()
+        # Define the bar width and the spacing between groups of bars
+        bar_width = 0.7 / num_algorithms
+        group_spacing = 1.2
+    
+        # Create a bar chart for each algorithm
+        for i, (algo, data) in enumerate(grouped):
+            index = np.arange(num_metrics) * group_spacing + i * bar_width
+            ax.bar(index, means.loc[algo], bar_width, alpha=0.8, label=algo, yerr=std_devs.loc[algo], capsize=5, color=palette[i])
+
+    
+        ax.set_xlabel('Metrics')
+        ax.set_ylabel('Values')
+        ax.set_title(f'Task Allocation: ({num_drones} drones, {num_tasks} tasks)')
+        ax.set_xticks(np.arange(num_metrics) * group_spacing + (bar_width * (num_algorithms - 1) / 2))
+        ax.set_xticklabels(list(df.columns)[:-1])
+        ax.legend()
         ax.set_ylim(0, 1.5)
     
         plt.tight_layout()
         plt.show()
+    
+
 
     def plot_convergence(self,df, num_drones, num_tasks,algorithm):
+        
         cumulative_means = df.expanding().mean()
     
+        palette = sns.color_palette("Set1",n_colors=len(df)-1)
+              
         fig, ax = plt.subplots()
-        for metric in cumulative_means.columns:
-            ax.plot(cumulative_means[metric], label=metric)
+        for i, metric in enumerate(cumulative_means.columns):
+            ax.plot(cumulative_means[metric], label=metric, color = palette[i])
     
         ax.set_xlabel('Número de simulações')
         ax.set_ylabel('Média acumulada das métricas')
@@ -342,7 +371,7 @@ class DroneEnv(gym.Env):
 
 
     
-    def render(self):
+    def render(self, show_lines = True):
         
         if self.screen is None:
             pygame.init()
@@ -354,9 +383,20 @@ class DroneEnv(gym.Env):
         
         # Desenhar drones
         for i,drone in enumerate(self.drones):
-            #pygame.draw.circle(self.screen, (0, 0, 255), (int(drone[0]), int(drone[1])), 5)
+            
+            #pygame.draw.circle(self.screen, (0, 0, 255), (int(drone.position[0]), int(drone.position[1])), 7)
             self.draw_rotated_x(self.screen, int(drone.position[0]), int(drone.position[1]), 10, self.drone_directions[i])
         
+            if show_lines:
+                if len(drone.tasks) > 0: 
+                    # Desenhar linha entre o drone e seu alvo atual            
+                    pygame.draw.line(self.screen, (100, 100, 100), drone.position, self.targets[drone.tasks[0]].position, 1)
+            
+                # Desenhar linha entre o alvo atual e o próximo (mais clara)
+                if len(drone.tasks) > 1:                
+                    pygame.draw.line(self.screen, (180, 180, 180), self.targets[drone.tasks[0]].position, self.targets[drone.tasks[1]].position, 1)
+        
+                
         font = pygame.font.Font(None, 18)
 
         # Desenhar alvos
@@ -407,8 +447,10 @@ if __name__ == "__main__":
         print ("."  if (episode+1)%10 != 0 else str(episode+1), end="")       
         while not done:
             
+            if env.render_enabled:
+                env.render()
             
-            # Definir uma ação para mover os drones em direção aos alvos
+            # Definir uma ação para mover os drones em direção aos alvos            
             action = None#np.full(env.NUM_DRONES, 5)
 
             observation, reward, done, info = env.step(action)
