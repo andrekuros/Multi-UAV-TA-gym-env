@@ -155,7 +155,7 @@ def chromosome_to_task_allocation(chromosome, num_drones, num_targets):
 def cluster_targets(targets, num_clusters):
     # Realizar a clusterização utilizando o k-means
     kmeans = KMeans(n_clusters=num_clusters, random_state=0, n_init = 10)
-    kmeans.fit(targets)
+    kmeans.fit([t.position for t in targets])
     
     cluster_centers = kmeans.cluster_centers_
     cluster_labels = kmeans.labels_
@@ -215,3 +215,29 @@ def genetic_algorithm(env, population_size, num_generations, crossover_prob, mut
     plt.show()
 
     return best_chromosome
+
+###_______________________------------------___________________
+from DroneEnv import DroneEnv
+#--------------- Evaluate GA--------------------------------
+
+#recorde 2.67
+# Configurar os hiperparâmetros do algoritmo genético
+population_size = 30
+num_generations = 20
+crossover_prob = 0.7
+mutation_prob = 0.2
+
+
+# Criar o ambiente
+env = DroneEnv(render_enabled=False,  action_mode= "TaskAssign")
+env.reset( seed = 0)
+
+# Executar o algoritmo genético e obter o melhor cromossomo
+best_chromosome = genetic_algorithm(
+    env,
+    population_size,
+    num_generations,
+    crossover_prob,
+    mutation_prob
+)
+
