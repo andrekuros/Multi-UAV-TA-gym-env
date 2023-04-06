@@ -3,40 +3,40 @@ from DroneEnv import MultiDroneEnv
 import pandas as pd
 
 class TessiAgent:
-    def __init__(self, num_drones, num_targets, tessi_model = 1):
+    def __init__(self, num_drones, n_tasks, tessi_model = 1):
         self.num_drones = num_drones
-        self.num_targets = num_targets
+        self.n_tasks = n_tasks
         self.tessi_model = tessi_model
 
-    def allocate_tasks(self, drone_states, target_states):
+    def allocate_tasks(self, drone_states, task_states):
         action = {}
                 
         selected = set()
-        #print(target_states[0].target_id)
+        #print(task_states[0].task_id)
         for drone in drone_states:
             min_distance = float('inf')
-            chosen_target = None
+            chosen_task = None
                         
-            for target in target_states:
+            for task in task_states:
                 
-                if target.target_id in selected:
+                if task.task_id in selected:
                     continue
                 
-                distance = np.linalg.norm(drone.position - target.position) 
+                distance = np.linalg.norm(drone.position - task.position) 
 
                 if distance < min_distance:
                     min_distance = distance
-                    chosen_target = target.target_id
+                    chosen_task = task.task_id
                     
 
-            if chosen_target != None:
+            if chosen_task != None:
                 
                 if self.tessi_model == 1:                
-                    action[drone.drone_id] = chosen_target
-                    selected.add(chosen_target)
+                    action[drone.drone_id] = chosen_task
+                    selected.add(chosen_task)
                 #elif self.tessi_model == 2:
-                #    if chosen_target not in allocation:
-                #        action[drone.id] = chosen_target
+                #    if chosen_task not in allocation:
+                #        action[drone.id] = chosen_task
 
         return action
    

@@ -15,50 +15,30 @@ from godot_rl.core.utils import lod_to_dol
 import MultiDroneEnvUtils as utils
 
 
-def createGodotEnv():
-    parser = argparse.ArgumentParser(allow_abbrev=False)
-    parser.add_argument(
-        "--env_path",
-        default="W:/OneDrive/Doutorado/SwarmSimASA/GoDot/godot_rl_agents-main/examples/godot_rl_agents_examples-main/godot_rl_agents_examples-main/examples/FlyBy/bin/FlyBy.exe",#envs/example_envs/builds/JumperHard/jumper_hard.x86_64",        
-        type=str,
-        help="The Godot binary to use, do not include for in editor training",
-    )
-    
-    parser.add_argument("--speedup", default=10, type=int, help="whether to speed up the physics in the env")
-    parser.add_argument("--renderize", default=1, type=int, help="whether renderize or not the screen")
-    args, extras = parser.parse_known_args()
-    env = GodotEnv( env_path=args.env_path,
-             port=11008,
-             show_window=True,
-             seed=0,
-             framerate=None,
-             action_repeat=60,
-             speedup=args.speedup,
-             convert_action_space=False,
-             renderize=args.renderize
-             )
 
-    return env
-
-algorithms =  ["Random"]#["Tessi1"] #"Swarm-GAP"
-
-num_drones = 10
-num_targets = 50
-num_obstacles = 0
+algorithms = ["Swarm-GAP"]#"Random"]#["Tessi1"] #"Swarm-GAP"
 
 episodes = 30
-render_speed = 1
+
+config = utils.DroneEnvOptions(  
+    
+    render_speed = 1,
+    max_time_steps = 1500,
+    action_mode= "TaskAssign",
+    agents = {"R1" : 6 ,"C1" :2 } ,
+    tasks = { "Rec" : 20 }   ,
+    num_obstacles = 3        ,
+    hidden_obstacles = False   )
 
 
 simEnv = "PyGame"
 
 if simEnv == "PyGame":
-    env = env(action_mode= "TaskAssign", render_speed=render_speed, num_drones=num_drones, num_targets=num_targets, num_obstacles=num_obstacles, max_time_steps=1500)
+    worldModel = MultiDroneEnv(config)
     #env = env
     
-
-elif simEnv == "Godot":
-    env = GodotEnv()
+#elif simEnv == "Godot":
+#    env = GodotEnv()
 
 #from pettingzoo.test import parallel_api_test
 #from pettingzoo.test import parallel_seed_test
@@ -74,28 +54,28 @@ for algorithm in algorithms:
         
     for episode in range(episodes):
         
-        observation  = env.reset(seed=episode)        
-        info         = env.get_initial_state()
+        observation  = worldModel.reset(seed=episode)        
+        info         = worldModel.get_initial_state()
         
         drones = info["drones"]
-        targets = info["targets"]
+        tasks = info["tasks"]
         quality_table =  info["quality_table"]
         
         done = {0 : False}
         truncations = {0 : False}
                         
         if algorithm == "Random":            
-            planned_actions = utils.generate_random_tasks_all(drones, targets, seed = episode) 
+            planned_actions = utils.generate_random_tasks_all(drones, tasks, seed = episode) 
             #print(planned_actions)
         
         if algorithm == "Tessi1":
-            agent = TessiAgent(num_drones=num_drones, num_targets=num_targets, tessi_model = 1)
+            agent = TessiAgent(num_drones=worldModel.n_agents, n_tasks=worldModel.n_tasks, tessi_model = 1)
         
         if algorithm == "Tessi2":
-            agent = TessiAgent(num_drones=num_drones, num_targets=num_targets, tessi_model = 2)
+            agent = TessiAgent(num_drones=worldModel.n_agents, n_tasks=worldModel.n_tasks, tessi_model = 2)
         
         if algorithm == "Swarm-GAP":
-            agent = SwarmGap(drones, targets, quality_table, exchange_interval=1)
+            agent = SwarmGap(drones, tasks, quality_table, exchange_interval=1)
     
         print ("."  if (episode+1)%10 != 0 else str(episode+1), end="")   
         
@@ -122,7 +102,7 @@ for algorithm in algorithms:
                             
             elif algorithm == "Swarm-GAP":
                 
-                if env.time_steps % agent.exchange_interval == 0:                    
+                if worldModel.time_steps % agent.exchange_interval == 0:                    
                     actions = agent.process_token()    
             
             elif algorithm == "Tessi1" or algorithm == "Tessi2":            
@@ -131,18 +111,18 @@ for algorithm in algorithms:
                                                         
                 if env.time_steps % 10 == 0:
                     # Convert task_allocation to actions
-                    actions = agent.allocate_tasks(env.drones, [env.targets[i] for i in env.unallocated_tasks()] )
+                    actions = agent.allocate_tasks(worldModel.drones, [worldModel.tasks[i] for i in worldModel.unallocated_tasks()] )
             
         
-            observation, reward, done, truncations, info = env.step(actions)
+            observation, reward, done, truncations, info = worldModel.step(actions)
                         
             #for agent in range(env.NUM_DRONES):                
             #    print(observation[agent])
-                #if not all(obs["target_status"], -1):   
+                #if not all(obs["task_status"], -1):   
                 #    print(observation)
             
-            if env.render_enabled:
-                env.render()
+            if worldModel.render_enabled:
+                worldModel.render()
             
             #print(done)
             if all(done.values()):
@@ -151,23 +131,23 @@ for algorithm in algorithms:
                 totalMetrics.append(info)
                             
             if all(truncations.values()):                
-                print("\nMax Steps Reached:", env.time_steps )
+                print("\nMax Steps Reached:", worldModel.time_steps )
                 
     
     end_time = time.time()
     execution_time = end_time - start_time
     print("\nExecution time ", algorithm, execution_time, "seconds")
     
-    env.close()
+    worldModel.close()
 
 
 
 metricsDf = pd.DataFrame(totalMetrics)
 # Chamar a função de plotagem
 
-env.plot_metrics(metricsDf, len(env.drones), len(env.targets))
+worldModel.plot_metrics(metricsDf, len(worldModel.drones), len(worldModel.tasks))
 for algorithm in algorithms:
-    env.plot_convergence(metricsDf[metricsDf.Algorithm == algorithm], len(env.drones), len(env.targets), algorithm)
+    worldModel.plot_convergence(metricsDf[metricsDf.Algorithm == algorithm], len(worldModel.drones), len(worldModel.tasks), algorithm)
 
 
 #%%%

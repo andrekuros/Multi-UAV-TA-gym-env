@@ -2,25 +2,25 @@ import numpy as np
 import random
 
 class SwarmGap:
-    def __init__(self, drones, targets, quality_table, exchange_interval=100, seed=0):
+    def __init__(self, drones, tasks, quality_table, exchange_interval=100, seed=0):
         
         self.seed = seed
         
         self.drones = drones
-        self.targets = targets
+        self.tasks = tasks
         self.quality_table = quality_table
         
-        self.num_agents = len(drones)
-        self.num_targets = len(targets) 
+        self.n_agents = len(drones)
+        self.n_tasks = len(tasks) 
                 
-        self.unallocated_tasks = [tgt.target_id for tgt in targets]
+        self.unallocated_tasks = [tgt.task_id for tgt in tasks]
         self.drones_out = []
         
         self.exchange_interval = exchange_interval
                 
-        self.task_assignment = {i: [] for i in range(self.num_agents)}
+        self.task_assignment = {i: [] for i in range(self.n_agents)}
         
-        self.token_exchange_list = np.random.permutation(np.arange(0, self.num_agents))
+        self.token_exchange_list = np.random.permutation(np.arange(0, self.n_agents))
 
    
     def process_token(self):
@@ -28,7 +28,7 @@ class SwarmGap:
         action = None
         
         if len(self.token_exchange_list) == 0:            
-            self.token_exchange_list = np.random.permutation(np.arange(0, self.num_agents))
+            self.token_exchange_list = np.random.permutation(np.arange(0, self.n_agents))
         
         drone_id = self.token_exchange_list[0]        
         drone = self.drones[drone_id]
@@ -37,7 +37,7 @@ class SwarmGap:
         if len(self.unallocated_tasks) == 0:
             return
         
-        distances = np.linalg.norm(np.array([self.targets[i].position for i in self.unallocated_tasks]) - drone.position, axis=1)       
+        distances = np.linalg.norm(np.array([self.tasks[i].position for i in self.unallocated_tasks]) - drone.position/drone.max_speed, axis=1)       
         
         Qs = np.array([self.quality_table[drone_id][task] for task in self.unallocated_tasks])
        
@@ -50,6 +50,7 @@ class SwarmGap:
             #print("Drone_out", drone_id)            
         else:
         
+            #Higer Alpha priorize Distance    
             alpha = 0.5
             st = 0.6
                        
@@ -97,7 +98,7 @@ class SwarmGap:
                     availables.append(drone.drone_id)
             
             random.shuffle(availables)
-            #self.token_exchange_list = np.random.permutation(np.arange(0, self.num_agents))
+            #self.token_exchange_list = np.random.permutation(np.arange(0, self.n_agents))
             #print("Restart Token", availables)
         
         return action
