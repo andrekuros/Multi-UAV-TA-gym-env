@@ -20,9 +20,12 @@ from DroneEnvComponents import Drone, Task, Obstacle
 import MultiDroneEnvData as data
 import MultiDroneEnvUtils as utils
 
+
+
+
 MAX_INT = sys.maxsize
 
-def env(config):
+def env(config = None):
     """
     The env function often wraps the environment in wrappers by default.
     You can find full documentation for these methods
@@ -40,12 +43,12 @@ def env(config):
     
     # Provides a wide vareity of helpful user errors
     # Strongly recommended
-    #env = wrappers.OrderEnforcingWrapper(env)
+    env = wrappers.OrderEnforcingWrapper(env)
     
     return env
 
 
-def raw_env(config):
+def raw_env(config = None):
     """
     To support the AEC API, the raw_env() function just uses the from_parallel
     function to convert from a ParallelEnv to an AEC env
@@ -57,10 +60,15 @@ def raw_env(config):
 class MultiDroneEnv(ParallelEnv):
     metadata = {"render_modes": ["human"], "name": "multi_drone_env_v0"}
     
-    def __init__(self, config ):
+    def __init__(self, config=None ):
         
         super(MultiDroneEnv, self).__init__()
         
+        if config == None:
+            self.config = utils.DroneEnvOptions()
+        else:
+            self.config = config              
+            
         self.seed = 0
         self.rndGen = random.Random(self.seed)
         
@@ -69,18 +77,18 @@ class MultiDroneEnv(ParallelEnv):
         self.area_height = self.sceneData.GameArea[1]
         self.bases = self.sceneData.Bases
         
-        self.max_time_steps = config.max_time_steps
-        self.render_speed = config.render_speed        
-        self.render_enabled = config.render_speed != -1 #Render is activated if speed != -1
+        self.max_time_steps = self.config.max_time_steps
+        self.render_speed = self.config.render_speed        
+        self.render_enabled = self.config.render_speed != -1 #Render is activated if speed != -1
         
 
         self.clock = pygame.time.Clock()
-        self.action_mode = config.action_mode
+        self.action_mode = self.config.action_mode
         self.reached_tasks = set()
         
         # Define Agents
-        self.agents_config = config.agents
-        self.n_agents = sum(config.agents.values()) 
+        self.agents_config = self.config.agents
+        self.n_agents = sum(self.config.agents.values()) 
         
         self.drones = None
         self.possible_agents = [i for i in range(self.n_agents)]        
@@ -88,12 +96,12 @@ class MultiDroneEnv(ParallelEnv):
             zip(self.possible_agents, list(range(len(self.possible_agents))))
         )
                 
-        self.n_tasks = sum(config.tasks.values())
-        self.tasks_config = config.tasks               
+        self.n_tasks = sum(self.config.tasks.values())
+        self.tasks_config = self.config.tasks               
         self.tasks = None
         
-        self.hidden_obstacles = config.hidden_obstacles        
-        self.num_obstacles = config.num_obstacles
+        self.hidden_obstacles = self.config.hidden_obstacles        
+        self.num_obstacles = self.config.num_obstacles
         
         self.obstacles = None
                         
@@ -160,11 +168,11 @@ class MultiDroneEnv(ParallelEnv):
     
     def reset(self, seed=0, return_info = True, options={"options":1}):
         
+        self.seed = seed
         self.rndAgentGen = random.Random(seed)
         self.rndObsGen = random.Random(self.rndAgentGen.randint(0, MAX_INT))
-        self.rndTgtGen = random.Random(self.rndAgentGen.randint(0, MAX_INT))
+        self.rndTgtGen = random.Random(self.rndAgentGen.randint(0, MAX_INT))        
         
-        self.seed = seed
                                 
         if self.drones != None:
            self.drones.clear() 
@@ -181,11 +189,13 @@ class MultiDroneEnv(ParallelEnv):
             position = self.random_position(self.rndObsGen, obstacles = self.obstacles, own_range = size , contact_line = True)            
             self.obstacles.append(Obstacle(position, size))
                                             
+        
         #self.drones = [Drone(i, self.random_position(self.rndAgentGen, obstacles = self.obstacles), sensors=listSensors[i]) for i in range(self.n_agents)]
         self.drones = []
         for agent_type, n_agents in self.agents_config.items():
             self.drones += [Drone(i, self.bases[0], agent_type, self.sceneData) for i in range(n_agents)]
            
+        
         self.tasks = []
         for task_type, n_tasks in self.tasks_config.items(): 
             self.tasks += [Task(i, self.random_position(self.rndTgtGen, obstacles = self.obstacles, contact_line = True), 
@@ -241,6 +251,8 @@ class MultiDroneEnv(ParallelEnv):
                    "quality_table" : copy.deepcopy(self.quality_table) 
                    }
 
+    
+
     def step(self, actions):
                       
         if self.action_mode == "TaskAssign":
@@ -259,11 +271,13 @@ class MultiDroneEnv(ParallelEnv):
                         
                         if task != None:                
                                                     
-                        # Adicione a tarefa à lista de tarefas do drone
-                            #self.drone_tasks[drone_index] = self.drone_tasks[drone_index] + task_allocation
+                            # Adicione a tarefa à lista de tarefas do drone                            
                             self.drones[drone_index].tasks.append(task)                                                                                    
                             self.tasks_current_quality[task] = self.quality_table[drone_index][task]                              
                             task_info[drone_index] = [task, 1]#, self.quality_table[drone_index][task], self.tasks[task].position]
+                            
+                            if self.drones[drone_index].state == 0: 
+                                self.drones[drone_index].state = 1
                                       
         
             # Verificar se os drones alcançaram seus alvos
@@ -272,74 +286,94 @@ class MultiDroneEnv(ParallelEnv):
             if self.hidden_obstacles:            
                 self.detect_segments()
             
-            # Calcular as novas posições dos drones voando para o alvo
+            # Calcular as novas posições dos drones 
             for i, drone in enumerate(self.drones):
                             
-               if len(drone.tasks) > 0:    
+                movement = np.array([0,0])
+                avoid_vector = np.array([0,0])
+                
+                #------------------- HAS TASK ------------------
+                if len(drone.tasks) > 0:    
                                                     
-                     current_task = self.tasks[drone.tasks[0]].position  
+                     current_task = self.tasks[drone.tasks[0]]
 
-                     # Calcular a direção em relação ao alvo
-                     direction = current_task - drone.position
-                     distance = np.linalg.norm(direction)                                          
-                     direction_normalized = direction / distance                     
-                     
-                     task_hdg = np.degrees(np.arctan2(direction_normalized[1], direction_normalized[0]))
+                     # Calcular condições para task
+                     dir_task = current_task.position - drone.position
+                     distance_task  = np.linalg.norm(dir_task)                                          
+                     dir_task_norm = dir_task / distance_task                                          
+                     #hdg_task = np.degrees(np.arctan2(dir_task_norm[1], dir_task_norm[0]))
                                        
-                     
-                     if drone.state == 1: #Navigating 
+                     #----------------NAVIGATING--------------------
+                     if drone.state == 1: 
                      
                          # Definir uma distância limite para considerar que o alvo foi alcançado
-                         if distance < 3:                      
+                         if distance_task < 3:                      
                             
                             drone.state = 2
-                            drones.task_start = self.time_steps
+                            drone.task_start = self.time_steps  
+
+                         movement = dir_task_norm 
+                         avoid_vector = drone.avoid_obstacles(drone, self.obstacles, movement, self.sceneData)                                                  
                             
-                     elif drone.state == 2: # In Task
+                     #----------------IN TASK--------------------
+                     elif drone.state == 2: 
+                                                                        
+                        #Just Started the Task
+                        if drone.task_start == -1:                                            
+                            
+                            drone.task_start = self.time_steps
+                            
+                        else:
+                            
+                            #Check if Task is Concluded
+                            if (self.time_steps - drone.task_start) >= current_task.task_duration:
+                            
+                                task_id = drone.tasks.pop(0)    
+                                reached_tasks_this_step.add(task_id)
+                                drone.tasks_done.append(task_id)                           
+                                self.tasks[task_id].final_quality = self.quality_table[i][task_id] 
                         
-                        
-                        movement = drone.doTask(drone_directions[i], task_hdg, distance, current_task.type)
-                        
-                        
-                        
-                        task_id = drone.tasks.pop(0)    
-                        reached_tasks_this_step.add(task_id)
-                        drone.tasks_done.append(task_id)
-                       
-                        self.tasks[task_id].final_quality = self.quality_table[i][task_id] 
-                        
-                        task_info[i] = [ task_id, 2 , self.quality_table[i][task_id]] #,  self.tasks[task_id].position ] 
-                        
-                        # Adicionar o alvo alcançado ao conjunto de alvos alcançados
-                        self.reached_tasks.add(task_id)          
-                    
-                         else:
-                             
-                             
-                         
-                         
-                    
-                         avoid_vector = drone.avoid_obstacles(drone, self.obstacles, current_task, self.sceneData)     
-                         
-                         movement = utils.norm_vector(direction_normalized + avoid_vector) * drone.max_speed
-                         
-                         #print(movement + avoid_vector, movement , avoid_vector)
-                         
-                         # Atualizar a posição do drone                   
-                         drone.position = drone.position + movement 
-                         
-                         
-                         
-                         #Limitar Drone à area de atuação                         
-                         drone.position = np.clip(drone.position, 0, [self.area_width, self.area_height])  
-                                                  
+                                task_info[i] = [ task_id, 2 , self.quality_table[i][task_id]] #,  self.tasks[task_id].position ] 
+
+                                # Adicionar o alvo alcançado ao conjunto de alvos alcançados
+                                self.reached_tasks.add(task_id)   
+                                
+                                
+                                if len(drone.tasks) == 0:
+                                    drone.state = 3
+                                else:
+                                    drone.state = 1
+                                    
+                        movement = drone.doTask(self.drone_directions[i], dir_task_norm, distance_task, current_task.type)
+                                                                             
+                #----------------RETURNING BASE (NO TASK)--------------------
+                if drone.state == 3:
+                                                              
+                     if np.linalg.norm(drone.position - self.bases[0]) < 5:
+                         drone.state = 0
+                     else:
+                         movement = utils.norm_vector(self.bases[0]  - drone.position)
+                         avoid_vector = drone.avoid_obstacles(drone, self.obstacles, movement, self.sceneData)     
+                                                                                                      
+                
+                movement = utils.norm_vector(movement + avoid_vector) * drone.max_speed
+                
+                #print(movement + avoid_vector, movement , avoid_vector)
+                
+                # Atualizar a posição do drone                   
+                drone.position = drone.position + movement 
+                                                                  
+                #Limitar Drone à area de atuação                         
+                drone.position = np.clip(drone.position, 0, [self.area_width, self.area_height])  
+                                         
                             
             
             self.all_drone_positions = np.vstack([drone.position for drone in self.drones])
             
-            # Armazenar a direção de cada drone
-            self.drone_directions = [np.degrees(np.arctan2(direction_normalized[1], direction_normalized[0]) for direction_normalized in (self.all_drone_positions - self.previous_drones_positions)]
             
+            # Armazenar a direção de cada drone            
+            self.drone_directions = [ direction for direction in (self.all_drone_positions - self.previous_drones_positions)]
+                                                
             # Calcular a distância percorrida pelos drones em cada etapa
             dists = np.linalg.norm(self.all_drone_positions - self.previous_drones_positions, axis=1)           
             
@@ -350,9 +384,9 @@ class MultiDroneEnv(ParallelEnv):
             rewards = {k: len(reached_tasks_this_step) for k in self.agents}  
             
             # Definir a condição de término (todos os alvos alcançados)
-            done = len(self.reached_tasks) == self.n_tasks or (self.time_steps >= self.max_time_steps and self.max_time_steps > 0)            
+            done = (len(self.reached_tasks) == self.n_tasks or (self.time_steps >= self.max_time_steps and self.max_time_steps > 0))            
             
-            terminations = {agent: done for agent in self.agents}
+            terminations = {agent.drone_id : (done and agent.state == 0) for agent in self.drones}
             
             env_truncation = (self.time_steps >= self.max_time_steps) if self.max_time_steps > 0 else False             
             
@@ -427,8 +461,8 @@ class MultiDroneEnv(ParallelEnv):
         tries = 0
         while tries < 100:            
             
-            x = self.rndGen.uniform(own_range + min_distance, self.area_width - own_range - min_distance)
-            y = self.rndGen.uniform(own_range + min_distance, self.area_height - own_range - min_distance - (self.area_height-limit_line))
+            x = rndGen.uniform(own_range + min_distance, self.area_width - own_range - min_distance)
+            y = rndGen.uniform(own_range + min_distance, self.area_height - own_range - min_distance - (self.area_height-limit_line))
             
             point = np.array([x, y])
     
@@ -451,18 +485,7 @@ class MultiDroneEnv(ParallelEnv):
             tries +=  1
         
         raise ValueError(f'Error to build a valid scenario, can´t find no space for more {len(obstacles)-1} then obstacles')        
-        
-        
-        
-      
-    def random_list(self,n_min, n_max, t_max):
-        # Determina a quantidade de elementos aleatórios a serem gerados
-        length = self.rndGen.randint(n_min, n_max)
-        
-        # Gera a lista de elementos aleatórios
-        random_list = [self.rndGen.randint(0, t_max) for _ in range(length)]
-        
-        return random_list
+           
       
     def calculate_capacities_table(self, drones, tasks, sceneData):
         
@@ -515,10 +538,10 @@ class MultiDroneEnv(ParallelEnv):
         #for 15 drones / 50 ,tasks
         #total_distance = 18245.25,  total_time = 397.5 , load_balancing_std = 371.21        
         return {
-            "total_time": total_time / 397.5 ,
-            "total_distance": total_distance /  18245.25 ,
+            "total_time": total_time, #/ 397.5 ,
+            "total_distance": total_distance,# /  18245.25 ,
             #"load_balancing": load_balancing,
-            "load_balancing_std": load_balancing_std / 371.21 ,
+            "load_balancing_std": load_balancing_std, #/ 371.21 ,
             "total_quality": total_quality
         }
 
@@ -583,12 +606,14 @@ class MultiDroneEnv(ParallelEnv):
 
 #####--------------- Rendering in PyGame -------------------###################
 
-    def draw_rotated_triangle(self, surface, x, y, size, angle, agent_type):
+    def draw_rotated_triangle(self, surface, x, y, size, angle, agent_type, idle = False):
         
         mod_size = size / 2
+        color = (0, 0, 255) if idle == False else (100, 100, 100)
                 
         if agent_type == "C1":
             mod_size = size / 1.5
+            color = (0, 200, 200) if idle == False else color 
                             
         angle_rad = np.radians(angle)    
         dx1 = mod_size  * np.cos(angle_rad - np.pi / 0.7)
@@ -599,10 +624,12 @@ class MultiDroneEnv(ParallelEnv):
         dy3 = mod_size  * np.sin(angle_rad + np.pi / 0.7)           
         points = [(x + dx1, y + dy1), (x + dx2, y + dy2), (x + dx3, y + dy3)]
         
+                
+        
         if agent_type == "C1":
-            pygame.draw.polygon(surface, (0, 200, 200), points )
+            pygame.draw.polygon(surface, color, points )
         else:
-            pygame.draw.polygon(surface, (0, 0, 255), points )
+            pygame.draw.polygon(surface, color, points )
         
 
     def draw_rotated_x(self,surface, x, y, size, angle, agent_type):
@@ -636,10 +663,19 @@ class MultiDroneEnv(ParallelEnv):
         
         pygame.draw.line(agents_surface, (0, 0, 90), (0, self.sceneData.ContactLine),(self.area_width, self.sceneData.ContactLine) , 3)
         
+        #Draw Base
+        base_size = 50
+        base_x = self.bases[0][0]
+        base_y = self.bases[0][1]
+        
+        pygame.draw.rect(agents_surface, (10,80,30), (base_x-base_size/2, base_y-base_size/2, base_size, base_size))
+        
+        font = pygame.font.Font(None, 18)
+                        
         # Desenhar drones
         for i,drone in enumerate(self.drones):
             
-            pygame.draw.circle(comm_surface, (25, 25, 25), (int(drone.position[0]), int(drone.position[1])), drone.relay_area)
+            pygame.draw.circle(comm_surface, (40, 40, 40), (int(drone.position[0]), int(drone.position[1])), drone.relay_area)
             
             if show_lines:
                 if len(drone.tasks) > 0: 
@@ -652,62 +688,27 @@ class MultiDroneEnv(ParallelEnv):
             
             #pygame.draw.circle(self.screen, (0, 0, 255), (int(drone.position[0]), int(drone.position[1])), 7)
             #self.draw_rotated_x(self.screen, int(drone.position[0]), int(drone.position[1]), 10, self.drone_directions[i])
-            self.draw_rotated_triangle(agents_surface, int(drone.position[0]), int(drone.position[1]), 20, self.drone_directions[i], drone.type)            
+            if drone.state != 0:
+                self.draw_rotated_triangle(agents_surface, int(drone.position[0]), int(drone.position[1]), 20, np.degrees(np.arctan2(self.drone_directions[i][1],self.drone_directions[i][0])) , drone.type)            
+            else:
+                self.draw_rotated_triangle(agents_surface, int(drone.position[0]), int(drone.position[1]), 20, -90 , drone.type, idle = True)            
             
-            
-        
-        font = pygame.font.Font(None, 18)
-        
-        if True:
-            # Desenhar obstáculos
-            for obstacle in self.obstacles:
-                obstacle_color = (150, 40, 40)  # Cor vermelha clara
-                
-                if not self.hidden_obstacles:
-                    pygame.draw.circle(comm_surface, obstacle_color, (int(obstacle.position[0]), int(obstacle.position[1])), obstacle.size)
-                    # Renderizar o texto "No Fly Zone" e desenhá-lo no centro do círculo
-                    obstacle_text = font.render("NFZ", True, (0, 0, 0))  # Renderizar o texto (preto)
-                    text_rect = obstacle_text.get_rect(center=(int(obstacle.position[0]), int(obstacle.position[1])))  # Centralizar o texto no círculo
-                    comm_surface.blit(obstacle_text, text_rect)        
-                else:
-                    self.draw_detected_circle_segments(comm_surface, obstacle_color,obstacle)
-            
-                
-            
-        #else:
-            
-            
-            # # Desenhar obstáculos
-            # for obstacle in self.obstacles:
-            #     obstacle_color = (255, 150, 150)  # Cor vermelha clara
-                
-            #     # Dividir a circunferência do obstáculo em 12 partes
-            #     num_segments = 12
-            #     angle_step = 2 * np.pi / num_segments
-        
-            #     for i in range(num_segments):
-            #         angle1 = i * angle_step
-            #         angle2 = (i + 1) * angle_step
                     
-            #         # Calcular as posições dos pontos na circunferência
-            #         x1 = int(obstacle.position[0] + obstacle.size * np.cos(angle1))
-            #         y1 = int(obstacle.position[1] + obstacle.size * np.sin(angle1))
-            #         x2 = int(obstacle.position[0] + obstacle.size * np.cos(angle2))
-            #         y2 = int(obstacle.position[1] + obstacle.size * np.sin(angle2))
-                    
-            #         # Verificar se algum drone está a 30 metros ou menos desta parte do obstáculo
-            #         draw_segment = False
-            #         for drone in self.drones:
-            #             distance_to_segment = min(np.linalg.norm(drone.position - np.array([x1, y1])),
-            #                                       np.linalg.norm(drone.position - np.array([x2, y2])))
-            #             if distance_to_segment <= 30:
-            #                 draw_segment = True
-            #                 break
         
-            #         # Desenhar o segmento da circunferência se estiver dentro da faixa de visão de algum drone
-            #         if draw_segment:
-            #             pygame.draw.line(self.screen, obstacle_color, (x1, y1), (x2, y2), 2) 
                
+        # Desenhar obstáculos
+        for obstacle in self.obstacles:
+            obstacle_color = (150, 40, 40)  # Cor vermelha clara
+            
+            if not self.hidden_obstacles:
+                pygame.draw.circle(comm_surface, obstacle_color, (int(obstacle.position[0]), int(obstacle.position[1])), obstacle.size)
+                # Renderizar o texto "No Fly Zone" e desenhá-lo no centro do círculo
+                obstacle_text = font.render("NFZ", True, (0, 0, 0))  # Renderizar o texto (preto)
+                text_rect = obstacle_text.get_rect(center=(int(obstacle.position[0]), int(obstacle.position[1])))  # Centralizar o texto no círculo
+                comm_surface.blit(obstacle_text, text_rect)        
+            else:
+                self.draw_detected_circle_segments(comm_surface, (255, 70, 70) ,obstacle)
+                                               
 
         # Desenhar alvos
         for i, task in enumerate(self.tasks):

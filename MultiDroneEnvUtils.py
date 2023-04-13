@@ -87,6 +87,8 @@ def norm_vector(vector):
     # Calcular a magnitude do vetor
     magnitude = np.linalg.norm(vector)
 
+    if magnitude == 0:
+        return np.array([0,0])
     # Dividir cada componente do vetor pela magnitude
     normalized_vector = vector / magnitude
 

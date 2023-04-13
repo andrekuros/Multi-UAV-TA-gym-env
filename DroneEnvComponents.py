@@ -33,39 +33,45 @@ class Drone:
         
 #---------- UAV Internal Capabilities ----------#
 
-    def doTask(self, drone_hdg, task_hdg, distance, task_type):
+    def doTask(self, drone_dir, task_dir, distance, task_type):
                         
-        if task.type == "Rec":
+        desired_dir = task_dir
+        
+        if task_type == "Rec":
             
-            if abs(drone_direction - task_direction) > 90 and distance > 20:
+            #if np.dot(drone_dir, task_dir) < 0 and distance < 20:
+            #    return -task_dir
+            return np.array([0,0])
+               
                 
-                return 
+        return desired_dir
             
 
 
-    def avoid_obstacles(self, drone, obstacles, task, sceneData):
+    def avoid_obstacles(self, drone, obstacles, movement, sceneData):
         
         avoid_vector = np.array([0.0, 0.0])
         
         for obstacle in obstacles:
             
-            direction_to_task = task - drone.position        
+            #direction_to_task = task - drone.position        
+            #distance_to_task = np.linalg.norm(direction_to_task)
+            
             direction_to_obstacle = obstacle.position - drone.position
             distance_to_obstacle = np.linalg.norm(direction_to_obstacle)
             distance_to_zone = distance_to_obstacle - obstacle.size
     
             # Verificar se o drone está muito próximo do obstáculo
             #if distance_to_obstacle < obstacle.size * 3:
-            if distance_to_zone < 30:
-                
-                
+            if distance_to_zone < 40:
+                                
                 direction_normalized = direction_to_obstacle / distance_to_zone
     
                 # Calcular a força de desvio com base na distância à zona de segurança
                 avoidance_force = 0.5 / (1 - math.log(max(distance_to_zone, 1.05)))
     
                 # Calcular o ângulo entre o vetor de direção ao obstáculo e o vetor de direção ao alvo
-                angle_between = np.arctan2(direction_to_task[1], direction_to_task[0]) - np.arctan2(direction_to_obstacle[1], direction_to_obstacle[0])
+                angle_between = np.arctan2(movement[1], movement[0]) - np.arctan2(direction_to_obstacle[1], direction_to_obstacle[0])                
     
                 # Normalizar o ângulo para ficar entre -pi e pi
                 angle_between = (angle_between + np.pi) % (2 * np.pi) - np.pi

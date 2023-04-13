@@ -29,6 +29,13 @@ class sceneData:
                             "C1" : 2.0,
                             "C2" : 1.5}
         
+        self.Endurances = { "F1" : 1000,
+                            "F2" : 800,
+                            "R1" : 2000,
+                            "R2" : 2500,
+                            "C1" : 3500,
+                            "C2" : 4000}
+        
         self.relayArea = {  "F1" : 20.0,
                             "F2" : 20.0,
                             "R1" : 50.0,
@@ -41,7 +48,7 @@ class sceneData:
         
         expectedDurations = {"Att" :  50,
                              "Jam" : 100,
-                             "Def" : 100,
+                             "Esc" : 100,
                              "Rec" : 100,
                              "Com" : 100,
                              }
