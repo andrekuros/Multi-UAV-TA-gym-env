@@ -43,6 +43,13 @@ class sceneData:
                             "C1" : 200.0,
                             "C2" : 250.0}
         
+        self.failTable = {  "F1" : 1.0,
+                            "F2" : 1.2,
+                            "R1" : 0.8,
+                            "R2" : 1.0,
+                            "C1" : 1.5,
+                            "C2" : 2.0}
+        
         
     def getTaskDuration(self, task_type):
         

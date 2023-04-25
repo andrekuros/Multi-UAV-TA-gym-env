@@ -3,34 +3,36 @@ from DroneEnv import env
 from swarm_gap import SwarmGap
 from tessi import TessiAgent
 import pandas as pd
-import argparse
-import json
+#import argparse
+#import json
 import time
-import copy
-import concurrent.futures
-import cProfile
+#import copy
+#import concurrent.futures
+#import cProfile
 
-from gym import spaces
-from godot_rl.core.godot_env import GodotEnv
-from godot_rl.core.utils import lod_to_dol
+#from gym import spaces
+#from godot_rl.core.godot_env import GodotEnv
+#from godot_rl.core.utils import lod_to_dol
 
 import MultiDroneEnvUtils as utils
 
 
-algorithms = ["Random","Tessi1"] #"Swarm-GAP"
+algorithms = ["Random"]#,"Tessi1"] #"Swarm-GAP"
 
-episodes = 3
+episodes = 10
 
 config = utils.DroneEnvOptions(  
     
-    render_speed = 5,
-    max_time_steps = 5000,
+    render_speed = -1,
+    max_time_steps = 1000,
     action_mode= "TaskAssign",
     agents = {"R1" : 10 ,"C1" :2 } ,
     tasks = { "Rec" : 20 }   ,
     num_obstacles = 5        ,
-    hidden_obstacles = False )
+    hidden_obstacles = False,
+    fail_rate = 0.1 )
 
+config=None
 
 simEnv = "PyGame"
 
@@ -40,7 +42,7 @@ if simEnv == "PyGame":
     
 #elif simEnv == "Godot":
 #    env = GodotEnv()
-if True:
+if False:
 
     from pettingzoo.test import parallel_api_test
     from pettingzoo.test import parallel_seed_test
@@ -58,7 +60,7 @@ for algorithm in algorithms:
         
     for episode in range(episodes):
         
-        observation  = worldModel.reset(seed=0)#episode)        
+        observation  = worldModel.reset(seed=0)#episode)         
         info         = worldModel.get_initial_state()
         
         drones = info["drones"]
@@ -110,14 +112,14 @@ for algorithm in algorithms:
                     actions = agent.process_token()    
             
             elif algorithm == "Tessi1" or algorithm == "Tessi2":            
-                
-                
-                                                        
+                                                                                        
                 if worldModel.time_steps % 10 == 0:
                     # Convert task_allocation to actions
                     actions = agent.allocate_tasks(worldModel.drones, [worldModel.tasks[i] for i in worldModel.unallocated_tasks()] )
                                     
             observation, reward, done, truncations, info = worldModel.step(actions)
+            
+            #print(observation)
                         
             #for agent in range(env.NUM_DRONES):                
             #    print(observation[agent])
@@ -135,6 +137,8 @@ for algorithm in algorithms:
                             
             if all(truncations.values()):                
                 print("\nMax Steps Reached:", worldModel.time_steps )
+                info["Algorithm"] = algorithm
+                totalMetrics.append(info)
                 
     
     end_time = time.time()
@@ -144,11 +148,10 @@ for algorithm in algorithms:
     worldModel.close()
 
 
-
 metricsDf = pd.DataFrame(totalMetrics)
 # Chamar a função de plotagem
 
-worldModel.plot_metrics(metricsDf, len(worldModel.drones), len(worldModel.tasks))
+#worldModel.plot_metrics(metricsDf, len(worldModel.agents), len(worldModel.tasks))
 #for algorithm in algorithms:
 #    worldModel.plot_convergence(metricsDf[metricsDf.Algorithm == algorithm], len(worldModel.drones), len(worldModel.tasks), algorithm)
 

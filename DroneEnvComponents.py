@@ -7,29 +7,31 @@ import MultiDroneEnvUtils as utils
 
 class Drone:
     
-    def __init__(self, drone_id, position, uavType,  sceneData, altitude=1000  ):
+    def __init__(self, drone_id, name, position, uavType,  sceneData, altitude=1000  ):
         
+        self.name = name
         self.drone_id = drone_id
+        
         self.position = position
         self.altitude = altitude    
 
-        #0 - Idle / 1 - Navigating / 2 - In Task / 3 - Retuning to Base / 4 - Out of Service
+        #0 - Idle / 1 - Navigating / 2 - In Task / 3 - Retuning to Base / (-1) - Out of Service
         self.state = 0            
         self.task_start = -1
         self.task_finished = -1
-        
-        
+        self.fail_event = -1        
+                
         self.type = uavType
         self.typeIdx = sceneData.UavIndex[self.type]        
-        self.fit2Task = sceneData.UavCapTable[self.type]
-                        
+        self.fit2Task = sceneData.UavCapTable[self.type]                        
         self.max_speed = sceneData.maxSpeeds[self.type]
-        self.relay_area = sceneData.relayArea[self.type]        
+        self.relay_area = sceneData.relayArea[self.type]             
+        self.fail_multiplier = sceneData.failTable[self.type]        
         
         self.tasks = []
         self.tasks_done = []
         
-        self.has_capability = True
+        self.has_capability = True        
         
 #---------- UAV Internal Capabilities ----------#
 

@@ -3,15 +3,16 @@ import numpy as np
 
 class DroneEnvOptions:
     def __init__(self, 
-                 render_mode = None,                  
+                 render_mode = 'human',                  
                  render_speed=-1, 
                  action_mode="TaskAssign",
                  simulator_module = "Internal", 
-                 max_time_steps=-1, 
-                 agents= {"R1" : 10},                 
-                 tasks= {"Rec" : 30},
-                 num_obstacles=5,
-                 hidden_obstacles = False):
+                 max_time_steps=1000, 
+                 agents= {"R1" : 2},                 
+                 tasks= {"Rec" : 5},
+                 num_obstacles=0,
+                 hidden_obstacles = False,
+                 fail_rate = 0.01):
         
         self.render_mode = render_mode 
         self.render_speed = render_speed
@@ -22,6 +23,7 @@ class DroneEnvOptions:
         self.tasks = tasks        
         self.num_obstacles = num_obstacles
         self.hidden_obstacles = hidden_obstacles
+        self.fail_rate = fail_rate
 
 def generate_random_tasks_all(drones, tasks, seed = 0):
     
@@ -49,7 +51,7 @@ def generate_random_tasks_all(drones, tasks, seed = 0):
     
     for i in range(len(drones)):
         n_tasks = min_tasks_per_drone + (1 if i < extra_tasks else 0)
-        task_actions[i] = task_list[task_idx:task_idx + n_tasks]
+        task_actions[f'agent{i}'] = task_list[task_idx:task_idx + n_tasks]
         task_idx += n_tasks
 
     return task_actions
