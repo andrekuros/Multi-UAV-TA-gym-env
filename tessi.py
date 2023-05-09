@@ -14,6 +14,7 @@ class TessiAgent:
         selected = set()
         #print(task_states[0].task_id)
         for drone in drone_states:
+            
             min_distance = float('inf')
             chosen_task = None
                         
@@ -21,8 +22,8 @@ class TessiAgent:
                 
                 if task.task_id in selected:
                     continue
-                
-                distance = np.linalg.norm(drone.position - task.position) 
+                                
+                distance = np.linalg.norm(drone.next_free_position - task.position) 
 
                 if distance < min_distance:
                     min_distance = distance
@@ -32,7 +33,7 @@ class TessiAgent:
             if chosen_task != None:
                 
                 if self.tessi_model == 1:                
-                    action[drone.drone_id] = chosen_task
+                    action[drone.name] = chosen_task
                     selected.add(chosen_task)
                 #elif self.tessi_model == 2:
                 #    if chosen_task not in allocation:

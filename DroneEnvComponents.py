@@ -15,7 +15,7 @@ class Drone:
         self.position = position
         self.altitude = altitude    
 
-        #0 - Idle / 1 - Navigating / 2 - In Task / 3 - Retuning to Base / (-1) - Out of Service
+        #0 - Idle / 1 - Navigating / 2 - In Task / 3 - Retuning to Base / (4) - Out of Service
         self.state = 0            
         self.task_start = -1
         self.task_finished = -1
@@ -26,14 +26,32 @@ class Drone:
         self.fit2Task = sceneData.UavCapTable[self.type]                        
         self.max_speed = sceneData.maxSpeeds[self.type]
         self.relay_area = sceneData.relayArea[self.type]             
-        self.fail_multiplier = sceneData.failTable[self.type]        
-        
+        self.fail_multiplier = sceneData.failTable[self.type]  
+            
         self.tasks = []
         self.tasks_done = []
+        
+        self.next_free_time = 0
+        self.next_free_position = position
         
         self.has_capability = True        
         
 #---------- UAV Internal Capabilities ----------#
+    def allocate(self, task, time_step, max_time_steps):
+        
+        if not task.task_id in self.tasks:
+            
+            time_to_task = np.linalg.norm(self.next_free_position - self.position) / self.max_speed + task.task_duration                        
+            end_time = self.next_free_time + time_to_task
+            
+            if end_time < max_time_steps:            
+                self.tasks.append(task.task_id)
+                self.next_free_time = end_time
+                self.next_free_position = task.position                
+                
+                return 1.0                        
+        return -1.0    
+
 
     def doTask(self, drone_dir, task_dir, distance, task_type):
                         
@@ -97,10 +115,11 @@ class Task:
         self.task_id = task_id
         self.position = position
                         
-        self.is_active = is_active        
+              
         self.type = task_type
         self.typeIdx = sceneData.TaskIndex[self.type]
         
+        self.status = 0 # 0 - waiting Allocation / 1 - Allocated / 2 - Concluded
         self.task_window = task_window
         self.task_duration = sceneData.getTaskDuration(self.type)
                     

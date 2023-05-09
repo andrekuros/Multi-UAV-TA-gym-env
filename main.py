@@ -17,20 +17,21 @@ import time
 import MultiDroneEnvUtils as utils
 
 
-algorithms = ["Random"]#,"Tessi1"] #"Swarm-GAP"
+algorithms = ["Random"]
+algorithms += ["Tessi1"] #"Swarm-GAP" Tessi1
 
-episodes = 10
+episodes = 30
 
 config = utils.DroneEnvOptions(  
     
-    render_speed = -1,
+    render_speed = 1,
     max_time_steps = 1000,
     action_mode= "TaskAssign",
     agents = {"R1" : 10 ,"C1" :2 } ,
     tasks = { "Rec" : 20 }   ,
     num_obstacles = 5        ,
     hidden_obstacles = False,
-    fail_rate = 0.1 )
+    fail_rate = 0.9 )
 
 config=None
 
@@ -52,15 +53,19 @@ if False:
     exit
 
 totalMetrics = []
+total_reward = {}
 
 for algorithm in algorithms:
     
     start_time = time.time()
     print("\nStarting Algorithm:", algorithm)
-        
+    
+    total_reward[algorithm] = 0    
+    
     for episode in range(episodes):
         
-        observation  = worldModel.reset(seed=0)#episode)         
+        
+        observation  = worldModel.reset(seed=episode)         
         info         = worldModel.get_initial_state()
         
         drones = info["drones"]
@@ -91,20 +96,24 @@ for algorithm in algorithms:
                         
             if algorithm == "Random":
                             
-                if len(planned_actions) > 0:
-                    
-                    actions = {}                     
-                    toDelete = [] 
-                     
-                    for i, tasks in planned_actions.items():                                             
+                if worldModel.time_steps % 1 == 0:
+                    #print(planned_actions, worldModel.time_steps)
+                    if len(planned_actions) > 0:
                         
-                        if len(tasks) > 0:
-                            actions[i] = planned_actions[i].pop()                      
-                        else:
-                            toDelete.append(i)
-                
-                    for i in toDelete: 
-                        del planned_actions[i] 
+                        actions = {}                     
+                        toDelete = [] 
+                         
+                        for i, tasks in planned_actions.items():                                             
+                            
+                            if len(tasks) > 0:
+                                actions[i] = planned_actions[i].pop()                      
+                            else:
+                                toDelete.append(i)
+                    
+                        for i in toDelete: 
+                            del planned_actions[i] 
+                        
+                    #print(actions) 
                             
             elif algorithm == "Swarm-GAP":
                 
@@ -113,12 +122,17 @@ for algorithm in algorithms:
             
             elif algorithm == "Tessi1" or algorithm == "Tessi2":            
                                                                                         
-                if worldModel.time_steps % 10 == 0:
-                    # Convert task_allocation to actions
-                    actions = agent.allocate_tasks(worldModel.drones, [worldModel.tasks[i] for i in worldModel.unallocated_tasks()] )
-                                    
+                
+                if worldModel.time_steps % 1 == 0:
+                    # Convert task_allocation to actions                    
+                    actions = agent.allocate_tasks(worldModel.agents_obj, [worldModel.tasks[i] for i in worldModel.unallocated_tasks()] )
+                    #if actions != {}:
+                        #print(actions)
+                    #print(actions)               
             observation, reward, done, truncations, info = worldModel.step(actions)
-            
+            #print(actions)  
+            total_reward[algorithm] += reward["agent0"]
+            #print(reward["agent0"])
             #print(observation)
                         
             #for agent in range(env.NUM_DRONES):                
@@ -134,19 +148,23 @@ for algorithm in algorithms:
             #if done:
                 info["Algorithm"] = algorithm
                 totalMetrics.append(info)
+                #print("Done Rew:", reward["agent0"])
                             
             if all(truncations.values()):                
-                print("\nMax Steps Reached:", worldModel.time_steps )
-                info["Algorithm"] = algorithm
+                #print("\nMax Steps Reached:", worldModel.time_steps )
+                #info["Algorithm"] = algorithm
                 totalMetrics.append(info)
-                
-    
+         
+        #print(worldModel.time_steps)#print("Trunc Rew:", total_reward)
+                    
     end_time = time.time()
     execution_time = end_time - start_time
     print("\nExecution time ", algorithm, execution_time, "seconds")
     
     worldModel.close()
 
+for alg in algorithms:
+    print(f'Rew({alg}): {total_reward[alg]/episodes}')
 
 metricsDf = pd.DataFrame(totalMetrics)
 # Chamar a função de plotagem
