@@ -12,6 +12,7 @@ from pettingzoo.utils.wrappers import BaseWrapper
 from pettingzoo.utils.wrappers import OrderEnforcingWrapper
 
 import torch.nn.functional as F
+
 class CustomNet(Net):
     def __init__(
         self,
@@ -86,7 +87,7 @@ class CustomNet(Net):
         agent_position = torch.tensor(obs["agent_position"], dtype=torch.float32).to(self.device)
         agent_state = torch.tensor(obs["agent_state"], dtype=torch.float32)
         agent_type = torch.tensor(obs["agent_type"], dtype=torch.float32).to(self.device)
-        next_free_time = torch.tensor(obs["next_free_time"], dtype=torch.float32).unsqueeze(-1).to(self.device)
+        next_free_time = torch.tensor(obs["next_free_time"], dtype=torch.float32).to(self.device)
         position_after_last_task = torch.tensor(obs["position_after_last_task"], dtype=torch.float32).to(self.device)         
         drone_embeddings = self.drone_encoder(torch.cat((agent_position, agent_state, agent_type, next_free_time, position_after_last_task), dim=-1))
        
@@ -98,8 +99,6 @@ class CustomNet(Net):
         # Expand the mask dimensions to match the required shape for the attention mechanism
         #tasks_info_mask = tasks_info_mask.unsqueeze(1).unsqueeze(2)
 
-
-                     
         combined_output = torch.cat((drone_embeddings.unsqueeze(1), task_embeddings.unsqueeze(1)), dim=1)
                 
         # Transformer layers: input (128) from transformer_input | output (128) to attention mechanism    
@@ -115,10 +114,14 @@ class CustomNet(Net):
         
         # Process the attention output with the remaining layers
         x = self.hidden_layers(attention_output)
+        #print(x)
         output = self.output(x)
     
         # Apply the softmax function
-        softmax_output = F.softmax(output, dim=-1)        
+        softmax_output = F.softmax(output, dim=-1) 
+        
+        #print(softmax_output)
+        #print(softmax_output.shape)
         
         return softmax_output, state
 

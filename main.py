@@ -20,7 +20,7 @@ import MultiDroneEnvUtils as utils
 algorithms = ["Random"]
 algorithms += ["Tessi1"] #"Swarm-GAP" Tessi1
 
-episodes = 30
+episodes = 10
 
 config = utils.DroneEnvOptions(  
     
@@ -50,7 +50,7 @@ if False:
 
     parallel_api_test(worldModel, num_cycles=1000)
     #parallel_seed_test(env, num_cycles=100, test_kept_state=True)
-    exit
+   
 
 totalMetrics = []
 total_reward = {}
@@ -65,7 +65,7 @@ for algorithm in algorithms:
     for episode in range(episodes):
         
         
-        observation  = worldModel.reset(seed=episode)         
+        observation  = worldModel.reset(seed=0)         
         info         = worldModel.get_initial_state()
         
         drones = info["drones"]
@@ -113,7 +113,7 @@ for algorithm in algorithms:
                         for i in toDelete: 
                             del planned_actions[i] 
                         
-                    #print(actions) 
+                    #print("plan->:",actions) 
                             
             elif algorithm == "Swarm-GAP":
                 
@@ -125,7 +125,10 @@ for algorithm in algorithms:
                 
                 if worldModel.time_steps % 1 == 0:
                     # Convert task_allocation to actions                    
-                    actions = agent.allocate_tasks(worldModel.agents_obj, [worldModel.tasks[i] for i in worldModel.unallocated_tasks()] )
+                    un_taks_obj = [worldModel.tasks[i] for i in worldModel.unallocated_tasks()] 
+                    
+                    actions = agent.allocate_tasks(worldModel.agents_obj, un_taks_obj )
+                    #actions = agent.allocate_tasks(worldModel.agents_obj, [worldModel.tasks[i] for i in worldModel.unallocated_tasks()] )
                     #if actions != {}:
                         #print(actions)
                     #print(actions)               

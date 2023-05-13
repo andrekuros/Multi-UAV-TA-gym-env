@@ -12,9 +12,14 @@ from tianshou.trainer import offpolicy_trainer
 from torch.utils.tensorboard import SummaryWriter
 from tianshou.utils import TensorboardLogger
 
+
 from Custom_Classes import CustomNet
 from Custom_Classes import CustomCollector
 from Custom_Classes import CustomParallelToAECWrapper
+
+from Custom_Classes_simplified import CustomNetSimple
+from Custom_Classes_simplified import CustomCollectorSimple
+from Custom_Classes_simplified import CustomParallelToAECWrapperSimple
 
 from DroneEnv import MultiDroneEnv
 
@@ -22,6 +27,7 @@ def _get_agents(
     agent_learn: Optional[BasePolicy] = None,
     agent_opponent: Optional[BasePolicy] = None,
     optim: Optional[torch.optim.Optimizer] = None,
+    policy_load_path = None
 ) -> Tuple[BasePolicy, torch.optim.Optimizer, list]:
     
     env = _get_env()
@@ -48,25 +54,36 @@ def _get_agents(
                
     if agent_learn is None:
         # model
-        net = CustomNet(
+        net = CustomNetSimple(
+        #net = CustomNet(
             state_shape_agent=state_shape_agent,
             state_shape_task=state_shape_task,
             action_shape=action_shape,
-            hidden_sizes=[256,256],
+            hidden_sizes=[64,64],
             device="cuda" if torch.cuda.is_available() else "cpu",
         ).to("cuda" if torch.cuda.is_available() else "cpu")
     
         if optim is None:
-            optim = torch.optim.Adam(net.parameters(), lr=1e-3)
+            optim = torch.optim.Adam(net.parameters(), lr=5e-4)
     
         agent_learn = DQNPolicy(
             model=net,
             optim=optim,
-            discount_factor=0.9,
+            discount_factor=0.7,
             estimation_step=20,
-            target_update_freq=20,
-        )   
+            target_update_freq=100,
+        )  
+        
+        if load_model == True:
+            # Load the saved checkpoint             
+            agent_learn.load_state_dict(torch.load(model_load_path))
+            print("loaded")
+            
+        
         agents = [agent_learn for _ in range(len(env.agents))]
+        
+        
+            
 
     policy = MultiAgentPolicyManager(agents, env)    
         
@@ -85,6 +102,9 @@ if __name__ == "__main__":
         
     train_env_num = 10
     test_env_num = 10
+    
+    model_load_path = os.path.join("dqn_Custom", "policy_03.pth")    
+    load_model = True   
     
     torch.set_grad_enabled(True) 
     # ======== Step 1: Environment setup =========
@@ -123,35 +143,35 @@ if __name__ == "__main__":
         
     # ======== Step 4: Callback functions setup =========
     def save_best_fn(policy):
-        model_save_path = os.path.join("log", "rps", "dqn", "policy.pth")
-        os.makedirs(os.path.join("log", "rps", "dqn"), exist_ok=True)
+        model_save_path = os.path.join("dqn_Custom", "policy_03.pth")        
+        os.makedirs(os.path.join("dqn_Custom"), exist_ok=True)
         torch.save(policy.policies[agents[0]].state_dict(), model_save_path)
 
     def stop_fn(mean_rewards):
-        return mean_rewards >= 200.0
+        return mean_rewards >= 9939.0
 
     def train_fn(epoch, env_step):
-        epsilon = max(0.05, 0.5 - epoch * 0.005)
+        epsilon = max(0.5, 0.5 - epoch * 0.0005)
         policy.policies[agents[0]].set_eps(epsilon)
 
     def test_fn(epoch, env_step):
-        epsilon = max(0.05, 0.5 - epoch * 0.005)
+        epsilon = 0.01#max(0.05, 0.1 - epoch * 0.001)
         policy.policies[agents[0]].set_eps(epsilon)
         
     def reward_metric(rews):       
         #print(rews)
         return rews.mean()#[:,0]
-                    
+                           
     # ======== Step 5: Run the trainer =========
     result = offpolicy_trainer(
         policy=policy,
         train_collector=train_collector,
         test_collector=test_collector,        
-        max_epoch=500,
-        step_per_epoch=900 * train_env_num,
-        step_per_collect=10 * train_env_num,
-        episode_per_test= test_env_num,
-        batch_size=16,
+        max_epoch=10000,
+        step_per_epoch=10000 * train_env_num,
+        step_per_collect=300 * train_env_num,
+        episode_per_test= 10 * test_env_num,
+        batch_size=32,
         train_fn=train_fn,
         test_fn=test_fn,
         stop_fn=stop_fn,
@@ -167,3 +187,36 @@ if __name__ == "__main__":
     print(f"\n==========Result==========\n{result}")
     print("\n(the trained policy can be accessed via policy.policies[agents[0]])")
 
+#%%%
+from typing import Optional, Tuple
+
+import numpy as np
+import torch
+from tianshou.env import DummyVectorEnv
+from tianshou.trainer import offpolicy_trainer
+from torch.utils.tensorboard import SummaryWriter
+from tianshou.utils import TensorboardLogger
+import torch
+#from Custom_Classes import CustomCollector
+
+# Create a new instance of the policy with the same architecture as the saved policy
+policy, optim, _ = _get_agents()
+model_save_path = os.path.join("dqn_Custom", "policy_03.pth")        
+
+# Load the saved checkpoint
+policy_test = policy.policies['agent0']
+policy_test.load_state_dict(torch.load(model_save_path ))
+
+envs = DummyVectorEnv([_get_env for _ in range(1)])
+
+#policy_test.policies['agent0'].eval()
+#policy.policies['agent0'].set_eps(0.9)
+
+policy_test.eval()
+policy_test.set_eps(0.00)
+
+#collector = CustomCollector(policy.policies['agent0'], envs, exploration_noise=True)
+collector = CustomCollector(policy_test, envs, exploration_noise=True)
+
+#collector.collect(n_episode=10)
+collector.collect(n_episode=1, render=1 / 5000)

@@ -4,7 +4,6 @@ import MultiDroneEnvUtils as utils
 
 
 #---------- Class UAV ----------#
-
 class Drone:
     
     def __init__(self, drone_id, name, position, uavType,  sceneData, altitude=1000  ):
@@ -38,18 +37,19 @@ class Drone:
         
 #---------- UAV Internal Capabilities ----------#
     def allocate(self, task, time_step, max_time_steps):
-        
+                
         if not task.task_id in self.tasks:
-            
+        
             time_to_task = np.linalg.norm(self.next_free_position - self.position) / self.max_speed + task.task_duration                        
             end_time = self.next_free_time + time_to_task
             
-            if end_time < max_time_steps:            
-                self.tasks.append(task.task_id)
-                self.next_free_time = end_time
-                self.next_free_position = task.position                
-                
-                return 1.0                        
+            #if end_time < max_time_steps: 
+            
+            self.tasks.append(task.task_id)
+            self.next_free_time = end_time
+            self.next_free_position = task.position                
+            
+            return 1.0                        
         return -1.0    
 
 

@@ -53,7 +53,7 @@ class sceneData:
         
     def getTaskDuration(self, task_type):
         
-        expectedDurations = {"Att" :  1,
+        expectedDurations = {"Att" : 1,
                              "Jam" : 1,
                              "Esc" : 1,
                              "Rec" : 1,
