@@ -13,10 +13,11 @@ from torch.utils.tensorboard import SummaryWriter
 from tianshou.utils import TensorboardLogger
 
 
-from Custom_Classes import CustomNet
+#from Custom_Classes import CustomNet
 from Custom_Classes import CustomCollector
 from Custom_Classes import CustomParallelToAECWrapper
 
+from CustomClass_multi_head import CustomNet
 from Custom_Classes_simplified import CustomNetSimple
 from Custom_Classes_simplified import CustomCollectorSimple
 from Custom_Classes_simplified import CustomParallelToAECWrapperSimple
@@ -50,16 +51,17 @@ def _get_agents(
     
     state_shape_task = env.observation_space["agent0"]["tasks_info"].shape[0]
                   
-    action_shape = env.action_space[agent_name].n
+    action_shape = env.action_space[agent_name].shape[0]
+    #action_shape = env.action_space[agent_name].n
                
     if agent_learn is None:
         # model
-        net = CustomNetSimple(
-        #net = CustomNet(
+        #net = CustomNetSimple(
+        net = CustomNet(
             state_shape_agent=state_shape_agent,
             state_shape_task=state_shape_task,
             action_shape=action_shape,
-            hidden_sizes=[64,64],
+            hidden_sizes=[128,128],
             device="cuda" if torch.cuda.is_available() else "cpu",
         ).to("cuda" if torch.cuda.is_available() else "cpu")
     
@@ -100,11 +102,11 @@ def _get_env():
 
 if __name__ == "__main__":
         
-    train_env_num = 10
-    test_env_num = 10
+    train_env_num = 1
+    test_env_num = 1
     
     model_load_path = os.path.join("dqn_Custom", "policy_03.pth")    
-    load_model = True   
+    load_model = False   
     
     torch.set_grad_enabled(True) 
     # ======== Step 1: Environment setup =========

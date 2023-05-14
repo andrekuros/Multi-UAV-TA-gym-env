@@ -209,7 +209,7 @@ class MultiDroneEnv(ParallelEnv):
                
         #return Dict({agent:MultiDiscrete([5, 5, 5]) for agent in self.possible_agents})
         
-        return Dict({agent: Discrete(self.max_tasks + 1) for agent in self.possible_agents})
+        return Dict({agent: Box(low=0, high=1, shape=(self.max_tasks,), dtype=np.float32) for agent in self.possible_agents})
         #return Discrete(self.n_tasks )
 
     def last(self):
@@ -322,7 +322,7 @@ class MultiDroneEnv(ParallelEnv):
                                           
             #task_info = [ [-1,-1,-1] for i in range(len(self.agents_obj))]
                         
-            #print(actions)
+            print(actions)
             if not isinstance(actions,dict) and actions != None:   
                 actions = {"agent0" : actions}
             #print(actions)

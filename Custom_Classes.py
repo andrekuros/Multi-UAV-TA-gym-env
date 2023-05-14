@@ -77,6 +77,7 @@ class CustomNet(Net):
               
         self.attention = ScaledDotProductAttention(d_model=64)
         
+        
         self.output = nn.Linear(sizes[-1], action_shape).to(device)  
                 
         
@@ -99,7 +100,9 @@ class CustomNet(Net):
         # Expand the mask dimensions to match the required shape for the attention mechanism
         #tasks_info_mask = tasks_info_mask.unsqueeze(1).unsqueeze(2)
 
-        combined_output = torch.cat((drone_embeddings.unsqueeze(1), task_embeddings.unsqueeze(1)), dim=1)
+        #combined_output = torch.cat((drone_embeddings.unsqueeze(1), task_embeddings.unsqueeze(1)), dim=1)       
+        combined_output = torch.cat((drone_embeddings.unsqueeze(1), task_embeddings.unsqueeze(1)), dim=1)       
+
                 
         # Transformer layers: input (128) from transformer_input | output (128) to attention mechanism    
         transformer_input = combined_output.view(1, -1, self.embedding_size)
@@ -141,19 +144,16 @@ class ScaledDotProductAttention(nn.Module):
         return output, attn_weights
 
 
-
-
-
 class CustomCollector(Collector):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         #print("CustomCollector initialized")
 
-    def policy_forward(self, obs):
+    def _policy_forward(self, obs):
         print(obs)
         obs = deepcopy(obs)
         actions = {}
-        #print("CustomCollector policy_forward method called")
+        print("CustomCollector policy_forward method called")
         for agent_id, agent_obs in obs.items():
             policy = self.policy.policies[agent_id]
             action, _ = policy(agent_obs)
@@ -161,7 +161,7 @@ class CustomCollector(Collector):
         return actions
 
     def collect(self, n_step: Optional[int] = None, n_episode: Optional[int] = None, random: Optional[bool] = False, render: Optional[float] = None) -> Dict[str, Any]:
-        #print("CustomCollector collect method called")
+        print("CustomCollector collect method called")
         return super().collect(n_step=n_step, n_episode=n_episode, random=random, render=render)
 
 
