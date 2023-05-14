@@ -94,6 +94,7 @@ class CustomNet(Net):
         agent_type = torch.tensor(obs["agent_type"], dtype=torch.float32).to(self.device)
         next_free_time = torch.tensor(obs["next_free_time"], dtype=torch.float32).to(self.device)
         position_after_last_task = torch.tensor(obs["position_after_last_task"], dtype=torch.float32).to(self.device)         
+        
         drone_embeddings = self.drone_encoder(torch.cat((agent_position, agent_state, agent_type, next_free_time, position_after_last_task), dim=-1))
        
         tasks_info = torch.tensor(obs["tasks_info"], dtype=torch.float32).to(self.device)  # Convert tasks_info to tensor                        
@@ -116,7 +117,7 @@ class CustomNet(Net):
         combined_output = torch.cat((drone_embeddings.unsqueeze(1), task_embeddings.unsqueeze(1)), dim=1)
         print("combined size:", combined_output.size())
                 
-        # Transformer layers: input (128) from transformer_input | output (128) to attention mechanism    
+        
         transformer_input = combined_output.view(1, -1, self.embedding_size)
         transformer_output = self.combined_transformer(transformer_input).view(-1, combined_output.size(1), combined_output.size(2))
 
