@@ -148,7 +148,7 @@ class MultiDroneEnv(ParallelEnv):
             "next_free_time": Box(low=0, high=1, shape=(1,), dtype=np.float32),
             "position_after_last_task": Box(low=0, high=1, shape=(2,), dtype=np.float32),
             #"agent_relay_area": Box(low=0, high=max(self.area_width, self.area_height), shape=(2,), dtype=np.float32),           
-            "tasks_info": Box(low=0, high=1, shape=(self.max_tasks * 3,), dtype=np.float32),
+            "tasks_info": Box(low=0, high=1, shape=(self.max_tasks * 2,), dtype=np.float32),
             #"task_type": Discrete(2)  # Assuming 2 possible types
         }) 
         
@@ -164,27 +164,46 @@ class MultiDroneEnv(ParallelEnv):
         }
         
         self.observations = { agent: { } for agent in self.possible_agents  }
-        
-    def _generate_observations(self):
+
+    def euclidean_distance(self, point1, point2):
+        return np.sqrt(np.sum((np.array(point1) - np.array(point2)) ** 2))
+
+    def get_task_info(self, agent):
+
         task_values = []
-        
-        #self.last_tasks_obs = []
-        #task_values.extend([-1] * (self.observation_space["agent0"]["tasks_info"].shape[0]))
-        
-        for task in self.tasks:
+         #for task in self.tasks:
                                         
-            task_values.extend([task.position[0] / self.max_coord, task.position[1] / self.max_coord, 1 if task.status == 0 else 0])#])            
+         #   task_values.extend([task.position[0] / self.max_coord, task.position[1] / self.max_coord, 1 if task.status == 0 else 0])#])            
             #task_values.extend(self._one_hot(task.status, 1))
             #if task.status == 0:
             #    task_values.extend([task.position[0] / self.max_coord, task.position[1] / self.max_coord])
                 
                 #self.last_tasks_obs.append(task.task_id)
-                
 
+        for task in self.tasks:
+            #print("taks", task.task_id)
+            distance = self.euclidean_distance(agent.position, task.position)  # Compute the distance
+            task_values.extend([
+                distance / self.max_coord,  # Normalize the distance
+                #task.position[0] / self.max_coord,
+                #task.position[1] / self.max_coord,
+                1 if task.status == 0 else 0
+                ])
+            
         # Pad the task_values array to match the maximum number of tasks
-        task_values.extend([0] * (self.observation_space["agent0"]["tasks_info"].shape[0] - len(task_values)))
+        task_values.extend([-1] * (self.observation_space["agent0"]["tasks_info"].shape[0] - len(task_values)))
 
         task_values = np.array(task_values, dtype=np.float32)
+        
+        return task_values
+
+
+    def _generate_observations(self):
+        
+        
+        #self.last_tasks_obs = []
+        #task_values.extend([-1] * (self.observation_space["agent0"]["tasks_info"].shape[0]))
+        
 
         self.observations = {
             agent.name: {
@@ -194,7 +213,8 @@ class MultiDroneEnv(ParallelEnv):
                 "next_free_time": [agent.next_free_time / self.max_time_steps],
                 "position_after_last_task": agent.next_free_position / self.max_coord,
                 #"agent_relay_area": agent.relay_area,
-                "tasks_info": task_values,                
+                "tasks_info": self.get_task_info(agent),                
+                
             }
             for agent in self.agents_obj
         }
@@ -322,7 +342,7 @@ class MultiDroneEnv(ParallelEnv):
                                           
             #task_info = [ [-1,-1,-1] for i in range(len(self.agents_obj))]
                         
-            print(actions)
+            #print(actions)
             if not isinstance(actions,dict) and actions != None:   
                 actions = {"agent0" : actions}
             #print(actions)

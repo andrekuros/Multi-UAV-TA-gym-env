@@ -153,7 +153,7 @@ class CustomCollector(Collector):
         print(obs)
         obs = deepcopy(obs)
         actions = {}
-        print("CustomCollector policy_forward method called")
+        #print("CustomCollector policy_forward method called")
         for agent_id, agent_obs in obs.items():
             policy = self.policy.policies[agent_id]
             action, _ = policy(agent_obs)
@@ -161,7 +161,7 @@ class CustomCollector(Collector):
         return actions
 
     def collect(self, n_step: Optional[int] = None, n_episode: Optional[int] = None, random: Optional[bool] = False, render: Optional[float] = None) -> Dict[str, Any]:
-        print("CustomCollector collect method called")
+        #print("CustomCollector collect method called")
         return super().collect(n_step=n_step, n_episode=n_episode, random=random, render=render)
 
 

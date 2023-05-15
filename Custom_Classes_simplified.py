@@ -82,8 +82,15 @@ class CustomNetSimple(Net):
             position_after_last_task = torch.tensor(obs["position_after_last_task"], dtype=torch.float32).to(self.device)         
             drone_embeddings = self.drone_encoder(torch.cat((agent_position, agent_state, agent_type, next_free_time, position_after_last_task), dim=-1))
                
+           
+
+
+            
             tasks_info = torch.tensor(obs["tasks_info"], dtype=torch.float32).to(self.device)  # Convert tasks_info to tensor                        
             task_embeddings = self.task_encoder(tasks_info)
+
+            #print("agent pos: ", agent_position)
+            #print("task info: ", tasks_info)
             
             # Combine drone and task embeddings
             combined_output = torch.cat((drone_embeddings, task_embeddings), dim=1)

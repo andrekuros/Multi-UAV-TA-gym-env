@@ -49,6 +49,7 @@ def _get_agents(
                      #state_shape_agent_relay_area
                      )                 
     
+
     state_shape_task = env.observation_space["agent0"]["tasks_info"].shape[0]
                   
     action_shape = env.action_space[agent_name].shape[0]
@@ -56,8 +57,8 @@ def _get_agents(
                
     if agent_learn is None:
         # model
-        #net = CustomNetSimple(
-        net = CustomNet(
+        net = CustomNetSimple(
+        #net = CustomNet(
             state_shape_agent=state_shape_agent,
             state_shape_task=state_shape_task,
             action_shape=action_shape,
