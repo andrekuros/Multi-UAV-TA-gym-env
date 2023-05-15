@@ -168,7 +168,7 @@ class MultiDroneEnv(ParallelEnv):
     def euclidean_distance(self, point1, point2):
         return np.sqrt(np.sum((np.array(point1) - np.array(point2)) ** 2))
 
-    def get_task_info(self, agent):
+    def get_task_info(self, agent: Drone):
 
         task_values = []
          #for task in self.tasks:
@@ -182,7 +182,7 @@ class MultiDroneEnv(ParallelEnv):
 
         for task in self.tasks:
             #print("taks", task.task_id)
-            distance = self.euclidean_distance(agent.position, task.position)  # Compute the distance
+            distance = self.euclidean_distance(agent.next_free_position, task.position)  # Compute the distance
             task_values.extend([
                 distance / self.max_coord,  # Normalize the distance
                 #task.position[0] / self.max_coord,

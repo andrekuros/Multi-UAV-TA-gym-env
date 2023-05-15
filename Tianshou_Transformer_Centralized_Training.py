@@ -1,3 +1,7 @@
+# Description: This file contains the code for training the centralized transformer model using Tianshou library.
+
+
+#%%
 import os
 from typing import Optional, Tuple
 
@@ -23,6 +27,10 @@ from Custom_Classes_simplified import CustomCollectorSimple
 from Custom_Classes_simplified import CustomParallelToAECWrapperSimple
 
 from DroneEnv import MultiDroneEnv
+
+
+model_load_path = os.path.join("dqn_Custom", "policy_03.pth")    
+load_model = False   
 
 def _get_agents(
     agent_learn: Optional[BasePolicy] = None,
@@ -103,11 +111,9 @@ def _get_env():
 
 if __name__ == "__main__":
         
-    train_env_num = 1
-    test_env_num = 1
-    
-    model_load_path = os.path.join("dqn_Custom", "policy_03.pth")    
-    load_model = False   
+    train_env_num = 10
+    test_env_num = 10
+        
     
     torch.set_grad_enabled(True) 
     # ======== Step 1: Environment setup =========

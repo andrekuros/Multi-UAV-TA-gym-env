@@ -54,7 +54,7 @@ class CustomNetSimple(Net):
         ).to(device)
 
         # Hidden Layers
-        input_size = 128  # sum of drone and task encoder
+        input_size = 64  # sum of drone and task encoder
         sizes = [input_size] + hidden_sizes + [action_shape]
         self.hidden_layers = []
         for i in range(len(sizes) - 2):
@@ -74,6 +74,7 @@ class CustomNetSimple(Net):
 
     def forward(self, obs: Dict[str, torch.Tensor], state: Optional[Any] = None, info: Optional[Any] = None):
                    
+            #print("agent pos: "", agent_position.shape")
             # Drone embeddings: input (12) from agent_obs | output (32) to combined_output
             agent_position = torch.tensor(obs["agent_position"], dtype=torch.float32).to(self.device)
             agent_state = torch.tensor(obs["agent_state"], dtype=torch.float32)
@@ -81,22 +82,20 @@ class CustomNetSimple(Net):
             next_free_time = torch.tensor(obs["next_free_time"], dtype=torch.float32).to(self.device)
             position_after_last_task = torch.tensor(obs["position_after_last_task"], dtype=torch.float32).to(self.device)         
             drone_embeddings = self.drone_encoder(torch.cat((agent_position, agent_state, agent_type, next_free_time, position_after_last_task), dim=-1))
-               
-           
-
-
             
             tasks_info = torch.tensor(obs["tasks_info"], dtype=torch.float32).to(self.device)  # Convert tasks_info to tensor                        
             task_embeddings = self.task_encoder(tasks_info)
 
-            #print("agent pos: ", agent_position)
-            #print("task info: ", tasks_info)
+            # print("agent pos: ", agent_position.shape)
+            # print("task info: ", tasks_info.shape)
             
             # Combine drone and task embeddings
-            combined_output = torch.cat((drone_embeddings, task_embeddings), dim=1)
+            #combined_output = torch.cat((drone_embeddings, task_embeddings), dim=1)
                     
+            #print("combined_output info: ", combined_output.shape)
+
             # Process the combined output with the hidden layers
-            x = self.hidden_layers(combined_output)            
+            x = self.hidden_layers(task_embeddings)            
             output = self.output(x)
             
             # Apply the softmax function
