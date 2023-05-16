@@ -1,4 +1,5 @@
 #%%
+import numpy as np
 from DroneEnv import MultiDroneEnv
 from DroneEnv import env
 from swarm_gap import SwarmGap
@@ -19,10 +20,10 @@ import MultiDroneEnvUtils as utils
 
 
 
-algorithms = ["Random"]
-algorithms += ["Tessi1"] #"Swarm-GAP" Tessi1
+#algorithms = ["Random"]
+algorithms = ["Tessi1"] #"Swarm-GAP" Tessi1
 
-episodes = 10
+episodes = 100
 
 config = utils.DroneEnvOptions(  
     
@@ -62,12 +63,12 @@ for algorithm in algorithms:
     start_time = time.time()
     print("\nStarting Algorithm:", algorithm)
     
-    total_reward[algorithm] = 0    
+    total_reward[algorithm] = []    
     
     for episode in range(episodes):
         
         
-        observation  = worldModel.reset(seed=0)         
+        observation  = worldModel.reset(seed=episode)         
         info         = worldModel.get_initial_state()
         
         drones = info["drones"]
@@ -92,6 +93,7 @@ for algorithm in algorithms:
     
         print ("."  if (episode+1)%10 != 0 else str(episode+1), end="")   
         
+        episodo_reward = 0
         while not all(done.values()) and not all(truncations.values()):
                             
             actions = None
@@ -136,7 +138,7 @@ for algorithm in algorithms:
                     #print(actions)               
             observation, reward, done, truncations, info = worldModel.step(actions)
             #print(actions)  
-            total_reward[algorithm] += reward["agent0"]
+            episodo_reward += reward["agent0"]
             #print(reward["agent0"])
             #print(observation)
                         
@@ -154,12 +156,14 @@ for algorithm in algorithms:
                 info["Algorithm"] = algorithm
                 totalMetrics.append(info)
                 #print("Done Rew:", reward["agent0"])
+                
                             
             if all(truncations.values()):                
                 #print("\nMax Steps Reached:", worldModel.time_steps )
                 #info["Algorithm"] = algorithm
                 totalMetrics.append(info)
-         
+
+        total_reward[algorithm].append(episodo_reward) 
         #print(worldModel.time_steps)#print("Trunc Rew:", total_reward)
                     
     end_time = time.time()
@@ -168,9 +172,13 @@ for algorithm in algorithms:
     
     worldModel.close()
 
-for alg in algorithms:
-    print(f'Rew({alg}): {total_reward[alg]/episodes}')
+import matplotlib.pyplot as plt
 
+for alg in algorithms:
+    print(f'Rew({alg}): {np.mean(total_reward[alg])}')
+    print(f'Rew({alg}): Max: {max(total_reward[alg])}, Min: {min(total_reward[alg])}')
+    plt.hist(total_reward[alg], bins=100)
+    plt.show()
 metricsDf = pd.DataFrame(totalMetrics)
 
 
@@ -183,7 +191,7 @@ metricsDf = pd.DataFrame(totalMetrics)
 
 # %%
 
-#%%%
+
 
 
 

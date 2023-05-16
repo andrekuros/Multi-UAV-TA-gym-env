@@ -207,7 +207,7 @@ class MultiDroneEnv(ParallelEnv):
 
         self.observations = {
             agent.name: {
-                "agent_position": agent.position / self.max_coord,
+                "agent_position": agent.next_free_position / self.max_coord,
                 "agent_state": self._one_hot(agent.state, 5),
                 "agent_type": self._one_hot(agent.typeIdx, 2),
                 "next_free_time": [agent.next_free_time / self.max_time_steps],
@@ -358,7 +358,7 @@ class MultiDroneEnv(ParallelEnv):
                             
                             #case of stay idle action
                             if obs_task_ids == self.max_tasks:
-                                action_reward += -2.0#5
+                                action_reward += -3.0#5
                                 #print("ok", end=".")
                                 continue
                             
@@ -375,9 +375,7 @@ class MultiDroneEnv(ParallelEnv):
                             if obs_task_id > self.n_tasks:
                                 action_reward += -10                                
                             else:                            
-                                task_id = obs_task_id
-                                
-                               
+                                task_id = obs_task_id                                                               
                                 if task_id != None:                
                                                             
                                     #print(task_id,self.time_steps)
@@ -386,9 +384,7 @@ class MultiDroneEnv(ParallelEnv):
                                         task = self.tasks[task_id]
                                         
                                         if task.status == 0:
-                                            #print(drone_name, task, self.reached_tasks, self.agents_obj[drone_index].tasks)
-                                            
-                                            # Adicione a tarefa à lista de tarefas do drone                            
+                                            #print(drone_name, task, self.reached_tasks, self.agents_obj[drone_index].tasks)                                            
                                             aloccation = self.agents_obj[drone_index].allocate(task, self.time_steps, self.max_time_steps)
                                             
                                             if aloccation > 0:                                    
@@ -409,6 +405,7 @@ class MultiDroneEnv(ParallelEnv):
                                             #print("ASDASFD")                                             
                                     #else:
                                         #print("old_task")
+            #print("Drone_tasts:", self.agents_obj[0].tasks)
         
             # Verificar se os drones alcançaram seus alvos
             reached_tasks_this_step = set()    
