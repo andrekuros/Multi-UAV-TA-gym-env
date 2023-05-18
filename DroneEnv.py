@@ -185,16 +185,16 @@ class MultiDroneEnv(ParallelEnv):
             task_values.extend([
                 distance / self.max_coord,  # Normalize the distance
                 agent.fit2Task[task.typeIdx],
-                task.position[0] / self.max_coord,
-                task.position[1] / self.max_coord,
+                #task.position[0] / self.max_coord,
+                #task.position[1] / self.max_coord,
                 #self._one_hot(task.typeIdx, 2),
                 1 if task.status == 0 else 0,                
 
                 ])
             
-        [task_values.extend( [agent.next_free_position[0] / self.max_coord, 
-                                 agent.next_free_position[1]/ self.max_coord, 
-                                 1 if agent.type == "F1" else 0 , 0, 0] ) for agent in self.agents_obj ]
+        #[task_values.extend( [agent.next_free_position[0] / self.max_coord, 
+        #                         agent.next_free_position[1]/ self.max_coord, 
+        #                         1 if agent.type == "F1" else 0 , 0, 0] ) for agent in self.agents_obj ]
 
                 
             
