@@ -102,7 +102,7 @@ class MultiDroneEnv(ParallelEnv):
         self.agent_selector = agent_selector(self.possible_agents)
         self.agent_selection = self.agent_selector.next()
                 
-        self.max_tasks = 10
+        self.max_tasks = 20
         self.n_tasks = sum(self.config.tasks.values())
         self.tasks_config = self.config.tasks               
         self.tasks = None
@@ -146,7 +146,7 @@ class MultiDroneEnv(ParallelEnv):
             "next_free_time": Box(low=0, high=1, shape=(1,), dtype=np.float32),
             "position_after_last_task": Box(low=0, high=1, shape=(2,), dtype=np.float32),
             #"agent_relay_area": Box(low=0, high=max(self.area_width, self.area_height), shape=(2,), dtype=np.float32),           
-            "tasks_info": Box(low=0, high=1, shape=(self.max_tasks * 3,), dtype=np.float32),
+            "tasks_info": Box(low=0, high=1, shape=((self.max_tasks+6) * 5,), dtype=np.float32),
             #"task_type": Discrete(2)  # Assuming 2 possible types
         }) 
         
@@ -185,11 +185,18 @@ class MultiDroneEnv(ParallelEnv):
             task_values.extend([
                 distance / self.max_coord,  # Normalize the distance
                 agent.fit2Task[task.typeIdx],
-                #task.position[0] / self.max_coord,
-                #task.position[1] / self.max_coord,
+                task.position[0] / self.max_coord,
+                task.position[1] / self.max_coord,
                 #self._one_hot(task.typeIdx, 2),
-                1 if task.status == 0 else 0
+                1 if task.status == 0 else 0,                
+
                 ])
+            
+        [task_values.extend( [agent.next_free_position[0] / self.max_coord, 
+                                 agent.next_free_position[1]/ self.max_coord, 
+                                 1 if agent.type == "F1" else 0 , 0, 0] ) for agent in self.agents_obj ]
+
+                
             
         # Pad the task_values array to match the maximum number of tasks
         task_values.extend([-1] * (self._observation_space["agent0"]["tasks_info"].shape[0] - len(task_values)))

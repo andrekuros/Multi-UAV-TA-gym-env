@@ -7,9 +7,9 @@ class DroneEnvOptions:
                  render_speed=-1, 
                  action_mode="TaskAssign",
                  simulator_module = "Internal", 
-                 max_time_steps=10, 
-                 agents= {"F1" : 1,"R1" : 1},                 
-                 tasks= {"Rec" : 6, "Att" : 4},
+                 max_time_steps=25, 
+                 agents= {"F1" : 2,"R1" : 4},                 
+                 tasks= {"Rec" : 15, "Att" : 5},
                  num_obstacles=0,
                  hidden_obstacles = False,
                  fail_rate = 0.0):
