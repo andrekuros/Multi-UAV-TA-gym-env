@@ -13,8 +13,9 @@ class TessiAgent:
                 
         selected = set()
         #print(task_states[0].task_id)
+        
         for drone in drone_states:
-            
+                        
             min_distance = float('inf')
             chosen_task = None
                         

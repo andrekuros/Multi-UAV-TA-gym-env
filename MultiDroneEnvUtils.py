@@ -8,8 +8,8 @@ class DroneEnvOptions:
                  action_mode="TaskAssign",
                  simulator_module = "Internal", 
                  max_time_steps=10, 
-                 agents= {"R1" : 1},                 
-                 tasks= {"Rec" : 10},
+                 agents= {"F1" : 1,"R1" : 1},                 
+                 tasks= {"Rec" : 6, "Att" : 4},
                  num_obstacles=0,
                  hidden_obstacles = False,
                  fail_rate = 0.0):

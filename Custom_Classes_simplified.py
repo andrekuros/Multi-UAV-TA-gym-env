@@ -96,13 +96,16 @@ class CustomNetSimple(Net):
 
             # Process the combined output with the hidden layers
             x = self.hidden_layers(task_embeddings)            
+            #print("X", x)
             output = self.output(x)
-            
+            #print("OUt->", output)
             # Apply the softmax function
             softmax_output = torch.nn.functional.softmax(output, dim=-1) 
-            
+            #print("SOFT->", softmax_output.shape, softmax_output)
+
             #print(softmax_output.shape)
-            
+        
+
             return softmax_output, state
 
 

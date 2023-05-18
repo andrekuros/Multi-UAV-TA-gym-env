@@ -80,7 +80,7 @@ class CustomNet(Net):
         
         self.output = nn.Linear(sizes[-1], action_shape).to(device)  
                 
-        
+                
 
     def forward(self, obs: Dict[str, torch.Tensor], state: Optional[Any] = None, info: Optional[Any] = None):
         
@@ -122,8 +122,7 @@ class CustomNet(Net):
     
         # Apply the softmax function
         softmax_output = F.softmax(output, dim=-1) 
-        
-        #print(softmax_output)
+                
         #print(softmax_output.shape)
         
         return softmax_output, state
@@ -146,15 +145,25 @@ class ScaledDotProductAttention(nn.Module):
 
 class CustomCollector(Collector):
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        #print("CustomCollector initialized")
+        #preprocess_fn: Optional[Callable[..., Batch]] = None
+        super().__init__(*args, **kwargs)        
+        #self.preprocess_fn = self._preprocess_fn       
+        
 
-    def _policy_forward(self, obs):
-        print(obs)
-        obs = deepcopy(obs)
-        actions = {}
-        #print("CustomCollector policy_forward method called")
+    def _preprocess_fn(self, obs_next=None,rew=None,done=None, info=None, 
+                       policy=None, env_id=None, act=None ):        
+        obs = deepcopy(obs_next)
+        actions = {}        
+
+        if policy == None:
+            return {}
+        
+        #print("Policy:",policy)
+        
         for agent_id, agent_obs in obs.items():
+            print("AgentID:", agent_id)
+            print("agent_obs:", agent_obs)
+       
             policy = self.policy.policies[agent_id]
             action, _ = policy(agent_obs)
             actions[agent_id] = action

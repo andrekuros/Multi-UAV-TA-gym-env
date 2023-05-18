@@ -57,7 +57,7 @@ class Drone:
                         
         desired_dir = task_dir
         
-        if task_type == "Rec":
+        if True:#task_type == "Rec":
             
             #if np.dot(drone_dir, task_dir) < 0 and distance < 20:
             #    return -task_dir
@@ -114,8 +114,6 @@ class Task:
         
         self.task_id = task_id
         self.position = position
-                        
-              
         self.type = task_type
         self.typeIdx = sceneData.TaskIndex[self.type]
         

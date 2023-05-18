@@ -9,22 +9,22 @@ class sceneData:
         self.ContactLine = 550
         self.Bases = [np.array([400,680])]
         
-        self.UavTypes = [ "R1", "R2", "F1", "F2", "C1", "C2"]
-                  
-        self.TaskTypes =                    [ "Att"  , "Jam" , "Esc" , "Rec" , "Com" ]
-        self.UavCapTable ={ "R1" : np.array([   0.0  ,  0.0  ,  0.0  ,  1.0  ,  0.5  ]),
-                            "R2" : np.array([   0.0  ,  0.3  ,  0.0  ,  1.0  ,  1.0  ]),
-                            "F1" : np.array([   1.0  ,  0.3  ,  1.0  ,  0.2  ,  0.5  ]),
-                            "F2" : np.array([   0.7  ,  0.5  ,  0.8  ,  0.2  ,  0.5  ]),                            
-                            "C1" : np.array([   0.0  ,  1.0  ,  0.0  ,  0.0  ,  0.8  ]),
-                            "C2" : np.array([   0.0  ,  0.7  ,  0.0  ,  0.0  ,  1.0  ])}
-                
+        self.UavTypes = [ "R1", "F1"]#, "F1", "F2", "C1", "C2"]
+                                         
+        self.TaskTypes =                    [ "Rec"  , "Att" , "Esc" , "Jam" , "Com" ]
+        self.UavCapTable ={ "R1" : np.array([   1.0  ,  0.0  ,  0.0  ,  0.5  ,  0.5  ]),
+                            "R2" : np.array([   1.0  ,  0.0  ,  0.0  ,  0.3  ,  1.0  ]),
+                            "F1" : np.array([   0.3  ,  1.0  ,  1.0  ,  0.3  ,  0.5  ]),
+                            "F2" : np.array([   0.2  ,  0.7  ,  0.8  ,  0.5  ,  0.5  ]),                            
+                            "C1" : np.array([   0.0  ,  0.0  ,  0.0  ,  1.0  ,  0.8  ]),
+                            "C2" : np.array([   0.0  ,  0.0  ,  0.0  ,  0.7  ,  1.0  ])}
+        
         self.UavIndex =  {name : idx  for idx, name in enumerate(self.UavTypes)}
         self.TaskIndex = {name : idx  for idx, name in enumerate(self.TaskTypes)}
         
-        self.maxSpeeds = {  "F1" : 7.0,
+        self.maxSpeeds = {  "F1" : 20.0,
                             "F2" : 7.0,
-                            "R1" : 20.0,
+                            "R1" : 10.0,
                             "R2" : 20.0,
                             "C1" : 2.0,
                             "C2" : 1.5}
@@ -50,7 +50,11 @@ class sceneData:
                             "C1" : 1.5,
                             "C2" : 2.0}
         
-        
+        #Swarm-GAP work table
+        self.sensors_table = np.array([[1.0, 0.0, 0.3, 0.5],
+                                       [0.0, 0.0, 1.0, 0.0],
+                                       [0.2, 0.0, 0.0, 1.0],
+                                       [0.0, 1.0, 0.0, 0.3]])   
     def getTaskDuration(self, task_type):
         
         expectedDurations = {"Att" : 1,
