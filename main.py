@@ -4,6 +4,7 @@ from DroneEnv import MultiDroneEnv
 from DroneEnv import env
 from swarm_gap import SwarmGap
 from tessi import TessiAgent
+from CBBA import CBBA
 import pandas as pd
 #import argparse
 #import json
@@ -22,8 +23,9 @@ import MultiDroneEnvUtils as utils
 
 algorithms = ["Random"]
 algorithms += ["Tessi1"] #"Swarm-GAP" Tessi1
+algorithms += ['CBBA']
 
-episodes = 300
+episodes = 100
 
 config = utils.DroneEnvOptions(  
     
@@ -86,6 +88,10 @@ for algorithm in algorithms:
         
         if algorithm == "Swarm-GAP":
             agent = SwarmGap(drones, tasks, quality_table, exchange_interval = 1)
+        
+        if algorithm == "CBBA":
+            agent = CBBA(worldModel.agents_obj, worldModel.tasks, worldModel.max_coord)
+
     
         print ("."  if (episode+1)%10 != 0 else str(episode+1), end="")   
         
@@ -102,8 +108,7 @@ for algorithm in algorithms:
                         
                         actions = {}                     
                         toDelete = [] 
-                         
-                        
+           
                         for i, tasks in planned_actions.items():                                             
                             
                             if len(tasks) > 0:
@@ -130,6 +135,15 @@ for algorithm in algorithms:
                     actions = agent.allocate_tasks(worldModel.agents_obj, un_taks_obj )
                     #actions = agent.allocate_tasks(worldModel.agents_obj, [worldModel.tasks[i] for i in worldModel.unallocated_tasks()] )                    
                     
+            elif algorithm == "CBBA":
+                if worldModel.time_steps % 1 == 0 :
+                    un_taks_obj = [worldModel.tasks[i] for i in worldModel.unallocated_tasks()] 
+                    
+                    if un_taks_obj != []:
+                        actions = agent.allocate_tasks( un_taks_obj )
+                    
+                        #print( actions)
+            
             #if actions != {} and actions != None:
             #       print(actions)
             observation, reward, done, truncations, info = worldModel.step(actions)

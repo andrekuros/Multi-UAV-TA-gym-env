@@ -32,7 +32,7 @@ class CustomNetReduced(Net):
         )
         
         input_size = 64
-        self.max_tasks = 20 + 6
+        self.max_tasks = 10
         self.task_size = int(state_shape_task / self.max_tasks)
                 
         sizes = [input_size] + hidden_sizes + [action_shape]
@@ -84,7 +84,6 @@ class CustomNetReduced(Net):
         self.output = nn.Linear(64, 1).to(device)
                 
         
-
     def forward(self, obs: Dict[str, torch.Tensor], state: Optional[Any] = None, info: Optional[Any] = None):
         
         # Drone embeddings: input (12) from agent_obs | output (32) to combined_output

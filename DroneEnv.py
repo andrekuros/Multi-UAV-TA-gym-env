@@ -11,7 +11,6 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from pygame_screen_recorder import pygame_screen_recorder as pgr
 
-import functools
 from pettingzoo import ParallelEnv
 from pettingzoo.utils import parallel_to_aec, wrappers
 from pettingzoo.utils import agent_selector
@@ -19,7 +18,6 @@ from pettingzoo.utils import agent_selector
 from DroneEnvComponents import Drone, Task, Obstacle
 import MultiDroneEnvData as data
 import MultiDroneEnvUtils as utils
-
 
 
 
@@ -102,7 +100,7 @@ class MultiDroneEnv(ParallelEnv):
         self.agent_selector = agent_selector(self.possible_agents)
         self.agent_selection = self.agent_selector.next()
                 
-        self.max_tasks = 20
+        self.max_tasks = 10
         self.n_tasks = sum(self.config.tasks.values())
         self.tasks_config = self.config.tasks               
         self.tasks = None
@@ -146,7 +144,7 @@ class MultiDroneEnv(ParallelEnv):
             "next_free_time": Box(low=0, high=1, shape=(1,), dtype=np.float32),
             "position_after_last_task": Box(low=0, high=1, shape=(2,), dtype=np.float32),
             #"agent_relay_area": Box(low=0, high=max(self.area_width, self.area_height), shape=(2,), dtype=np.float32),           
-            "tasks_info": Box(low=0, high=1, shape=((self.max_tasks+6) * 5,), dtype=np.float32),
+            "tasks_info": Box(low=0, high=1, shape=((self.max_tasks) * 2,), dtype=np.float32),
             #"task_type": Discrete(2)  # Assuming 2 possible types
         }) 
         
@@ -184,7 +182,7 @@ class MultiDroneEnv(ParallelEnv):
             distance = self.euclidean_distance(agent.next_free_position, task.position)  # Compute the distance
             task_values.extend([
                 distance / self.max_coord,  # Normalize the distance
-                agent.fit2Task[task.typeIdx],
+                #agent.fit2Task[task.typeIdx],
                 #task.position[0] / self.max_coord,
                 #task.position[1] / self.max_coord,
                 #self._one_hot(task.typeIdx, 2),
@@ -408,10 +406,8 @@ class MultiDroneEnv(ParallelEnv):
                                                 self.allocation_table[task_id] = drone_index
                                                 task.status = 1
                                                 
-                                                action_reward += 5.0 * self.agents_obj[drone_index].fit2Task[task.typeIdx]#
-                                                #quality_reward += self.agents_obj[drone_index].fit2Task[task.typeIdx] * 5.0  # noqa: E501
-
-
+                                                action_reward += 5.0 #* self.agents_obj[drone_index].fit2Task[task.typeIdx]#
+                                                quality_reward += self.agents_obj[drone_index].fit2Task[task.typeIdx]   # noqa: E501
                                                 distance_reward += self.calculate_drone_expected_reward(self.agents_obj[drone_index])                                                  
                                                 
                                                 if self.agents_obj[drone_index].state == 0: 
@@ -548,8 +544,9 @@ class MultiDroneEnv(ParallelEnv):
             #print(alloc_reward)
                          
             # rewards for all agents are placed in the rewards dictionary to be returned
-            self.rewards = {agent.name :  1.0 * action_reward  +
-                                          10.0 * distance_reward +  
+            self.rewards = {agent.name :  0.0 * action_reward  +
+                                          10.0 * distance_reward +
+                                          5.0 * quality_reward +  
                                           0.0 * time_reward +
                                           0.0 * alloc_reward  for agent in self.agents_obj}  
                             

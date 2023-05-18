@@ -106,6 +106,8 @@ class Drone:
                 avoid_vector += rotated_vector * avoidance_force
     
         return avoid_vector
+    
+    
 
 #---------- Class Task ----------#                    
 
