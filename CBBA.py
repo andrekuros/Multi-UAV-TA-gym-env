@@ -7,11 +7,12 @@ class CBBA():
         self.max_dist = max_dist
         self.n_all_tasks = len(tasks)
 
-    def allocate_tasks(self, tasks):
+    def allocate_tasks(self, agents, tasks):
         actions = {}
         task_dict = {task.task_id: task for task in tasks}  # Map unique task IDs to tasks
         remaining_tasks = set(task_dict.keys())
         bundles = {agent.drone_id: [] for agent in self.agents}  # Map unique agent IDs to bundles
+        self.agents = agents
 
         while remaining_tasks:
             max_bid = -np.inf
@@ -44,6 +45,7 @@ class CBBA():
 
     
     def calculate_bid(self, agent, task):
-        total_distance = np.linalg.norm(agent.next_free_position - task.position)
-        quality = agent.fit2Task[task.typeIdx]        
-        return (10 * total_distance) * (50 * quality) / self.max_dist # The factor 0.1 here balances reward and distance
+        total_distance = np.linalg.norm(agent.next_free_position - task.position) 
+        quality = agent.fit2Task[task.typeIdx] 
+        time = agent.next_free_time + total_distance / agent.max_speed      
+        return (-6.0 * total_distance / self.max_dist  + 6.0 * quality - 25.0 *  time / 200)  

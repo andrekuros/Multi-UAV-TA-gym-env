@@ -46,15 +46,15 @@ class CustomNetSimple(Net):
 
         # Task Encoder
         self.task_encoder = nn.Sequential(
-            nn.Linear(state_shape_task, 128),
+            nn.Linear(state_shape_task, 256),
             nn.ReLU(),
-            nn.Linear(128, 96),
+            nn.Linear(256, 512),
             nn.ReLU(),
-            nn.Linear(96, 64)
+            nn.Linear(512, 256)
         ).to(device)
 
         # Hidden Layers
-        input_size = 64  # sum of drone and task encoder
+        input_size = 256  # sum of drone and task encoder
         sizes = [input_size] + hidden_sizes + [action_shape]
         self.hidden_layers = []
         for i in range(len(sizes) - 2):

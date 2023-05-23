@@ -8,8 +8,9 @@ class DroneEnvOptions:
                  action_mode="TaskAssign",
                  simulator_module = "Internal", 
                  max_time_steps=20, 
-                 agents= {"F1" : 2,"R1" : 2},                 
-                 tasks= { "Att" : 5 , "Rec" : 5},
+                 agents= {"F1" : 2,"R1" : 6},                 
+                 tasks= { "Att" : 4 , "Rec" : 16},
+                 random_init_pos=True,
                  num_obstacles=0,
                  hidden_obstacles = False,
                  fail_rate = 0.0):
@@ -19,6 +20,7 @@ class DroneEnvOptions:
         self.action_mode=action_mode 
         self.simulator_module = simulator_module        
         self.max_time_steps = max_time_steps                
+        self.random_init_pos = random_init_pos
         self.agents = agents
         self.tasks = tasks        
         self.num_obstacles = num_obstacles
@@ -39,7 +41,7 @@ def generate_random_tasks_all(drones, tasks, seed = 0):
                          and the list of assigned tasks as the value.
     """
     rndGen = random.Random(seed)
-    task_list = list(range(len(tasks)))
+    task_list = [task.task_id for task in tasks]#list(range(len(tasks)))
     rndGen.shuffle(task_list)
 
     # Calculate the minimum number of tasks per drone and the number of drones that will receive an extra task

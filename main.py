@@ -1,4 +1,5 @@
 #%%
+import os
 import numpy as np
 from DroneEnv import MultiDroneEnv
 from DroneEnv import env
@@ -6,12 +7,11 @@ from swarm_gap import SwarmGap
 from tessi import TessiAgent
 from CBBA import CBBA
 import pandas as pd
-#import argparse
-#import json
+import matplotlib.pyplot as plt
 import time
-#import copy
-#import concurrent.futures
-#import cProfile
+from Tianshou_Policy import _get_model
+import torch
+from tianshou.data import Batch
 
 #from gym import spaces
 #from godot_rl.core.godot_env import GodotEnv
@@ -19,32 +19,35 @@ import time
 
 import MultiDroneEnvUtils as utils
 
+algorithms = []
+algorithms += ['Random']
+#algorithms += ["Greedy"]
+#algorithms += ["Swarm-GAP"]
+algorithms += ["CBBA"]
+algorithms +=  ["TBTA"]
+#algorithms +=  ["TBTA2"]
 
+print(algorithms)
+episodes = 10
 
-algorithms = ["Random"]
-algorithms += ["Tessi1"] #"Swarm-GAP" Tessi1
-algorithms += ['CBBA']
-
-episodes = 100
-
-config = utils.DroneEnvOptions(  
-    
+config = utils.DroneEnvOptions(     
     render_speed = -1,
-    max_time_steps = 300,
+    max_time_steps = 1000,
     action_mode= "TaskAssign",
-    agents = {"F1" : 1, "R1" : 1 } ,
-    tasks = { "Rec" : 6 , "Att" : 4 }   ,
-    num_obstacles = 0        ,
+    agents= {"F1" : 2,"R1" : 6},                 
+    tasks= { "Att" : 8 , "Rec" : 22} ,
+    random_init_pos = False,
+    num_obstacles = 0,
     hidden_obstacles = False,
-    fail_rate = 0.01 )
+    fail_rate = 0.0 )
 
-config=None
+#config=None
 
 simEnv = "PyGame"
 
 if simEnv == "PyGame":
     worldModel = MultiDroneEnv(config)
-    env = env
+    #env = env
     
 #elif simEnv == "Godot":
 #    env = GodotEnv()
@@ -69,7 +72,7 @@ for algorithm in algorithms:
     
     for episode in range(episodes):
                 
-        observation  = worldModel.reset(seed=episode)         
+        observation, info  = worldModel.reset(seed=episode)         
         info         = worldModel.get_initial_state()
         
         drones = info["drones"]
@@ -81,94 +84,137 @@ for algorithm in algorithms:
                         
         if algorithm == "Random":            
             planned_actions = utils.generate_random_tasks_all(drones, tasks, seed = episode) 
+            single_random_alloc = True
             #print(planned_actions)
         
-        if algorithm == "Tessi1":
-            agent = TessiAgent(num_drones=worldModel.n_agents, n_tasks=worldModel.n_tasks, tessi_model = 1)               
+        if algorithm == "Greedy":
+            agent = TessiAgent(num_drones=worldModel.n_agents, n_tasks=worldModel.n_tasks, max_dist=worldModel.max_coord, tessi_model = 1)               
         
         if algorithm == "Swarm-GAP":
-            agent = SwarmGap(drones, tasks, quality_table, exchange_interval = 1)
+            agent = SwarmGap(worldModel.agents_obj, worldModel.tasks, exchange_interval = 1)
         
         if algorithm == "CBBA":
             agent = CBBA(worldModel.agents_obj, worldModel.tasks, worldModel.max_coord)
-
+        
+        if algorithm == "TBTA" or algorithm == "TBTA2":
+            # load policy as in your original code
+            
+            if algorithm == "TBTA":
+                load_policy_name = 'policy_CustomNetReducedEval_TBTA_01_max30agents.pth'            
+            if algorithm == "TBTA2": 
+                load_policy_name = 'policy_CustomNetReducedEval_TBTA_01_max30agents_timeRew.pth'            
+            load_policy_path = os.path.join("dqn_Custom", load_policy_name)                    
+            agent = _get_model(worldModel)
+            saved_state = torch.load(load_policy_path )           
+            agent.load_state_dict(saved_state)
+            agent.eval()
+            agent.set_eps(0.0)
     
         print ("."  if (episode+1)%10 != 0 else str(episode+1), end="")   
         
-        episodo_reward = 0
+        episode_reward = 0
         while not all(done.values()) and not all(truncations.values()):
                             
             actions = None
                         
             if algorithm == "Random":
                             
-                if worldModel.time_steps % 1 == 0 and worldModel.time_steps >= 2:
-                    #print(planned_actions, worldModel.time_steps)
+                if worldModel.time_steps % 1 == 0 and worldModel.time_steps >= 0:
+                    
+                    #if info['events'] == ["Reset_Allocation"]:
+                        #print("New TAsks Alloc")                        
+                        
+                    un_taks_obj = [worldModel.tasks[i] for i in worldModel.unallocated_tasks()]                                         
+                        
+                    if un_taks_obj != []:
+                        planned_actions = utils.generate_random_tasks_all(worldModel.get_live_agents() , un_taks_obj, seed = episode) 
+
                     if len(planned_actions) > 0:
                         
                         actions = {}                     
                         toDelete = [] 
-           
-                        for i, tasks in planned_actions.items():                                             
+                                                                                 
+                        for agent_id, tasks in planned_actions.items():                                             
                             
                             if len(tasks) > 0:
-                                actions[i] = planned_actions[i].pop()                      
+                                actions[agent_id] = planned_actions[agent_id].pop()
+                                #if single_random_alloc:                                    
+                                #    break                      
                             else:
-                                toDelete.append(i)
+                                toDelete.append(agent_id)
                     
                         for i in toDelete: 
-                            del planned_actions[i] 
-                        
-                    #print("plan->:",actions) 
+                            del planned_actions[i]
+                        #print(actions)                         
                             
             elif algorithm == "Swarm-GAP":
                 
-                if worldModel.time_steps % agent.exchange_interval:                    
-                    actions = agent.process_token()    
+                if worldModel.time_steps % agent.exchange_interval == 0:  
+                    
+                    un_taks_obj = [worldModel.tasks[i] for i in worldModel.unallocated_tasks()]                   
+                    if un_taks_obj != []:
+                        actions = agent.process_token(worldModel.agents_obj, un_taks_obj)    
             
-            elif algorithm == "Tessi1":            
+            elif algorithm == "Greedy":            
                                                                                                         
                 if worldModel.time_steps % 1 == 0 :
-                    # Convert task_allocation to actions                    
-                    un_taks_obj = [worldModel.tasks[i] for i in worldModel.unallocated_tasks()] 
-                                        
-                    actions = agent.allocate_tasks(worldModel.agents_obj, un_taks_obj )
-                    #actions = agent.allocate_tasks(worldModel.agents_obj, [worldModel.tasks[i] for i in worldModel.unallocated_tasks()] )                    
+                    
+                    un_taks_obj = [worldModel.tasks[i] for i in worldModel.unallocated_tasks()]                                                             
+                    
+                    if un_taks_obj != []:
+                        actions = agent.allocate_tasks(worldModel.get_live_agents(), un_taks_obj )
+                    
                     
             elif algorithm == "CBBA":
                 if worldModel.time_steps % 1 == 0 :
+                    
                     un_taks_obj = [worldModel.tasks[i] for i in worldModel.unallocated_tasks()] 
                     
                     if un_taks_obj != []:
-                        actions = agent.allocate_tasks( un_taks_obj )
-                    
-                        #print( actions)
+                        actions = agent.allocate_tasks( worldModel.get_live_agents(), un_taks_obj )                                
+                        
+            elif algorithm == "TBTA" or algorithm == "TBTA2":
+                
+                un_taks_obj = [worldModel.tasks[i] for i in worldModel.unallocated_tasks()] 
+                if un_taks_obj != []:
+                    agent_id = "agent" + str(worldModel.agent_selector._current_agent)                
+                    obs_batch = Batch(obs=observation[agent_id], info=[{}])               
+                    action = agent(obs_batch).act
+                    actions = {agent_id : action[0]}
+            
+            elif algorithm == "CTBTA":
+                
+                un_taks_obj = [worldModel.tasks[i] for i in worldModel.unallocated_tasks()] 
+                if un_taks_obj != []:
+                    agent_id = "agent" + str(worldModel.agent_selector._current_agent)                
+                    obs_batch = Batch(obs=observation[agent_id], info=[{}])               
+                    action = agent(obs_batch).act
+                    actions = {agent_id : action[0]}
             
             #if actions != {} and actions != None:
             #       print(actions)
+            
             observation, reward, done, truncations, info = worldModel.step(actions)
             #print({'agent_id': worldModel.agent_selector.next()})            
-            episodo_reward += sum(reward.values())/worldModel.n_agents
+            episode_reward += sum(reward.values())/worldModel.n_agents
             
             if worldModel.render_enabled:
                 worldModel.render()
-            
-            #print(done)
-            if all(done.values()):
-            #if done:
+                        
+            if all(done.values()):            
                 metrics = info['metrics']
+                metrics['Reward'] = episode_reward
                 metrics["Algorithm"] = algorithm
+                
                 totalMetrics.append(metrics)
-                #print("Done Rew:", reward["agent0"])
                                             
-            if all(truncations.values()):                
-                #print("\nMax Steps Reached:", worldModel.time_steps )
+            if all(truncations.values()):                                
                 metrics = info['metrics']
+                metrics['Reward'] = episode_reward
                 metrics["Algorithm"] = algorithm
                 totalMetrics.append(metrics)
 
-        total_reward[algorithm].append(episodo_reward) 
-        #print(worldModel.time_steps)#print("Trunc Rew:", total_reward)
+        total_reward[algorithm].append(episode_reward)         
                     
     end_time = time.time()
     execution_time = end_time - start_time
@@ -176,23 +222,57 @@ for algorithm in algorithms:
     
     worldModel.close()
 
-import matplotlib.pyplot as plt
-
 for alg in algorithms:
     print(f'Rew({alg}): {np.mean(total_reward[alg])}')
     print(f'Rew({alg}): Max: {max(total_reward[alg])}, Min: {min(total_reward[alg])}')
     #plt.hist(total_reward[alg], bins=100)
     #plt.show()
 
-#%%%
 metricsDf = pd.DataFrame(totalMetrics)
-worldModel.plot_metrics(metricsDf, len(worldModel.agents), worldModel.n_tasks)
+#worldModel.plot_metrics(metricsDf, len(worldModel.agents), worldModel.n_tasks)
+import seaborn as sns
 
-for algorithm in algorithms:
-    worldModel.plot_convergence(metricsDf[metricsDf.Algorithm == algorithm], len(worldModel.agents), len(worldModel.tasks), algorithm)
+#for algorithm in algorithms:
+#    worldModel.plot_convergence(metricsDf[metricsDf.Algorithm == algorithm], len(worldModel.agents), len(worldModel.tasks), algorithm)
 
-print(metricsDf.mean())
+df = metricsDf#[metricsDf['Algorithm'] != 'Greedy']
+#print(metricsDf.mean())
+grouped = df.groupby('Algorithm', sort=False)
+means = grouped.mean()
+std_devs = grouped.std()
 
+std_devs = std_devs / means.loc['Random']
+means = means / means.loc['Random']        
+
+# Calculate the number of algorithms and metrics
+num_algorithms = len(grouped)
+num_metrics = len(df.columns) - 1
+
+palette = sns.color_palette("Set1",n_colors=num_algorithms)
+        
+# Create a single plot
+fig, ax = plt.subplots(figsize=(10, 5))
+
+# Define the bar width and the spacing between groups of bars
+bar_width = 0.7 / num_algorithms
+group_spacing = 1.2
+
+# Create a bar chart for each algorithm
+for i, (algo, data) in enumerate(grouped):
+    index = np.arange(num_metrics) * group_spacing + i * bar_width
+    print(algo)    
+    ax.bar(index, means.loc[algo], bar_width, alpha=0.8, label=algo, yerr=std_devs.loc[algo], capsize=5, color=palette[i])
+
+ax.set_xlabel('Metrics')
+ax.set_ylabel('Values')
+ax.set_title(f'Task Allocation: ({6} drones, {10} tasks)')
+ax.set_xticks(np.arange(num_metrics) * group_spacing + (bar_width * (num_algorithms - 1) / 2))
+ax.set_xticklabels(list(df.columns)[:-1])
+ax.legend()
+ax.set_ylim(0, 2.0)
+
+plt.tight_layout()
+plt.show()
 
 
 

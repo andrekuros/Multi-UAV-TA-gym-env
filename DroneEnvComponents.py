@@ -6,7 +6,7 @@ import MultiDroneEnvUtils as utils
 #---------- Class UAV ----------#
 class Drone:
     
-    def __init__(self, drone_id, name, position, uavType,  sceneData, altitude=1000  ):
+    def __init__(self, drone_id, name, position, uavType,  sceneData, altitude=1000 ):
         
         self.name = name
         self.drone_id = drone_id
@@ -51,6 +51,14 @@ class Drone:
             
             return 1.0                        
         return -1.0    
+    
+    def desallocateAll(self, time_step):
+        
+        self.tasks = []
+        self.next_free_time = time_step
+        self.next_free_position = self.position   
+        
+
 
 
     def doTask(self, drone_dir, task_dir, distance, task_type):

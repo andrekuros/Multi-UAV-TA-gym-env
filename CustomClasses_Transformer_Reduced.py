@@ -7,7 +7,6 @@ from copy import deepcopy
 import numpy as np
 import torch.nn.functional as F
 
-
 from pettingzoo.utils.wrappers import BaseWrapper
 from pettingzoo.utils.wrappers import OrderEnforcingWrapper
 
@@ -32,7 +31,7 @@ class CustomNetReduced(Net):
         )
         
         input_size = 64
-        self.max_tasks = 10
+        self.max_tasks = 30
         self.task_size = int(state_shape_task / self.max_tasks)
                 
         sizes = [input_size] + hidden_sizes + [action_shape]
@@ -93,15 +92,13 @@ class CustomNetReduced(Net):
         next_free_time = torch.tensor(obs["next_free_time"], dtype=torch.float32).to(self.device)
         position_after_last_task = torch.tensor(obs["position_after_last_task"], dtype=torch.float32).to(self.device)         
         
-        #drone_embeddings = self.drone_encoder(torch.cat((tasks_info,position_after_last_task, next_free_time, agent_type ), dim=-1))
-       
+        #drone_embeddings = self.drone_encoder(torch.cat((tasks_info,position_after_last_task, next_free_time, agent_type ), dim=-1))       
         #drone_embeddings = self.drone_encoder(torch.cat((agent_position, agent_state, agent_type, next_free_time, position_after_last_task), dim=-1))
         
         tasks_info = torch.tensor(obs["tasks_info"], dtype=torch.float32).to(self.device)  # Convert tasks_info to tensor         
         tasks_info = tasks_info.view(-1, self.max_tasks, self.task_size)#int(len(tasks_info[0]/10))) #calculate the size of each tasks, and consider 10 max tasks                         
         task_embeddings = self.task_encoder(tasks_info)
         
-
         #position_after_last_task = tasks_info.view(-1, 6, 2)
         #drone_embeddings = self.drone_encoder(position_after_last_task)
 
