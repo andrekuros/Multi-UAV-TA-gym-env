@@ -598,7 +598,7 @@ class MultiDroneEnv(ParallelEnv):
             self.rewards = {agent.name :  1.0 * action_reward  +   #Rand +50
                                           6.0 * distance_reward +  #Rand -4
                                           4.0 * quality_reward +   #Rand +6
-                                          10.0 * time_reward +      #Rand -9
+                                          0.0 * time_reward +      #Rand -9
                                           0.0 * alloc_reward  for agent in self.agents_obj} #Rand -28 
             
             #[ self._cumulative_rewards[agent] = self.rewards[agent] for agent in self.possible_agents]
@@ -607,9 +607,9 @@ class MultiDroneEnv(ParallelEnv):
             done = (len(self.reached_tasks) == self.n_tasks or (self.time_steps >= self.max_time_steps and self.max_time_steps > 0))  
             
             #Only for speed up traning without Dynamic conditions
-            #done = done or (self.allocation_table.count(-1) == 0 and self.time_steps >= 50)
+            done = done or (self.allocation_table.count(-1) == 0 and self.time_steps >= 50)
                                   
-            self.terminations = { agent.name : (done or (agent.state <= 0 )) for agent in self.agents_obj}
+            self.terminations = { agent.name : (done and (agent.state <= 0 )) for agent in self.agents_obj}
             
             #env_truncation = done#(self.time_steps >= self.max_time_steps) if self.max_time_steps > 0 else done             
             env_truncation = (self.time_steps >= self.max_time_steps) if self.max_time_steps > 0 else done             

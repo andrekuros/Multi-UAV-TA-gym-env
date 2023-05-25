@@ -101,7 +101,7 @@ for algorithm in algorithms:
             # load policy as in your original code
             
             if algorithm == "TBTA":
-                load_policy_name = 'policy_CustomNetReducedEval_TBTA_02_max30agents_timeRew_DroneEncodings_OWN_olyOwn_noAgemts.pth'            
+                load_policy_name = 'policy_CustomNetReducedEval_TBTA_03_pre_process.pth'            
             if algorithm == "TBTA2": 
                 load_policy_name = 'policy_CustomNetReducedEval_TBTA_01_max30agents_timeRew_DroneEncodings.pth'            
             load_policy_path = os.path.join("dqn_Custom", load_policy_name)                    

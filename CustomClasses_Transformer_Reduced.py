@@ -58,19 +58,35 @@ class CustomNetReduced(Net):
         ).to(device)
         
         self.task_encoder = nn.Sequential(
-            nn.Linear(int(state_shape_task/self.max_tasks), 32),
+            nn.Linear(int(state_shape_task/self.max_tasks), 64),
             #nn.ReLU(),
-            #nn.Linear(32, 64),
+            #nn.Linear(64, 128),
             #nn.ReLU(),
-            #nn.Linear(64, 16)
+            #nn.Linear(128, 256),
+            #nn.ReLU(),
+            #nn.Linear(256, 128)
         ).to(device)
                
-        self.embedding_size = 32 #sum of drone and task encoder
+        self.embedding_size = 64 #sum of drone and task encoder
         
         self.combined_transformer = nn.TransformerEncoder(
             nn.TransformerEncoderLayer(d_model=self.embedding_size, nhead=nhead),
             num_layers=num_layers,
         ).to(device)
+
+        self.combined_transformer2 = nn.TransformerEncoder(
+            nn.TransformerEncoderLayer(d_model=self.embedding_size, nhead=nhead),
+            num_layers=num_layers,
+        ).to(device)
+
+        self.combined_transformer3 = nn.TransformerEncoder(
+            nn.TransformerEncoderLayer(d_model=self.embedding_size, nhead=nhead),
+            num_layers=num_layers,
+        ).to(device)
+
+        self.norm1 = nn.LayerNorm(self.embedding_size)
+        self.norm2 = nn.LayerNorm(self.embedding_size)
+        self.norm3 = nn.LayerNorm(self.embedding_size)
         
         self.query_linear = nn.Linear(self.embedding_size, 64).to(device)
         self.key_linear = nn.Linear(self.embedding_size, 64).to(device)
@@ -94,7 +110,7 @@ class CustomNetReduced(Net):
         
         #drone_embeddings = self.drone_encoder(torch.cat((tasks_info,position_after_last_task, next_free_time, agent_type ), dim=-1))       
         #drone_embeddings = self.drone_encoder(torch.cat((agent_position, agent_state, agent_type, next_free_time, position_after_last_task), dim=-1))
-        
+    
         tasks_info = torch.tensor(obs["tasks_info"], dtype=torch.float32).to(self.device)  # Convert tasks_info to tensor         
         tasks_info = tasks_info.view(-1, self.max_tasks, self.task_size)#int(len(tasks_info[0]/10))) #calculate the size of each tasks, and consider 10 max tasks                         
         task_embeddings = self.task_encoder(tasks_info)
@@ -102,19 +118,27 @@ class CustomNetReduced(Net):
         #position_after_last_task = tasks_info.view(-1, 6, 2)
         #drone_embeddings = self.drone_encoder(position_after_last_task)
 
-        transformer_output = self.combined_transformer(task_embeddings).view(-1, self.max_tasks, self.embedding_size)       
+        transformer_output1 = self.combined_transformer(task_embeddings).view(-1, self.max_tasks, self.embedding_size)
+        transformer_output1 = self.norm1(transformer_output1 + task_embeddings)  # Add skip connection and normalization
+
+        #transformer_output2 = self.combined_transformer2(transformer_output1).view(-1, self.max_tasks, self.embedding_size)
+        #transformer_output2 = self.norm2(transformer_output2 + transformer_output1)  # Add skip connection and normalization
+
+        transformer_output3 = self.combined_transformer3(transformer_output1).view(-1, self.max_tasks, self.embedding_size)
+        transformer_output3 = self.norm3(transformer_output3 + transformer_output1)  # Add skip connection and normalization
+
                 
-        q = self.query_linear(transformer_output)
-        k = self.key_linear(transformer_output)
-        v = self.value_linear(transformer_output)     
+        # q = self.query_linear(transformer_output)
+        # k = self.key_linear(transformer_output)
+        # v = self.value_linear(transformer_output)     
                       
-        attention_output, _ = self.attention(q, k, v, mask=None)
+        # attention_output, _ = self.attention(q, k, v, mask=None)
         
         # Process the attention output with the remaining layers
         #x = self.hidden_layers(attention_output)       
         
         #print("Attention->", attention_output.shape, attention_output)                        
-        output = self.output(attention_output)
+        output = self.output(transformer_output3)
         
         #print("OUt->", output.shape, output)
         # Apply the softmax function

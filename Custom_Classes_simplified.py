@@ -88,6 +88,7 @@ class CustomNetSimple(Net):
 
             # print("agent pos: ", agent_position.shape)
             # print("task info: ", tasks_info.shape)
+            # print("task_embeddings: ", task_embeddings.shape)
             
             # Combine drone and task embeddings
             #combined_output = torch.cat((drone_embeddings, task_embeddings), dim=1)
@@ -96,12 +97,12 @@ class CustomNetSimple(Net):
 
             # Process the combined output with the hidden layers
             x = self.hidden_layers(task_embeddings)            
-            #print("X", x)
+            # print("X", x.shape)
             output = self.output(x)
-            #print("OUt->", output)
+            # print("OUt->", output.shape)
             # Apply the softmax function
             softmax_output = torch.nn.functional.softmax(output, dim=-1) 
-            #print("SOFT->", softmax_output.shape, softmax_output)
+            # print("SOFT->", softmax_output.shape)
 
             #print(softmax_output.shape)
         
