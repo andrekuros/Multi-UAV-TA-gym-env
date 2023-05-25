@@ -14,7 +14,10 @@ class CBBA():
         bundles = {agent.drone_id: [] for agent in self.agents}  # Map unique agent IDs to bundles
         self.agents = agents
 
+        i = 0
         while remaining_tasks:
+        #while i  == 0:
+            i = i + 1
             max_bid = -np.inf
             max_bid_task_id = None
             max_bid_agent_id = None
@@ -48,4 +51,4 @@ class CBBA():
         total_distance = np.linalg.norm(agent.next_free_position - task.position) 
         quality = agent.fit2Task[task.typeIdx] 
         time = agent.next_free_time + total_distance / agent.max_speed      
-        return (-6.0 * total_distance / self.max_dist  + 6.0 * quality - 25.0 *  time / 200)  
+        return (-6.0 * total_distance / self.max_dist  + 4.0 * quality - 75.0 *  time / 1000)  

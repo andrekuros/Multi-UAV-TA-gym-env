@@ -50,21 +50,24 @@ class SwarmGap:
             else:
             
                 #Higer Alpha priorize Distance    
-                alpha = 0.6
+                alpha = 0.3
                 st = 0.6
                         
                 capability = (max_dist - distances) / max_dist * alpha + (1 - (max_Q  - Qs) / max_Q) * (1 - alpha) 
                 #print( distances)
                 # Normalize os valores para que eles somem 1
-                tendencies = pow(st,2) / (pow(st,2) + np.square(capability))
+                
+                tendencies = pow(st,2) / (pow(st,2) + np.square(1-capability))
                 
                 chosen_index = - 1
-                            
+
+                tendencies = sorted(tendencies,reverse=True)  
+                #print(tendencies)         
                 
                 for i,t in enumerate(tendencies):        
                     #chosen_index = np.random.choice(np.arange(len(capability)), p=tendencies)
                     randN = random.uniform(0,1)
-                    if t < randN:
+                    if t > randN:
                         chosen_index = i
                         break
                     #else:

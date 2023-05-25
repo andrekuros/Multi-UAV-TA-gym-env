@@ -150,24 +150,24 @@ class CustomCollector(Collector):
         #self.preprocess_fn = self._preprocess_fn       
         
 
-    def _preprocess_fn(self, obs_next=None,rew=None,done=None, info=None, 
-                       policy=None, env_id=None, act=None ):        
-        obs = deepcopy(obs_next)
-        actions = {}        
+    # def _preprocess_fn(self, obs_next=None,rew=None,done=None, info=None, 
+    #                    policy=None, env_id=None, act=None ):        
+    #     obs = deepcopy(obs_next)
+    #     actions = {}        
 
-        if policy == None:
-            return {}
+    #     if policy == None:
+    #         return {}
         
-        #print("Policy:",policy)
+    #     #print("Policy:",policy)
         
-        for agent_id, agent_obs in obs.items():
-            print("AgentID:", agent_id)
-            print("agent_obs:", agent_obs)
+    #     for agent_id, agent_obs in obs.items():
+    #         print("AgentID:", agent_id)
+    #         print("agent_obs:", agent_obs)
        
-            policy = self.policy.policies[agent_id]
-            action, _ = policy(agent_obs)
-            actions[agent_id] = action
-        return actions
+    #         policy = self.policy.policies[agent_id]
+    #         action, _ = policy(agent_obs)
+    #         actions[agent_id] = action
+    #     return actions
 
     def collect(self, n_step: Optional[int] = None, n_episode: Optional[int] = None, random: Optional[bool] = False, render: Optional[float] = None) -> Dict[str, Any]:
         #print("CustomCollector collect method called")
@@ -179,6 +179,9 @@ class CustomParallelToAECWrapper(OrderEnforcingWrapper):
     def __init__(self, env):
         super().__init__(env)
         self._initialize_observation_spaces()
+        #self.last = env.last
+        self.agent_selector = env.agent_selector
+        self.agent_selection = env.agent_selection
 
     def _initialize_observation_spaces(self):
         if not hasattr(self.env, 'agents') or self.env.agents is None:
@@ -188,10 +191,9 @@ class CustomParallelToAECWrapper(OrderEnforcingWrapper):
             for agent in self.env.agents
         }
     
-    def observation_space(self, agent):
-        return self._observation_spaces[agent]
+    
 
-    @property
-    def observation_spaces(self):
-        return self._observation_spaces
+    # @property
+    # def observation_spaces(self):
+    #     return self._observation_spaces
 

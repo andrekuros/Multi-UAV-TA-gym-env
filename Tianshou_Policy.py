@@ -22,7 +22,7 @@ def _get_model(env = None):
     env = _get_env(env)
     agent_name = env.agents[0]  # Get the name of the first agent
            
-    agent_observation_space = env.observation_space('agent0') # assuming 'agent0' is a valid agent name
+    agent_observation_space = env.observation_space # assuming 'agent0' is a valid agent name
     state_shape_agent_position = agent_observation_space["agent_position"].shape[0]
     state_shape_agent_state = agent_observation_space["agent_state"].shape[0]
     state_shape_agent_type = agent_observation_space["agent_type"].shape[0]
@@ -37,7 +37,7 @@ def _get_model(env = None):
                      )                 
     
 
-    state_shape_task = env.observation_space('agent0')["tasks_info"].shape[0]
+    state_shape_task = env.observation_space["tasks_info"].shape[0]
                   
     action_shape = env.action_space[agent_name].shape[0]
     #action_shape = env.action_space[agent_name].n

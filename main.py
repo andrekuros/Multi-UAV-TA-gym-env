@@ -1,5 +1,6 @@
 #%%
 import os
+import random
 import numpy as np
 from DroneEnv import MultiDroneEnv
 from DroneEnv import env
@@ -21,21 +22,21 @@ import MultiDroneEnvUtils as utils
 
 algorithms = []
 algorithms += ['Random']
-#algorithms += ["Greedy"]
-#algorithms += ["Swarm-GAP"]
+algorithms += ["Greedy"]
+algorithms += ["Swarm-GAP"]
 algorithms += ["CBBA"]
 algorithms +=  ["TBTA"]
 #algorithms +=  ["TBTA2"]
 
 print(algorithms)
-episodes = 10
+episodes = 20
 
 config = utils.DroneEnvOptions(     
     render_speed = -1,
     max_time_steps = 1000,
     action_mode= "TaskAssign",
-    agents= {"F1" : 2,"R1" : 6},                 
-    tasks= { "Att" : 8 , "Rec" : 22} ,
+    agents= {"F1" : 4,"R1" : 6},                 
+    tasks= { "Att" : 6 , "Rec" : 14},
     random_init_pos = False,
     num_obstacles = 0,
     hidden_obstacles = False,
@@ -100,9 +101,9 @@ for algorithm in algorithms:
             # load policy as in your original code
             
             if algorithm == "TBTA":
-                load_policy_name = 'policy_CustomNetReducedEval_TBTA_01_max30agents.pth'            
+                load_policy_name = 'policy_CustomNetReducedEval_TBTA_02_max30agents_timeRew_DroneEncodings_OWN_olyOwn_noAgemts.pth'            
             if algorithm == "TBTA2": 
-                load_policy_name = 'policy_CustomNetReducedEval_TBTA_01_max30agents_timeRew.pth'            
+                load_policy_name = 'policy_CustomNetReducedEval_TBTA_01_max30agents_timeRew_DroneEncodings.pth'            
             load_policy_path = os.path.join("dqn_Custom", load_policy_name)                    
             agent = _get_model(worldModel)
             saved_state = torch.load(load_policy_path )           
@@ -123,29 +124,39 @@ for algorithm in algorithms:
                     
                     #if info['events'] == ["Reset_Allocation"]:
                         #print("New TAsks Alloc")                        
-                        
-                    un_taks_obj = [worldModel.tasks[i] for i in worldModel.unallocated_tasks()]                                         
-                        
-                    if un_taks_obj != []:
-                        planned_actions = utils.generate_random_tasks_all(worldModel.get_live_agents() , un_taks_obj, seed = episode) 
-
-                    if len(planned_actions) > 0:
-                        
-                        actions = {}                     
-                        toDelete = [] 
-                                                                                 
-                        for agent_id, tasks in planned_actions.items():                                             
+                    if True:
+                        un_taks_obj = [worldModel.tasks[i] for i in worldModel.unallocated_tasks()] 
+                        if un_taks_obj != []: 
                             
-                            if len(tasks) > 0:
-                                actions[agent_id] = planned_actions[agent_id].pop()
-                                #if single_random_alloc:                                    
-                                #    break                      
-                            else:
-                                toDelete.append(agent_id)
+                            task = random.choice(un_taks_obj)
+                            agent = worldModel.agent_selection
+                            actions = {agent : task.task_id}
                     
-                        for i in toDelete: 
-                            del planned_actions[i]
-                        #print(actions)                         
+                    else:    
+                    
+                    
+                        un_taks_obj = [worldModel.tasks[i] for i in worldModel.unallocated_tasks()]                                         
+                            
+                        if un_taks_obj != []:
+                            planned_actions = utils.generate_random_tasks_all(worldModel.get_live_agents() , un_taks_obj, seed = episode) 
+
+                        if len(planned_actions) > 0:
+                            
+                            actions = {}                     
+                            toDelete = [] 
+                                                                                    
+                            for agent_id, tasks in planned_actions.items():                                             
+                                
+                                if len(tasks) > 0:
+                                    actions[agent_id] = planned_actions[agent_id].pop()
+                                    #if single_random_alloc:                                    
+                                    #break                      
+                                else:
+                                    toDelete.append(agent_id)
+                        
+                            for i in toDelete: 
+                                del planned_actions[i]
+                            #print(actions)                         
                             
             elif algorithm == "Swarm-GAP":
                 
@@ -228,6 +239,7 @@ for alg in algorithms:
     #plt.hist(total_reward[alg], bins=100)
     #plt.show()
 
+
 metricsDf = pd.DataFrame(totalMetrics)
 #worldModel.plot_metrics(metricsDf, len(worldModel.agents), worldModel.n_tasks)
 import seaborn as sns
@@ -257,11 +269,13 @@ fig, ax = plt.subplots(figsize=(10, 5))
 bar_width = 0.7 / num_algorithms
 group_spacing = 1.2
 
+max_val = 0
 # Create a bar chart for each algorithm
 for i, (algo, data) in enumerate(grouped):
-    index = np.arange(num_metrics) * group_spacing + i * bar_width
-    print(algo)    
+    index = np.arange(num_metrics) * group_spacing + i * bar_width       
     ax.bar(index, means.loc[algo], bar_width, alpha=0.8, label=algo, yerr=std_devs.loc[algo], capsize=5, color=palette[i])
+    if  max(means.loc[algo]) > max_val:
+         max_val = max(means.loc[algo])
 
 ax.set_xlabel('Metrics')
 ax.set_ylabel('Values')
@@ -269,7 +283,7 @@ ax.set_title(f'Task Allocation: ({6} drones, {10} tasks)')
 ax.set_xticks(np.arange(num_metrics) * group_spacing + (bar_width * (num_algorithms - 1) / 2))
 ax.set_xticklabels(list(df.columns)[:-1])
 ax.legend()
-ax.set_ylim(0, 2.0)
+ax.set_ylim(0, max_val*1.1)
 
 plt.tight_layout()
 plt.show()
