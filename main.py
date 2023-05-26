@@ -13,30 +13,36 @@ import time
 from Tianshou_Policy import _get_model
 import torch
 from tianshou.data import Batch
+import torch.nn.functional as F
 
 #from gym import spaces
 #from godot_rl.core.godot_env import GodotEnv
 #from godot_rl.core.utils import lod_to_dol
 
+def softmax_stable(x):
+    return(np.exp(x - np.max(x)) / np.exp(x - np.max(x)).sum())
+
 import MultiDroneEnvUtils as utils
 
 algorithms = []
 algorithms += ['Random']
+#algorithms += ['Random2']
 algorithms += ["Greedy"]
 algorithms += ["Swarm-GAP"]
-algorithms += ["CBBA"]
-algorithms +=  ["TBTA"]
-#algorithms +=  ["TBTA2"]
+#algorithms += ["CBBA"]
+#algorithms +=  ["TBTA"]
+algorithms +=  ["TBTA2"]
+#algorithms +=  ["CTBTA"]
 
 print(algorithms)
-episodes = 20
+episodes = 30
 
 config = utils.DroneEnvOptions(     
     render_speed = -1,
     max_time_steps = 1000,
     action_mode= "TaskAssign",
     agents= {"F1" : 4,"R1" : 6},                 
-    tasks= { "Att" : 6 , "Rec" : 14},
+    tasks= { "Att" : 4 , "Rec" : 16},
     random_init_pos = False,
     num_obstacles = 0,
     hidden_obstacles = False,
@@ -45,9 +51,9 @@ config = utils.DroneEnvOptions(
 #config=None
 
 simEnv = "PyGame"
-
-if simEnv == "PyGame":
-    worldModel = MultiDroneEnv(config)
+#worldModel = MultiDroneEnv(config)
+#if simEnv == "PyGame":
+#    worldModel = MultiDroneEnv(config)
     #env = env
     
 #elif simEnv == "Godot":
@@ -73,6 +79,19 @@ for algorithm in algorithms:
     
     for episode in range(episodes):
                 
+        # config = utils.DroneEnvOptions(     
+        #             render_speed = -1,
+        #             max_time_steps = 1000,
+        #             action_mode= "TaskAssign",
+        #             agents= {"F1":2 ,"F2":2, "R1":4, "R2":4 },
+        #             tasks= { "Att" : 4 , "Rec" : 16},
+        #             random_init_pos = True,
+        #             num_obstacles = 0,
+        #             hidden_obstacles = False,
+        #             fail_rate = 0.0 )
+        
+        worldModel = MultiDroneEnv(config)
+
         observation, info  = worldModel.reset(seed=episode)         
         info         = worldModel.get_initial_state()
         
@@ -86,7 +105,9 @@ for algorithm in algorithms:
         if algorithm == "Random":            
             planned_actions = utils.generate_random_tasks_all(drones, tasks, seed = episode) 
             single_random_alloc = True
+            rndGen = random.Random(episode*2)
             #print(planned_actions)
+                
         
         if algorithm == "Greedy":
             agent = TessiAgent(num_drones=worldModel.n_agents, n_tasks=worldModel.n_tasks, max_dist=worldModel.max_coord, tessi_model = 1)               
@@ -101,38 +122,71 @@ for algorithm in algorithms:
             # load policy as in your original code
             
             if algorithm == "TBTA":
-                load_policy_name = 'policy_CustomNetReducedEval_TBTA_03_pre_process.pth'            
+                load_policy_name = 'policy_CustomNetReducedEval_TBTA_03_pre_process.pth'
+                load_policy_path = os.path.join("dqn_Custom", load_policy_name)                    
+                agent = _get_model(model="CustomNetReduced", env=worldModel)           
+                
+
             if algorithm == "TBTA2": 
-                load_policy_name = 'policy_CustomNetReducedEval_TBTA_01_max30agents_timeRew_DroneEncodings.pth'            
-            load_policy_path = os.path.join("dqn_Custom", load_policy_name)                    
-            agent = _get_model(worldModel)
+                load_policy_name = 'policy_CustomNetMultiHeadEval_TBTA_03_pre_process_New_REW_step500.pth'            
+                load_policy_path = os.path.join("dqn_Custom", load_policy_name)                    
+                agent = _get_model(model="CustomNetMultiHead", env=worldModel)
+            
             saved_state = torch.load(load_policy_path )           
             agent.load_state_dict(saved_state)
             agent.eval()
             agent.set_eps(0.0)
     
+        if algorithm == "CTBTA":
+            
+            agent = CBBA(worldModel.agents_obj, worldModel.tasks, worldModel.max_coord)
+            load_policy_name = 'policy_CustomNetMultiHeadEval_TBTA_03_pre_process_New_REW_step500.pth'            
+            load_policy_path = os.path.join("dqn_Custom", load_policy_name)                    
+            agent2 = _get_model(model="CustomNetMultiHead", env=worldModel)
+            
+            saved_state = torch.load(load_policy_path )           
+            agent2.load_state_dict(saved_state)
+            agent2.eval()
+            agent2.set_eps(0.0)
+        
         print ("."  if (episode+1)%10 != 0 else str(episode+1), end="")   
         
+
         episode_reward = 0
         while not all(done.values()) and not all(truncations.values()):
                             
             actions = None
                         
-            if algorithm == "Random":
+            if algorithm == "Random" or algorithm == "Random2":
                             
                 if worldModel.time_steps % 1 == 0 and worldModel.time_steps >= 0:
                     
                     #if info['events'] == ["Reset_Allocation"]:
                         #print("New TAsks Alloc")                        
-                    if True:
+                    if algorithm == "Random":
+                        un_taks_obj = [worldModel.tasks[i] for i in worldModel.unallocated_tasks()] 
+                        
+                        if un_taks_obj != []: 
+                            
+                            task = rndGen.choice(un_taks_obj)
+                            #agent = rndGen.choice(worldModel.get_live_agents()).name
+                            agent = worldModel.agent_selection
+
+
+                            actions = {agent : task.task_id}
+                    
+                    elif algorithm == "Random2":
+
                         un_taks_obj = [worldModel.tasks[i] for i in worldModel.unallocated_tasks()] 
                         if un_taks_obj != []: 
                             
-                            task = random.choice(un_taks_obj)
-                            agent = worldModel.agent_selection
+                            task = rndGen.choice(un_taks_obj)
+                            agent = rndGen.choice(worldModel.get_live_agents()).name
+                            #agent = worldModel.agent_selection
+
                             actions = {agent : task.task_id}
-                    
-                    else:    
+
+                    elif algorithm == "Random3":    
                     
                     
                         un_taks_obj = [worldModel.tasks[i] for i in worldModel.unallocated_tasks()]                                         
@@ -173,7 +227,9 @@ for algorithm in algorithms:
                     un_taks_obj = [worldModel.tasks[i] for i in worldModel.unallocated_tasks()]                                                             
                     
                     if un_taks_obj != []:
-                        actions = agent.allocate_tasks(worldModel.get_live_agents(), un_taks_obj )
+                        
+                        drones = [worldModel.agents_obj[worldModel.agent_name_mapping[worldModel.agent_selection]]]
+                        actions = agent.allocate_tasks(drones, un_taks_obj )
                     
                     
             elif algorithm == "CBBA":
@@ -183,6 +239,7 @@ for algorithm in algorithms:
                     
                     if un_taks_obj != []:
                         actions = agent.allocate_tasks( worldModel.get_live_agents(), un_taks_obj )                                
+                        #print(actions)
                         
             elif algorithm == "TBTA" or algorithm == "TBTA2":
                 
@@ -191,16 +248,26 @@ for algorithm in algorithms:
                     agent_id = "agent" + str(worldModel.agent_selector._current_agent)                
                     obs_batch = Batch(obs=observation[agent_id], info=[{}])               
                     action = agent(obs_batch).act
-                    actions = {agent_id : action[0]}
+                    #print(action)
+                    action = np.argmax(action)
+                    actions = {agent_id : action}
             
             elif algorithm == "CTBTA":
                 
                 un_taks_obj = [worldModel.tasks[i] for i in worldModel.unallocated_tasks()] 
+                
                 if un_taks_obj != []:
-                    agent_id = "agent" + str(worldModel.agent_selector._current_agent)                
-                    obs_batch = Batch(obs=observation[agent_id], info=[{}])               
-                    action = agent(obs_batch).act
-                    actions = {agent_id : action[0]}
+                    Qs ={}
+                    live_agents = worldModel.get_live_agents()
+                    for uav in live_agents:                                       
+                        obs_batch = Batch(obs=observation[uav.name], info=[{}]) 
+                        #Qs[uav.name] =softmax_stable(agent2(obs_batch).act[0])
+                        Qs[uav.name] =agent2(obs_batch).act[0]
+                        #print(Qs)            
+                    #print(Qs)
+                    actions = agent.allocate_tasks(live_agents , un_taks_obj, Qs=Qs ) 
+                    print(actions)
+                    
             
             #if actions != {} and actions != None:
             #       print(actions)
@@ -214,14 +281,14 @@ for algorithm in algorithms:
                         
             if all(done.values()):            
                 metrics = info['metrics']
-                metrics['Reward'] = episode_reward
+                metrics['S_Reward'] = episode_reward
                 metrics["Algorithm"] = algorithm
                 
                 totalMetrics.append(metrics)
                                             
             if all(truncations.values()):                                
                 metrics = info['metrics']
-                metrics['Reward'] = episode_reward
+                metrics['S_Reward'] = episode_reward
                 metrics["Algorithm"] = algorithm
                 totalMetrics.append(metrics)
 

@@ -6,6 +6,9 @@ class SwarmGap:
         
         self.seed = seed
         
+        self.rndGen = random.Random(seed)
+        np.random.seed(self.rndGen.randint(0,1000000000))
+        
         self.drones = drones
         self.tasks = tasks        
         
@@ -22,6 +25,7 @@ class SwarmGap:
         self.token_exchange_list = np.random.permutation(np.arange(0, self.n_agents))
 
    
+
     def process_token(self, drones, tasks):
                 
         self.drones = drones
@@ -50,8 +54,8 @@ class SwarmGap:
             else:
             
                 #Higer Alpha priorize Distance    
-                alpha = 0.3
-                st = 0.6
+                alpha = 0.4
+                st = 0.5
                         
                 capability = (max_dist - distances) / max_dist * alpha + (1 - (max_Q  - Qs) / max_Q) * (1 - alpha) 
                 #print( distances)
@@ -59,16 +63,19 @@ class SwarmGap:
                 
                 tendencies = pow(st,2) / (pow(st,2) + np.square(1-capability))
                 
-                chosen_index = - 1
+                chosen_index = -1
 
-                tendencies = sorted(tendencies,reverse=True)  
-                #print(tendencies)         
+                #sorted_tendencies = sorted(tendencies,reverse=True)
                 
-                for i,t in enumerate(tendencies):        
+                sorted_list = sorted(enumerate(tendencies), key=lambda x: x[1] ,reverse=True)  
+                sorted_values = [value for index, value in sorted_list]
+                sorted_indices = [index for index, value in sorted_list]                
+                
+                for i,t in enumerate(sorted_values):        
                     #chosen_index = np.random.choice(np.arange(len(capability)), p=tendencies)
-                    randN = random.uniform(0,1)
+                    randN = self.rndGen.uniform(0,1)
                     if t > randN:
-                        chosen_index = i
+                        chosen_index = sorted_indices[i]
                         break
                     #else:
                     #   print("rejected", t, " vs ", randN)

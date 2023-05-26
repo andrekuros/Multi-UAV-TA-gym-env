@@ -9,13 +9,13 @@ class sceneData:
         self.ContactLine = 550
         self.Bases = [np.array([400,680])]
         
-        self.UavTypes = [ "R1", "F1"]#, "F1", "F2", "C1", "C2"]
+        self.UavTypes = [ "R1", "R2", "F1", "F2", "C1", "C2"]
                                          
         self.TaskTypes =                    [ "Rec"  , "Att" , "Esc" , "Jam" , "Com" ]
         self.UavCapTable ={ "R1" : np.array([   1.0  ,  0.0  ,  0.0  ,  0.5  ,  0.5  ]),
-                            "R2" : np.array([   1.0  ,  0.0  ,  0.0  ,  0.3  ,  1.0  ]),
-                            "F1" : np.array([   0.3  ,  1.0  ,  1.0  ,  0.3  ,  0.5  ]),
-                            "F2" : np.array([   0.2  ,  0.7  ,  0.8  ,  0.5  ,  0.5  ]),                            
+                            "R2" : np.array([   0.8  ,  0.0  ,  0.0  ,  0.3  ,  1.0  ]),
+                            "F1" : np.array([   0.2  ,  1.0  ,  1.0  ,  0.3  ,  0.5  ]),
+                            "F2" : np.array([   0.3  ,  0.7  ,  0.8  ,  0.5  ,  0.5  ]),                            
                             "C1" : np.array([   0.0  ,  0.0  ,  0.0  ,  1.0  ,  0.8  ]),
                             "C2" : np.array([   0.0  ,  0.0  ,  0.0  ,  0.7  ,  1.0  ])}
         
@@ -23,11 +23,11 @@ class sceneData:
         self.TaskIndex = {name : idx  for idx, name in enumerate(self.TaskTypes)}
         
         self.maxSpeeds = {  "F1" : 20.0,
-                            "F2" : 7.0,
+                            "F2" : 15.0,
                             "R1" : 10.0,
                             "R2" : 15.0,
-                            "C1" : 2.0,
-                            "C2" : 1.5}
+                            "C1" : 5.0,
+                            "C2" : 6.5}
         
         self.Endurances = { "F1" : 1000,
                             "F2" : 800,

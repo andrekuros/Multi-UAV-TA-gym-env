@@ -1,7 +1,6 @@
 import gym
 from gym import spaces
 from gym.spaces import Dict, Discrete, MultiDiscrete, Box
-import pygame
 import numpy as np
 import random
 import copy
@@ -9,7 +8,7 @@ import sys
 
 import matplotlib.pyplot as plt
 import seaborn as sns
-from pygame_screen_recorder import pygame_screen_recorder as pgr
+#from pygame_screen_recorder import pygame_screen_recorder as pgr
 
 from pettingzoo import ParallelEnv
 from pettingzoo.utils import parallel_to_aec, wrappers
@@ -77,12 +76,12 @@ class MultiDroneEnv(ParallelEnv):
         
         self.max_time_steps = self.config.max_time_steps
         self.time_steps = 0 
+        self.conclusion_time = self.max_time_steps
+
         self.render_speed = self.config.render_speed        
         self.render_enabled = self.config.render_speed != -1 #Render is activated if speed != -1
-        self.render_mode = self.config.render_mode
+        self.render_mode = self.config.render_mode        
         
-
-        self.clock = pygame.time.Clock()
         self.action_mode = self.config.action_mode
         self.reached_tasks = set()
         
@@ -139,7 +138,9 @@ class MultiDroneEnv(ParallelEnv):
         self.recrdr = None
         
         if self.render_enabled:
+            import pygame
             pygame.init()
+            self.clock = pygame.time.Clock()
             # Configurar o MovieWriter
             #self.recrdr = pgr("Test_Tessi.gif") # init recorder object
               
@@ -207,7 +208,7 @@ class MultiDroneEnv(ParallelEnv):
         for agent in self.agents_obj:
             #print("taks", task.task_id)
             #distance = self.euclidean_distance(agent.next_free_position, task.position)  # Compute the distance
-            agents_values.extend(self._one_hot(agent.typeIdx, 2))
+            agents_values.extend(self._one_hot(agent.typeIdx, 4))
             
             agents_values.extend([
                 #distance / self.max_coord,  # Normalize the distance
@@ -239,7 +240,7 @@ class MultiDroneEnv(ParallelEnv):
             agent.name : {
                 "agent_position": agent.position / self.max_coord,
                 "agent_state": self._one_hot(agent.state, 5),
-                "agent_type": self._one_hot(agent.typeIdx, 2),
+                "agent_type": self._one_hot(agent.typeIdx, 4),
                 "next_free_time": [agent.next_free_time / self.max_time_steps],
                 "position_after_last_task": agent.next_free_position / self.max_coord,
                 #"agent_relay_area": agent.relay_area,
@@ -314,7 +315,7 @@ class MultiDroneEnv(ParallelEnv):
         for agent_type, n_agents in self.agents_config.items():
             n_previous = len(self.agents_obj)
             self.agents_obj += [Drone(n_previous + i, self.agents[i + n_previous], 
-                                      self.random_position(self.rndAgentGen) if self.random_init_pos else self.bases[0],
+                                      self.random_position(self.rndAgentGen, obstacles = self.obstacles) if self.random_init_pos else self.bases[0],
                                       agent_type, self.sceneData) for i in range(n_agents)]
             #self.agents_obj += [Drone(n_previous + i, self.agents[i + n_previous], self.bases[0], agent_type, self.sceneData) for i in range(n_agents)]
             
@@ -383,11 +384,17 @@ class MultiDroneEnv(ParallelEnv):
         action_reward = 0
         distance_reward = 0
         quality_reward = 0
+        time_reward = 0
 
         done_events = []                
 
         self.agent_selection = self.agent_selector.next()
+        
+        while self.agents_obj[self.agent_name_mapping[self.agent_selection]].state == -1:
+            self.agent_selection = self.agent_selector.next()            
+
         self.current_agent = self.agent_selection
+        
         #print(".", end="")
         if self.action_mode == "TaskAssign":
                       
@@ -416,7 +423,10 @@ class MultiDroneEnv(ParallelEnv):
                 for drone_name, obs_task_ids in actions.items():                                    
                         
                         drone_index = self.agent_name_mapping[drone_name]
-                                                                        
+                        
+                        if self.agents_obj[drone_index].state == -1:
+                            continue
+
                         if not isinstance(obs_task_ids, list):                                                                            
                             
                             #case of stay idle action
@@ -453,6 +463,10 @@ class MultiDroneEnv(ParallelEnv):
                                             action_reward += 5.0 #* self.agents_obj[drone_index].fit2Task[task.typeIdx]#
                                             quality_reward += self.agents_obj[drone_index].fit2Task[task.typeIdx]   # noqa: E501
                                             distance_reward += self.calculate_drone_expected_reward(self.agents_obj[drone_index])                                                  
+                                            
+                                            if not -1 in self.allocation_table:
+                                                
+                                                time_reward = max(self.agents_obj, key=lambda obj: obj.next_free_time).next_free_time / 200
                                             
                                             if self.agents_obj[drone_index].state != 1 and self.agents_obj[drone_index].state != -1: 
                                                 self.agents_obj[drone_index].state = 1
@@ -544,7 +558,10 @@ class MultiDroneEnv(ParallelEnv):
                                 if task_id not in self.reached_tasks:
                                     reached_tasks_this_step.add(task_id)
                                     self.reached_tasks.add(task_id) 
-                                    self.tasks[task_id].status = 2
+                                    self.tasks[task_id].status = 2    
+
+                                    if len(self.reached_tasks) == self.n_tasks:
+                                        self.conclusion_time = self.time_steps
                                 
                                 #print("----------TASK_DONE:------------" , task_id,self.tasks[task_id].final_quality)                                
                                 
@@ -588,28 +605,28 @@ class MultiDroneEnv(ParallelEnv):
             self.drone_distances += dists    
             self.total_distance += np.sum(dists)
                                                                                               
-            time_reward = - (self.n_tasks - len(self.reached_tasks))/self.n_tasks * (self.time_steps / self.max_time_steps)
+            #time_reward = - (self.n_tasks - len(self.reached_tasks))/self.n_tasks * (self.time_steps / self.max_time_steps)
             alloc_reward = - self.allocation_table.count(-1)            
                         
             #print(self.allocation_table)
             #print(alloc_reward)
                          
             # rewards for all agents are placed in the rewards dictionary to be returned
-            self.rewards = {agent.name :  1.0 * action_reward  +   #Rand +50
-                                          6.0 * distance_reward +  #Rand -4
-                                          4.0 * quality_reward +   #Rand +6
-                                          0.0 * time_reward +      #Rand -9
+            self.rewards = {agent.name :  0.0 * action_reward  +   #Rand +50
+                                          2.5 * distance_reward +  #Rand -4
+                                          6.0 * quality_reward +   #Rand +6
+                                          1.5 * self.n_tasks * time_reward +      #Rand -9
                                           0.0 * alloc_reward  for agent in self.agents_obj} #Rand -28 
             
             #[ self._cumulative_rewards[agent] = self.rewards[agent] for agent in self.possible_agents]
                                        
             #Definir a condição de término (todos os alvos alcançados)
-            done = (len(self.reached_tasks) == self.n_tasks or (self.time_steps >= self.max_time_steps and self.max_time_steps > 0))  
+            done = (len(self.reached_tasks) == self.n_tasks or ((self.time_steps >= self.max_time_steps) and (self.max_time_steps > 0)))
             
             #Only for speed up traning without Dynamic conditions
-            done = done or (self.allocation_table.count(-1) == 0 and self.time_steps >= 50)
+            #done = done or (self.allocation_table.count(-1) == 0 and self.time_steps >= 50)
                                   
-            self.terminations = { agent.name : (done and (agent.state <= 0 )) for agent in self.agents_obj}
+            self.terminations = { agent.name : (done or (agent.state < 0 )) for agent in self.agents_obj}
             
             #env_truncation = done#(self.time_steps >= self.max_time_steps) if self.max_time_steps > 0 else done             
             env_truncation = (self.time_steps >= self.max_time_steps) if self.max_time_steps > 0 else done             
@@ -627,8 +644,6 @@ class MultiDroneEnv(ParallelEnv):
             
             #print(self.current_agent, end=".")
 
-            
-
             if done:
                 metrics =  self.calculate_metrics() 
                 self.infos['metrics'] = metrics
@@ -640,22 +655,10 @@ class MultiDroneEnv(ParallelEnv):
                                         
     
     def observe(self, agent):
-        """
-        Returns the observation for the given agent.
-
-        :param agent: the agent whose observation is being requested
-        :type agent: str or int
-        :return: the observation for the given agent
-        :rtype: np.ndarray or other appropriate type
-        """
-        # Get the observation for the given agent
-        # For example:
-        #agent = "agent" + str(agent)
+   
+        # Get the observation for the given agent   
         observation = self.observations[agent]
         observation['agent_id'] = agent
-
-        #print("Env:", agent)
-
         return observation
  
     def calculate_drone_expected_reward(self, agent):
@@ -667,8 +670,7 @@ class MultiDroneEnv(ParallelEnv):
         
         # Calculate distance between current position and first task
         #total_distance += np.linalg.norm(uav_position - self.tasks[0].position) 
-    
-    
+
         # Calculate distance between last task and base position
         if len(agent.tasks) >= 2:
             total_distance = np.linalg.norm(agent.next_free_position - self.tasks[agent.tasks[-2]].position)
@@ -709,16 +711,7 @@ class MultiDroneEnv(ParallelEnv):
     
                 if detected:
                     obstacle.detected_segments.append((start_angle, stop_angle))
-
-    def _get_observation(self,mode="DroneControl"):
-        
-        return np.concatenate((self.all_agent_positions, self.all_agent_positions))
-                
-    def _check_done(self):
-        # Verificar se todos os drones estão próximos de um alvo
-        done = all(any(np.linalg.norm(drone - task) < 10 for task in self.tasks) for drone in self.agents_obj)
-        return done
-    
+                        
     def random_position(self,  rndGen, obstacles = None, min_distance = 20, own_range = 3, contact_line = False):
           
         if contact_line:
@@ -730,7 +723,7 @@ class MultiDroneEnv(ParallelEnv):
         while tries < 100:            
             
             x = rndGen.uniform(own_range + min_distance, self.area_width - own_range - min_distance)
-            y = rndGen.uniform(own_range + min_distance, self.area_height - own_range - min_distance - (self.area_height-limit_line))
+            y = rndGen.uniform(own_range + min_distance, self.area_height - own_range - min_distance - ((self.area_height-limit_line) if limit_line != 0 else 0))
             
             point = np.array([x, y])
     
@@ -752,8 +745,7 @@ class MultiDroneEnv(ParallelEnv):
             tries +=  1
         
         raise ValueError(f'Error to build a valid scenario, can´t find no space for more {len(obstacles)-1} then obstacles')        
-           
-      
+                
     def calculate_capacities_table(self, drones, tasks, sceneData):
         
         # Cria uma matriz de capacidade inicializada com zeros
@@ -793,13 +785,11 @@ class MultiDroneEnv(ParallelEnv):
                 self.allocation_table[task.task_id] = -1
                 task.status = 0
                           
-        self.tasks_current_quality = {i: [] for i in range(self.n_tasks)}  
+        self.tasks_current_quality = {i: -1 for i in range(self.n_tasks)}  
     
     def get_live_agents(self):
 
-        return [agent for agent in self.agents_obj if agent.state != -1]
-
-        
+        return [agent for agent in self.agents_obj if agent.state != -1]     
 
 
 ####----------------------Metrics Calculation-----------------------------------
@@ -814,22 +804,23 @@ class MultiDroneEnv(ParallelEnv):
         return load_balancing
    
     def calculate_metrics(self):
-        
-        total_time = self.time_steps
+                
         total_distance = self.total_distance       
         #load_balancing = self.calculate_load_balancing()
-        #load_balancing_std = self.calculate_load_balancing_std()
+        load_balancing_std = self.calculate_load_balancing_std()
         
-        total_quality = np.mean([0 if t.final_quality == -1 else t.final_quality  for t in self.tasks])        
+        F_quality = np.mean([0 if t.final_quality == -1 else t.final_quality  for t in self.tasks])        
+        F_Time = 1 / self.conclusion_time * self.max_time_steps
+        F_distance = 1 / total_distance * self.max_coord
+        F_Reward = 0.25 * F_distance + 0.6 * F_quality + 0.15 * F_Time
 
-        #for 15 drones / 50 ,tasks
-        #total_distance = 18245.25,  total_time = 397.5 , load_balancing_std = 371.21        
-        return {
-            "F_time": 1 / total_time ,
-            "F_distance": 1 / total_distance ,
+        return { 
+            "F_time": F_Time ,
+            "F_distance": F_distance ,
             #"load_balancing": load_balancing,
-            #"load_balancing_std": load_balancing_std / 436.920411,
-            "F_quality": total_quality            
+            "F_load": 1 / load_balancing_std,
+            "F_quality": F_quality,
+            "F_Reward": F_Reward 
         }
 
     def plot_metrics(self, df, n_agents, n_tasks):

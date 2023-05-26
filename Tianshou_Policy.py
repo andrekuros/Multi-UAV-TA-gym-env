@@ -6,7 +6,8 @@ from Custom_Classes import CustomNet
 from Custom_Classes import CustomCollector
 from Custom_Classes import CustomParallelToAECWrapper
 
-from tianshou.policy import BasePolicy, DQNPolicy, MultiAgentPolicyManager, RandomPolicy
+from tianshou.policy import BasePolicy,  MultiAgentPolicyManager, RandomPolicy
+from EvalDqn import DQNPolicy
 
 #from CustomClass_multi_head import CustomNet
 from Custom_Classes_simplified import CustomNetSimple
@@ -14,10 +15,11 @@ from Custom_Classes_simplified import CustomNetSimple
 #from Custom_Classes_simplified import CustomParallelToAECWrapperSimple
 
 from CustomClasses_Transformer_Reduced import CustomNetReduced
+from CustomClass_MultiHead_Transformer import CustomNetMultiHead
 from DroneEnv import MultiDroneEnv
 
-
-def _get_model(env = None):
+# "CustomNet" or "CustomNetSimple" or "CustomNetReduced" or "CustomNetMultiHead"
+def _get_model(model="CustomNetMultiHead", env = None):
         
     env = _get_env(env)
     agent_name = env.agents[0]  # Get the name of the first agent
@@ -30,7 +32,6 @@ def _get_model(env = None):
     state_shape_position_after_last_task = agent_observation_space["position_after_last_task"].shape[0]       
     #state_shape_agent_relay_area = agent_observation_space["agent_relay_area"].shape[0]
     
-    
     state_shape_agent = (state_shape_agent_position + state_shape_agent_state +
                      state_shape_agent_type+ state_shape_next_free_time + state_shape_position_after_last_task #+                     
                      #state_shape_agent_relay_area
@@ -42,14 +43,25 @@ def _get_model(env = None):
     action_shape = env.action_space[agent_name].shape[0]
     #action_shape = env.action_space[agent_name].n
 
+    if model == "CustomNetMultiHead":
+        net = CustomNetMultiHead(            
+            state_shape_agent=state_shape_agent,
+            state_shape_task=state_shape_task,
+            action_shape=action_shape,
+            hidden_sizes=[128,128],
+            device="cuda" if torch.cuda.is_available() else "cpu",
+        ).to("cuda" if torch.cuda.is_available() else "cpu")
 
-    net = CustomNetReduced(            
-        state_shape_agent=state_shape_agent,
-        state_shape_task=state_shape_task,
-        action_shape=action_shape,
-        hidden_sizes=[128,128],
-        device="cuda" if torch.cuda.is_available() else "cpu",
-    ).to("cuda" if torch.cuda.is_available() else "cpu")
+    if model == "CustomNetReduced":
+         net = CustomNetReduced(            
+            state_shape_agent=state_shape_agent,
+            state_shape_task=state_shape_task,
+            action_shape=action_shape,
+            hidden_sizes=[128,128],
+            device="cuda" if torch.cuda.is_available() else "cpu",
+        ).to("cuda" if torch.cuda.is_available() else "cpu")
+
+
     optim = torch.optim.Adam(net.parameters(), lr=1e-4)
 
     agent_learn = DQNPolicy(

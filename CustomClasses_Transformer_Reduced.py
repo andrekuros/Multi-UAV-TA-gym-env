@@ -114,8 +114,7 @@ class CustomNetReduced(Net):
         tasks_info = torch.tensor(obs["tasks_info"], dtype=torch.float32).to(self.device)  # Convert tasks_info to tensor         
         tasks_info = tasks_info.view(-1, self.max_tasks, self.task_size)#int(len(tasks_info[0]/10))) #calculate the size of each tasks, and consider 10 max tasks                         
         task_embeddings = self.task_encoder(tasks_info)
-        
-        #position_after_last_task = tasks_info.view(-1, 6, 2)
+                
         #drone_embeddings = self.drone_encoder(position_after_last_task)
 
         transformer_output1 = self.combined_transformer(task_embeddings).view(-1, self.max_tasks, self.embedding_size)

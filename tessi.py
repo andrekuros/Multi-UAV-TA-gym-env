@@ -14,12 +14,12 @@ class TessiAgent:
                 
         selected = set()
         #print(task_states[0].task_id)
+        max_rew = float('-inf')
+        chosen_task = None
+        drone_name = None
         
         for drone in drone_states:
-                        
-            min_rew = float('inf')
-            chosen_task = None
-                        
+            
             for task in task_states:
                 
                 if task.task_id in selected:
@@ -28,19 +28,20 @@ class TessiAgent:
                 distance = np.linalg.norm(drone.next_free_position - task.position) / self.max_dist
                 quality = drone.fit2Task[task.typeIdx]
                 
-                if -6.0 * distance  + 4.0 * quality < min_rew:
-                    min_rew = distance * quality
+                if -4.0 * distance  + 6.0 * quality > max_rew:
+                    max_rew = -4.0 * distance  + 6.0 * quality
                     chosen_task = task.task_id
+                    drone_name = drone.name
                     
 
-            if chosen_task != None:
-                
-                if self.tessi_model == 1:                
-                    action[drone.name] = chosen_task
-                    selected.add(chosen_task)
-                #elif self.tessi_model == 2:
-                #    if chosen_task not in allocation:
-                #        action[drone.id] = chosen_task
+        if chosen_task != None:
+            
+                        
+            action[drone_name] = chosen_task
+           
+            #elif self.tessi_model == 2:
+            #    if chosen_task not in allocation:
+            #        action[drone.id] = chosen_task
 
         return action
    
