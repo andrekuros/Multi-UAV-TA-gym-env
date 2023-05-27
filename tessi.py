@@ -28,8 +28,8 @@ class TessiAgent:
                 distance = np.linalg.norm(drone.next_free_position - task.position) / self.max_dist
                 quality = drone.fit2Task[task.typeIdx]
                 
-                if -4.0 * distance  + 6.0 * quality > max_rew:
-                    max_rew = -4.0 * distance  + 6.0 * quality
+                if -2.5 * distance  + 6.0 * quality > max_rew:
+                    max_rew = -2.5 * distance  + 6.0 * quality
                     chosen_task = task.task_id
                     drone_name = drone.name
                     

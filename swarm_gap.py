@@ -38,6 +38,7 @@ class SwarmGap:
         drone_id = self.token_exchange_list[0]        
         drone = self.drones[drone_id]
                                        
+                                       
         if drone.state != -1:
             
             distances = np.linalg.norm(np.array([task.position for task in tasks]) - drone.next_free_position, axis=1)       
@@ -54,7 +55,7 @@ class SwarmGap:
             else:
             
                 #Higer Alpha priorize Distance    
-                alpha = 0.4
+                alpha = 0.3
                 st = 0.5
                         
                 capability = (max_dist - distances) / max_dist * alpha + (1 - (max_Q  - Qs) / max_Q) * (1 - alpha) 

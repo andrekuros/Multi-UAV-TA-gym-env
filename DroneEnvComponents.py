@@ -126,6 +126,7 @@ class Task:
         self.position = position
         self.type = task_type
         self.typeIdx = sceneData.TaskIndex[self.type]
+        self.fit2Agent = [cap[self.typeIdx] for cap in sceneData.UavCapTable.values()]#sceneData.UavCapTable[self.type] 
         
         self.status = 0 # 0 - waiting Allocation / 1 - Allocated / 2 - Concluded
         self.task_window = task_window

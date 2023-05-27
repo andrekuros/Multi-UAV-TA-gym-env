@@ -12,7 +12,7 @@ from pettingzoo.utils.wrappers import OrderEnforcingWrapper
 
 import torch.nn.functional as F
 
-class CustomNetMultiHead(Net):
+class CustomNetMultiHeadComplete(Net):
     def __init__(
         self,
         state_shape_agent: int,
@@ -36,13 +36,13 @@ class CustomNetMultiHead(Net):
         self.max_agents = 10
         self.agent_size = 5                                                                     
                 
-        # self.agents_encoder = nn.Sequential(
-        #     nn.Linear(self.agent_size, 64),
-        #     nn.ReLU(),
-        #     nn.Linear(64, 128),
-        #     nn.ReLU(),
-        #     nn.Linear(128, 32)
-        # ).to(device)
+        self.agents_encoder = nn.Sequential(
+             nn.Linear(self.agent_size, 64),
+             nn.ReLU(),
+             nn.Linear(64, 32),
+             nn.ReLU(),
+             nn.Linear(32, 64)
+         ).to(device)
 
         # self.own_encoder = nn.Sequential(
         #     nn.Linear(self.agent_size, 64),
@@ -58,22 +58,19 @@ class CustomNetMultiHead(Net):
             # nn.ReLU(),
             # nn.Linear(32, 64),
             # nn.ReLU(),
-            # nn.Linear(64, 128),
-            # nn.ReLU(),
-            # nn.Linear(128, 64)
+            # nn.Linear(64, 32)
         ).to(device)
                
         self.embedding_size = 64 #sum of drone and task encoder
         
 
-        #self.multihead_attention = nn.MultiheadAttention(embed_dim=self.embedding_size, num_heads=nhead).to(device)
+        self.tasks_attention = nn.MultiheadAttention(embed_dim=self.embedding_size, num_heads=nhead).to(device)
         self.own_attention = nn.MultiheadAttention(embed_dim=self.embedding_size, num_heads=nhead).to(device)
         #self.agents_attention = nn.MultiheadAttention(embed_dim=32, num_heads=nhead).to(device)
 
         self.norm1 = nn.LayerNorm(self.embedding_size)
         self.norm2 = nn.LayerNorm(self.embedding_size)
         self.norm3 = nn.LayerNorm(self.embedding_size)
-        
         # self.task_score_seq = nn.Sequential(
         #         nn.Linear(32, 64),
         #         nn.ReLU(),
@@ -84,8 +81,6 @@ class CustomNetMultiHead(Net):
         
         self.decoder_attention = nn.MultiheadAttention(embed_dim=self.embedding_size, num_heads=nhead).to(device)
         #self.output = nn.Linear(sizes[-1], action_shape).to(device)  
-        
-        
         self.output = nn.Linear(64, 1).to(device)
                 
         
@@ -99,40 +94,57 @@ class CustomNetMultiHead(Net):
         next_free_time = torch.tensor(obs["next_free_time"], dtype=torch.float32).to(self.device)
         position_after_last_task = torch.tensor(obs["position_after_last_task"], dtype=torch.float32).to(self.device)         
         
-        #drone_embeddings = self.drone_encoder(torch.cat((tasks_info,position_after_last_task, next_free_time, agent_type ), dim=-1))               
+        # drone_embeddings = self.drone_encoder(torch.cat((tasks_info,position_after_last_task, next_free_time, agent_type ), dim=-1))               
 
-        # own_embeddings = torch.cat((agent_type,
-        #                             position_after_last_task,                                                         
-        #                             next_free_time), dim=1)                            
-        #own_embeddings = self.own_encoder(own_embeddings)
-        #own_embeddings = own_embeddings.unsqueeze(1)  # Now own_embeddings has shape (10, 1, 64)
+        own_embeddings = torch.cat((agent_type,
+                                     position_after_last_task,                                                         
+                                     next_free_time), dim=1).transpose(0, 1)                            
+        own_embeddings = self.agents_encoder(own_embeddings)
+        own_embeddings = own_embeddings.unsqueeze(1)  # Now own_embeddings has shape (10, 1, 64)
 
         tasks_info = torch.tensor(obs["tasks_info"], dtype=torch.float32).to(self.device)  # Convert tasks_info to tensor         
         tasks_info = tasks_info.view(-1, self.max_tasks, self.task_size)#int(len(tasks_info[0]/10))) #calculate the size of each tasks, and consider 10 max tasks                         
         task_embeddings = self.task_encoder(tasks_info)
         
-        # agents_info = torch.tensor(obs["agents_info"], dtype=torch.float32).to(self.device)  # Convert agents_info to tensor         
-        # agents_info = agents_info.view(-1, self.max_agents, self.agent_size)#int(len(tasks_info[0]/10))) #calculate the size of each tasks, and consider 10 max tasks                         
-        # agents_embeddings = self.agents_encoder(agents_info)        
+        #agents_info = torch.tensor(obs["agents_info"], dtype=torch.float32).to(self.device)  # Convert agents_info to tensor         
+        #agents_info = agents_info.view(-1, self.max_agents, self.agent_size)#int(len(tasks_info[0]/10))) #calculate the size of each tasks, and consider 10 max tasks                         
+        #agents_embeddings = self.agents_encoder(agents_info)        
         
-        #print("task_embeddings",task_embeddings.shape )
+        print("tasks_info",tasks_info.shape )
         #print("own_embeddings:", own_embeddings.shape)
         # print("agents_embeddings:", agents_embeddings.shape)
         
         # Prepare the queries, keys, and values
         #queries = task_embeddings.transpose(0, 1)  # MultiheadAttention expects input in shape (seq_len, batch, embedding_dim)
-        
-        own_attention_output, _ = self.own_attention(task_embeddings, task_embeddings, task_embeddings)
+
+        own_attention_output, _ = self.own_attention(own_embeddings, own_embeddings, own_embeddings)
         # own_attention_output, _ = self.own_attention(queries, own_embeddings.transpose(0, 1), own_embeddings.transpose(0, 1))
         # agents_attention_output, _ = self.agents_attention(queries, agents_embeddings.transpose(0, 1), agents_embeddings.transpose(0, 1))
-        own_attention_output = self.norm1(own_attention_output + task_embeddings)  # Add skip connection and normalization
-        # print("task_embeddings_query",queries.shape )
-        #print("own_attention_output:", own_attention_output.shape)
+        own_attention_output = self.norm1(own_attention_output + own_embeddings)  # Add skip connection and normalization
+        
+        print("agents_embeddings",own_embeddings.shape )
+        print("own_attention_output:", own_attention_output.shape)
         # print("agents_attention_outputs:", agents_attention_output.shape)
-        own_attention_output, _ = self.decoder_attention(own_attention_output, own_attention_output, own_attention_output)
+        
+        task_attention_output, _ = self.own_attention(task_embeddings, task_embeddings, task_embeddings)
+        # own_attention_output, _ = self.own_attention(queries, own_embeddings.transpose(0, 1), own_embeddings.transpose(0, 1))
+        # agents_attention_output, _ = self.agents_attention(queries, agents_embeddings.transpose(0, 1), agents_embeddings.transpose(0, 1))
+        task_attention_output = self.norm2(task_attention_output + task_embeddings)  # Add skip connection and normalization
+        
+        print("task_embeddings_query",task_embeddings.shape )
+        print("own_attention_output:", task_attention_output.shape)
+        
+
+        
+        
+        own_attention_output, _ = self.decoder_attention(task_attention_output, own_attention_output, own_attention_output)
         own_attention_output = self.norm2(own_attention_output + task_embeddings)  # Add skip connection and normalization
+        
+        
         # Combine the attention outputs
         attention_output = own_attention_output#torch.cat((own_attention_output, agents_attention_output), dim=-1)
+
+        
 
         #attention_output = attention_output.transpose(0, 1) 
                         
@@ -143,8 +155,8 @@ class CustomNetMultiHead(Net):
         output = self.output(attention_output)
         #task_probabilities = F.softmax(task_scores, dim=-1)            
         
-              
         softmax_output = F.softmax(output, dim=1) 
+        #print("softmax_output:" , softmax_output.shape)
         softmax_output = torch.squeeze(softmax_output, -1)
         #print("softmax_output_Final:" , softmax_output)
        

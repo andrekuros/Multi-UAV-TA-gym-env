@@ -30,7 +30,7 @@ algorithms += ['Random']
 algorithms += ["Greedy"]
 algorithms += ["Swarm-GAP"]
 #algorithms += ["CBBA"]
-#algorithms +=  ["TBTA"]
+algorithms +=  ["TBTA"]
 algorithms +=  ["TBTA2"]
 #algorithms +=  ["CTBTA"]
 
@@ -39,7 +39,7 @@ episodes = 30
 
 config = utils.DroneEnvOptions(     
     render_speed = -1,
-    max_time_steps = 1000,
+    max_time_steps = 500,
     action_mode= "TaskAssign",
     agents= {"F1" : 4,"R1" : 6},                 
     tasks= { "Att" : 4 , "Rec" : 16},
@@ -122,7 +122,7 @@ for algorithm in algorithms:
             # load policy as in your original code
             
             if algorithm == "TBTA":
-                load_policy_name = 'policy_CustomNetReducedEval_TBTA_03_pre_process.pth'
+                load_policy_name = 'policy_CustomNetReducedEval_TBTA_03_pre_process_New_REW_step500.pth'
                 load_policy_path = os.path.join("dqn_Custom", load_policy_name)                    
                 agent = _get_model(model="CustomNetReduced", env=worldModel)           
                 
@@ -248,9 +248,11 @@ for algorithm in algorithms:
                     agent_id = "agent" + str(worldModel.agent_selector._current_agent)                
                     obs_batch = Batch(obs=observation[agent_id], info=[{}])               
                     action = agent(obs_batch).act
-                    #print(action)
+                    #print([task.type for task in un_taks_obj])
+                    #print([agent.type for agent in worldModel.get_live_agents()], worldModel.time_steps)
                     action = np.argmax(action)
                     actions = {agent_id : action}
+                    #print(actions)
             
             elif algorithm == "CTBTA":
                 
@@ -266,7 +268,7 @@ for algorithm in algorithms:
                         #print(Qs)            
                     #print(Qs)
                     actions = agent.allocate_tasks(live_agents , un_taks_obj, Qs=Qs ) 
-                    print(actions)
+                    #print(actions)
                     
             
             #if actions != {} and actions != None:
@@ -300,21 +302,27 @@ for algorithm in algorithms:
     
     worldModel.close()
 
+
 for alg in algorithms:
     print(f'Rew({alg}): {np.mean(total_reward[alg])}')
     print(f'Rew({alg}): Max: {max(total_reward[alg])}, Min: {min(total_reward[alg])}')
     #plt.hist(total_reward[alg], bins=100)
     #plt.show()
 
+#%%%
 
 metricsDf = pd.DataFrame(totalMetrics)
+# Salvar o DataFrame em um arquivo CSV
+metricsDf.to_csv('Resultados_Final_01_07ob_Trein100Est_Dyn07.csv', index=False)
+
 #worldModel.plot_metrics(metricsDf, len(worldModel.agents), worldModel.n_tasks)
 import seaborn as sns
+import matplotlib as mpl
 
-#for algorithm in algorithms:
-#    worldModel.plot_convergence(metricsDf[metricsDf.Algorithm == algorithm], len(worldModel.agents), len(worldModel.tasks), algorithm)
+# Define o estilo seaborn como 'whitegrid'
+sns.set_style("whitegrid")
 
-df = metricsDf#[metricsDf['Algorithm'] != 'Greedy']
+df = metricsDf.drop(['F_load', 'F_Reward'], axis=1)#[metricsDf['Algorithm'] != 'Greedy']
 #print(metricsDf.mean())
 grouped = df.groupby('Algorithm', sort=False)
 means = grouped.mean()
@@ -322,6 +330,8 @@ std_devs = grouped.std()
 
 std_devs = std_devs / means.loc['Random']
 means = means / means.loc['Random']        
+std_devs
+means
 
 # Calculate the number of algorithms and metrics
 num_algorithms = len(grouped)
@@ -330,32 +340,39 @@ num_metrics = len(df.columns) - 1
 palette = sns.color_palette("Set1",n_colors=num_algorithms)
         
 # Create a single plot
-fig, ax = plt.subplots(figsize=(10, 5))
+fig, ax = plt.subplots(figsize=(8, 6))
 
 # Define the bar width and the spacing between groups of bars
-bar_width = 0.7 / num_algorithms
-group_spacing = 1.2
+bar_width = 0.6 / num_algorithms
+group_spacing = 0.9
 
 max_val = 0
 # Create a bar chart for each algorithm
 for i, (algo, data) in enumerate(grouped):
     index = np.arange(num_metrics) * group_spacing + i * bar_width       
-    ax.bar(index, means.loc[algo], bar_width, alpha=0.8, label=algo, yerr=std_devs.loc[algo], capsize=5, color=palette[i])
+    ax.bar(index, means.loc[algo], bar_width, alpha=0.95, label=algo, yerr=std_devs.loc[algo], capsize=6, color=palette[i], linewidth=0.0)
     if  max(means.loc[algo]) > max_val:
          max_val = max(means.loc[algo])
 
-ax.set_xlabel('Metrics')
-ax.set_ylabel('Values')
-ax.set_title(f'Task Allocation: ({6} drones, {10} tasks)')
+ax.set_xlabel('Metrics',fontsize=12)
+ax.set_ylabel('Values',fontsize=12)
+ax.set_title(f'Task Allocation: ({10} drones, {20} tasks)  |  Dynamic: fails(0.7)',fontsize=14)
+
 ax.set_xticks(np.arange(num_metrics) * group_spacing + (bar_width * (num_algorithms - 1) / 2))
-ax.set_xticklabels(list(df.columns)[:-1])
-ax.legend()
-ax.set_ylim(0, max_val*1.1)
+ax.set_xticklabels(list(df.columns)[:-1], fontsize=12)
+
+ax.set_yticks(np.arange(0,max_val*1.35, 0.20))
+
+
+ax.legend(loc='upper left', fontsize=13)
+ax.set_ylim(0, max_val*1.35)
 
 plt.tight_layout()
 plt.show()
 
-
+#%%
+for algorithm in algorithms:
+    worldModel.plot_convergence(metricsDf[metricsDf.Algorithm == algorithm]/ means.loc['Random'], len(worldModel.agents), len(worldModel.tasks), algorithm)
 
 
 
