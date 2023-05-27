@@ -153,7 +153,7 @@ class MultiDroneEnv(ParallelEnv):
             "next_free_time": Box(low=0, high=1, shape=(1,), dtype=np.float32),
             "position_after_last_task": Box(low=0, high=1, shape=(2,), dtype=np.float32),
             #"agent_relay_area": Box(low=0, high=max(self.area_width, self.area_height), shape=(2,), dtype=np.float32),           
-            "tasks_info": Box(low=0, high=1, shape=((self.max_tasks ) * 5,), dtype=np.float32),
+            "tasks_info": Box(low=0, high=1, shape=((self.max_tasks ) * 3,), dtype=np.float32),
             "agents_info": Box(low=0, high=1, shape=((self.max_agents ) * 5,), dtype=np.float32),
             #"task_type": Discrete(2)  # Assuming 2 possible types
         }) 
@@ -183,13 +183,13 @@ class MultiDroneEnv(ParallelEnv):
             #print("taks", task.task_id)
             distance = self.euclidean_distance(agent.next_free_position, task.position)  # Compute the distance
             
-            task_values.extend(self._one_hot(task.typeIdx, 2))
+            #task_values.extend(self._one_hot(task.typeIdx, 2))
 
             task_values.extend([
-                #distance / self.max_coord,  # Normalize the distance
-                #agent.fit2Task[task.typeIdx],
-                task.position[0] / self.max_coord,
-                task.position[1] / self.max_coord,
+                distance / self.max_coord,  # Normalize the distance
+                agent.fit2Task[task.typeIdx],
+                #task.position[0] / self.max_coord,
+                #task.position[1] / self.max_coord,
 
                 1 if task.status == 0 else 0,                
 

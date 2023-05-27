@@ -64,8 +64,8 @@ class CustomNetMultiHeadComplete(Net):
         self.embedding_size = 64 #sum of drone and task encoder
         
 
-        self.tasks_attention = nn.MultiheadAttention(embed_dim=self.embedding_size, num_heads=nhead).to(device)
-        self.own_attention = nn.MultiheadAttention(embed_dim=self.embedding_size, num_heads=nhead).to(device)
+        self.tasks_attention = nn.MultiheadAttention(embed_dim=self.embedding_size, num_heads=nhead, batch_first=True).to(device)
+        self.own_attention = nn.MultiheadAttention(embed_dim=self.embedding_size, num_heads=nhead, batch_first=True).to(device)
         #self.agents_attention = nn.MultiheadAttention(embed_dim=32, num_heads=nhead).to(device)
 
         self.norm1 = nn.LayerNorm(self.embedding_size)
@@ -79,7 +79,7 @@ class CustomNetMultiHeadComplete(Net):
         #         nn.Linear(128, 32 )
         #     ).to(device)
         
-        self.decoder_attention = nn.MultiheadAttention(embed_dim=self.embedding_size, num_heads=nhead).to(device)
+        self.decoder_attention = nn.MultiheadAttention(embed_dim=self.embedding_size, num_heads=nhead, batch_first=True).to(device)
         #self.output = nn.Linear(sizes[-1], action_shape).to(device)  
         self.output = nn.Linear(64, 1).to(device)
                 

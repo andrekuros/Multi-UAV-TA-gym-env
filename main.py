@@ -30,7 +30,7 @@ algorithms += ['Random']
 algorithms += ["Greedy"]
 algorithms += ["Swarm-GAP"]
 #algorithms += ["CBBA"]
-algorithms +=  ["TBTA"]
+#algorithms +=  ["TBTA"]
 algorithms +=  ["TBTA2"]
 #algorithms +=  ["CTBTA"]
 

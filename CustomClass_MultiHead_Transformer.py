@@ -67,7 +67,7 @@ class CustomNetMultiHead(Net):
         
 
         #self.multihead_attention = nn.MultiheadAttention(embed_dim=self.embedding_size, num_heads=nhead).to(device)
-        self.own_attention = nn.MultiheadAttention(embed_dim=self.embedding_size, num_heads=nhead).to(device)
+        self.own_attention = nn.MultiheadAttention(embed_dim=self.embedding_size, num_heads=nhead, batch_first=True).to(device)
         #self.agents_attention = nn.MultiheadAttention(embed_dim=32, num_heads=nhead).to(device)
 
         self.norm1 = nn.LayerNorm(self.embedding_size)
@@ -82,7 +82,7 @@ class CustomNetMultiHead(Net):
         #         nn.Linear(128, 32 )
         #     ).to(device)
         
-        self.decoder_attention = nn.MultiheadAttention(embed_dim=self.embedding_size, num_heads=nhead).to(device)
+        self.decoder_attention = nn.MultiheadAttention(embed_dim=self.embedding_size, num_heads=nhead, batch_first=True).to(device)
         #self.output = nn.Linear(sizes[-1], action_shape).to(device)  
         
         
@@ -115,25 +115,26 @@ class CustomNetMultiHead(Net):
         # agents_info = agents_info.view(-1, self.max_agents, self.agent_size)#int(len(tasks_info[0]/10))) #calculate the size of each tasks, and consider 10 max tasks                         
         # agents_embeddings = self.agents_encoder(agents_info)        
         
-        #print("task_embeddings",task_embeddings.shape )
-        #print("own_embeddings:", own_embeddings.shape)
-        # print("agents_embeddings:", agents_embeddings.shape)
+        #print("tasks_info",tasks_info.shape )
+        #print("task_embeddings:", task_embeddings.shape)
+        
         
         # Prepare the queries, keys, and values
         #queries = task_embeddings.transpose(0, 1)  # MultiheadAttention expects input in shape (seq_len, batch, embedding_dim)
         
         own_attention_output, _ = self.own_attention(task_embeddings, task_embeddings, task_embeddings)
+        #print("own_attention_output:", own_attention_output.shape)
         # own_attention_output, _ = self.own_attention(queries, own_embeddings.transpose(0, 1), own_embeddings.transpose(0, 1))
         # agents_attention_output, _ = self.agents_attention(queries, agents_embeddings.transpose(0, 1), agents_embeddings.transpose(0, 1))
-        own_attention_output = self.norm1(own_attention_output + task_embeddings)  # Add skip connection and normalization
-        # print("task_embeddings_query",queries.shape )
+        own_attention_output = self.norm1(own_attention_output + task_embeddings)  # Add skip connection and normalization        
         #print("own_attention_output:", own_attention_output.shape)
-        # print("agents_attention_outputs:", agents_attention_output.shape)
+        
         own_attention_output, _ = self.decoder_attention(own_attention_output, own_attention_output, own_attention_output)
         own_attention_output = self.norm2(own_attention_output + task_embeddings)  # Add skip connection and normalization
         # Combine the attention outputs
+        #print("own_attention_output:", own_attention_output.shape)
         attention_output = own_attention_output#torch.cat((own_attention_output, agents_attention_output), dim=-1)
-
+        
         #attention_output = attention_output.transpose(0, 1) 
                         
         #task_scores = self.task_score_seq(attention_output)
@@ -141,13 +142,13 @@ class CustomNetMultiHead(Net):
         #print("Task_Scores:" , task_scores.shape)
         
         output = self.output(attention_output)
+        #print("own_attention_output:", own_attention_output.shape)
         #task_probabilities = F.softmax(task_scores, dim=-1)            
         
               
         softmax_output = F.softmax(output, dim=1) 
         softmax_output = torch.squeeze(softmax_output, -1)
-        #print("softmax_output_Final:" , softmax_output)
-       
+        #print("softmax_output_Final:" , softmax_output.shape)     
         return softmax_output, state
 
 
