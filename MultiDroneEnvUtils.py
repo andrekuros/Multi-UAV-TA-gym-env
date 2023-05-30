@@ -4,19 +4,21 @@ import numpy as np
 class DroneEnvOptions:
     def __init__(self, 
                  render_mode = 'human',                  
-                 render_speed=-1, 
+                 render_speed=-1,
+                 simulation_frame_rate = 0.2, 
                  action_mode="TaskAssign",
                  simulator_module = "Internal", 
-                 max_time_steps=30, 
-                 agents= {"F1" : 4,"R1" : 6},                 
-                 tasks= { "Att" : 4 , "Rec" : 16},
+                 max_time_steps=250, 
+                 agents= {"F1" : 2, "F2" : 2, "R1" : 3, "R2" : 3},                 
+                 tasks= { "Att" : 8 , "Rec" : 22},
                  random_init_pos=True,
                  num_obstacles=0,
                  hidden_obstacles = False,
-                 fail_rate = 0.0):
+                 fail_rate = 0.7):
         
         self.render_mode = render_mode 
         self.render_speed = render_speed
+        self.simulation_frame_rate = simulation_frame_rate
         self.action_mode=action_mode 
         self.simulator_module = simulator_module        
         self.max_time_steps = max_time_steps                

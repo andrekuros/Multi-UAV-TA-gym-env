@@ -5,7 +5,7 @@ class sceneData:
     def __init__(self):
         
         # Tamanho da tela        
-        self.GameArea = [1200,700]
+        self.GameArea = [1200,700] #each pixel represent 0.5nm
         self.ContactLine = 550
         self.Bases = [np.array([400,680])]
         
@@ -15,7 +15,7 @@ class sceneData:
         self.UavCapTable ={ "R1" : np.array([   1.0  ,  0.0  ,  0.0  ,  0.5  ,  0.5  ]),
                             "R2" : np.array([   0.8  ,  0.0  ,  0.0  ,  0.3  ,  1.0  ]),
                             "F1" : np.array([   0.2  ,  1.0  ,  1.0  ,  0.3  ,  0.5  ]),
-                            "F2" : np.array([   0.3  ,  0.7  ,  0.8  ,  0.5  ,  0.5  ]),                            
+                            "F2" : np.array([   0.3  ,  0.85  ,  0.8  ,  0.5  ,  0.5  ]),                            
                             "C1" : np.array([   0.0  ,  0.0  ,  0.0  ,  1.0  ,  0.8  ]),
                             "C2" : np.array([   0.0  ,  0.0  ,  0.0  ,  0.7  ,  1.0  ])}
         
@@ -43,10 +43,10 @@ class sceneData:
                             "C1" : 200.0,
                             "C2" : 250.0}
         
-        self.failTable = {  "F1" : 1.0,
-                            "F2" : 1.2,
-                            "R1" : 0.8,
-                            "R2" : 1.0,
+        self.failTable = {  "F1" : 1.5,
+                            "F2" : 0.8,
+                            "R1" : 1.2,
+                            "R2" : 0.8,
                             "C1" : 1.5,
                             "C2" : 2.0}
         

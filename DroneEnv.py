@@ -78,6 +78,7 @@ class MultiDroneEnv(ParallelEnv):
         
         self.max_time_steps = self.config.max_time_steps
         self.time_steps = 0 
+        self.simulation_frame_rate = self.config.simulation_frame_rate
         self.conclusion_time = self.max_time_steps
 
         self.render_speed = self.config.render_speed        
@@ -110,6 +111,7 @@ class MultiDroneEnv(ParallelEnv):
         self.n_tasks = sum(self.config.tasks.values())
         self.tasks_config = self.config.tasks               
         self.tasks = None
+        self.last_tasks_info = None
         
         #Dynamic Conditions        
         self.hidden_obstacles = self.config.hidden_obstacles        
@@ -180,21 +182,26 @@ class MultiDroneEnv(ParallelEnv):
         task_values = []     
 
         for task in self.tasks:
-            #print("taks", task.task_id)
-            distance = self.euclidean_distance(agent.next_free_position, task.position)  # Compute the distance
-            
-            #task_values.extend(self._one_hot(task.typeIdx, 2))
+            if task.status != 0:
+                continue
+            else:
+                #print("taks", task.task_id)
+                distance = self.euclidean_distance(agent.next_free_position, task.position)  # Compute the distance
+                
+                #task_values.extend(self._one_hot(task.typeIdx, 2))
 
-            task_values.extend([
-                distance / self.max_coord,  # Normalize the distance
-                agent.fit2Task[task.typeIdx],
-                #task.position[0] / self.max_coord,
-                #task.position[1] / self.max_coord,
+                task_values.extend([
+                    distance / self.max_coord,  # Normalize the distance
+                    agent.fit2Task[task.typeIdx],
+                    #task.position[0] / self.max_coord,
+                    #task.position[1] / self.max_coord,
 
-                1 if task.status == 0 else 0,                
+                    1 if task.status == 0 else 0,                
 
-                ])
-            
+                    ])
+                
+                
+        
         # Pad the task_values array to match the maximum number of tasks
         task_values.extend([-1] * (self._observation_spaces["agent0"]["tasks_info"].shape[0] - len(task_values)))
 
@@ -210,7 +217,7 @@ class MultiDroneEnv(ParallelEnv):
         for agent in self.agents_obj:
             #print("taks", task.task_id)
             #distance = self.euclidean_distance(agent.next_free_position, task.position)  # Compute the distance
-            agents_values.extend(self._one_hot(agent.typeIdx, 4))
+            agents_values.extend(self._one_hot(agent.typeIdx, 6))
             
             agents_values.extend([
                 #distance / self.max_coord,  # Normalize the distance
@@ -242,7 +249,7 @@ class MultiDroneEnv(ParallelEnv):
             agent.name : {
                 "agent_position": agent.position / self.max_coord,
                 "agent_state": self._one_hot(agent.state, 5),
-                "agent_type": self._one_hot(agent.typeIdx, 4),
+                "agent_type": self._one_hot(agent.typeIdx, 6),
                 "next_free_time": [agent.next_free_time / self.max_time_steps],
                 "position_after_last_task": agent.next_free_position / self.max_coord,
                 #"agent_relay_area": agent.relay_area,
@@ -252,6 +259,8 @@ class MultiDroneEnv(ParallelEnv):
             }
             for agent in self.agents_obj
         }
+
+        self.last_tasks_info = [task.task_id for task in self.tasks if task.status == 0]
         
     def _one_hot(self, idx, num_classes):
         one_hot_vector = np.zeros(num_classes)
@@ -424,60 +433,62 @@ class MultiDroneEnv(ParallelEnv):
                                 
                 for drone_name, obs_task_ids in actions.items():                                    
                         
-                        drone_index = self.agent_name_mapping[drone_name]
+                        drone_index = self.agent_name_mapping[drone_name]                       
                         
                         if self.agents_obj[drone_index].state == -1:
                             continue
 
                         if not isinstance(obs_task_ids, list):                                                                            
-                            
+                                                        
                             #case of stay idle action
-                            if obs_task_ids == self.max_tasks:
-                                action_reward += 1.0#5
+                            #if obs_task_ids == self.max_tasks:
+                            #    action_reward += 1.0#5
                                 #print("ok", end=".")
-                                continue
+                            #    continue
                             
                             obs_task_ids = [obs_task_ids]
                         
                         for obs_task_id in obs_task_ids:
                                                                                                                                             
-                            if obs_task_id >= self.n_tasks:
-                                action_reward += -10                                
+                            if obs_task_id < len(self.last_tasks_info):
+                                obs_task_id = self.last_tasks_info[obs_task_id]
                             else:                            
-                                task_id = obs_task_id                                                               
+                                action_reward += 0#-10                                
+                                                        
+                            task_id = obs_task_id                                                               
                                 
-                                if task_id != None:#and self.allocation_table.count(-1) != 0:                
-                                                            
-                                    #print(task_id,self.time_steps)
-                                    task = self.tasks[task_id]
+                            if task_id != None and self.allocation_table.count(-1) != 0:                
+                                                        
+                                #print(task_id,self.time_steps)
+                                task = self.tasks[task_id]
+                                
+                                if task.status == 0:
+                                    #print(drone_name, task, self.reached_tasks, self.agents_obj[drone_index].tasks)                                            
+                                    aloccation = self.agents_obj[drone_index].allocate(task, self.time_steps, self.max_time_steps)
                                     
-                                    if task.status == 0:
-                                        #print(drone_name, task, self.reached_tasks, self.agents_obj[drone_index].tasks)                                            
-                                        aloccation = self.agents_obj[drone_index].allocate(task, self.time_steps, self.max_time_steps)
+                                    if aloccation > 0:                                    
+                                        #print(f'{drone_name} -> {task_id} | Remianing: {self.allocation_table.count(-1)-1}')                                    
+                                        self.tasks_current_quality[task_id] = self.quality_table[drone_index][task_id]                              
+                                        #task_info[drone_index] = [task, 1]#, self.quality_table[drone_index][task], self.tasks[task].position]
+                                        self.allocation_table[task_id] = drone_index
+                                        task.status = 1
                                         
-                                        if aloccation > 0:                                    
-                                            #print(f'{drone_name} -> {task_id} | Remianing: {self.allocation_table.count(-1)-1}')                                    
-                                            self.tasks_current_quality[task_id] = self.quality_table[drone_index][task_id]                              
-                                            #task_info[drone_index] = [task, 1]#, self.quality_table[drone_index][task], self.tasks[task].position]
-                                            self.allocation_table[task_id] = drone_index
-                                            task.status = 1
+                                        action_reward += 5.0 #* self.agents_obj[drone_index].fit2Task[task.typeIdx]#
+                                        quality_reward += self.agents_obj[drone_index].fit2Task[task.typeIdx]   # noqa: E501
+                                        distance_reward += self.calculate_drone_expected_reward(self.agents_obj[drone_index])                                                  
+                                        
+                                        if not -1 in self.allocation_table:
                                             
-                                            action_reward += 5.0 #* self.agents_obj[drone_index].fit2Task[task.typeIdx]#
-                                            quality_reward += self.agents_obj[drone_index].fit2Task[task.typeIdx]   # noqa: E501
-                                            distance_reward += self.calculate_drone_expected_reward(self.agents_obj[drone_index])                                                  
-                                            
-                                            if not -1 in self.allocation_table:
-                                                
-                                                time_reward = max(self.agents_obj, key=lambda obj: obj.next_free_time).next_free_time / 200
-                                            
-                                            if self.agents_obj[drone_index].state != 1 and self.agents_obj[drone_index].state != -1: 
-                                                self.agents_obj[drone_index].state = 1
-                                    
-                                    else:
-                                        action_reward += -5
-                                            #print("ASDASFD")                                             
-                                    #else:
-                                        #print("old_task")
+                                            time_reward = max(self.agents_obj, key=lambda obj: obj.next_free_time).next_free_time / 200
+                                        
+                                        if self.agents_obj[drone_index].state != 1 and self.agents_obj[drone_index].state != -1: 
+                                            self.agents_obj[drone_index].state = 1
+                                
+                                else:
+                                    action_reward += -5
+                                        #print("ASDASFD")                                             
+                                #else:
+                                    #print("old_task")
             #print("Drone_tasts:", self.agents_obj[0].tasks)
         
             # Verificar se os drones alcançaram seus alvos
@@ -795,6 +806,17 @@ class MultiDroneEnv(ParallelEnv):
                 
                 if cum_cap == 0:                   
                     task.status = 2 #No capability to DO it
+                    #print("No CAP")
+                    
+                    # Adicionar o alvo par a lista alcançados por não ser mais possível
+                    # E não prejudicar algoritmos que alocam errado
+                    if task.task_id not in self.reached_tasks:                        
+                        self.reached_tasks.add(task.task_id) 
+                        self.tasks[task.task_id].status = 2    
+
+                        if len(self.reached_tasks) == self.n_tasks:
+                            self.conclusion_time = self.time_steps
+
                 else:
                     task.status = 0                        
                     self.allocation_table[task.task_id] = -1          
@@ -910,6 +932,10 @@ class MultiDroneEnv(ParallelEnv):
         if agent_type == "R1":
             mod_size = size / 1.5
             color = (0, 200, 200) if state >= 1 else color 
+        
+        if agent_type == "C1":
+            mod_size = size / 1.5
+            color = (230, 230, 230) if state >= 1 else color 
                             
         angle_rad = np.radians(angle)    
         dx1 = mod_size  * np.cos(angle_rad - np.pi / 0.7)
