@@ -29,7 +29,7 @@ class SwarmGap:
     def process_token(self, drones, tasks):
                 
         self.drones = drones
-        action = None
+        action = {}
         
         if len(self.token_exchange_list) == 0:            
             self.token_exchange_list = np.random.permutation(np.arange(0, self.n_agents))
