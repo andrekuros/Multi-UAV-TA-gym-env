@@ -8,13 +8,13 @@ class DroneEnvOptions:
                  simulation_frame_rate = 0.2, 
                  action_mode="TaskAssign",
                  simulator_module = "Internal", 
-                 max_time_steps=250, 
+                 max_time_steps=300, 
                  agents= {"F1" : 2, "F2" : 2, "R1" : 3, "R2" : 3},                 
                  tasks= { "Att" : 8 , "Rec" : 22},
                  random_init_pos=True,
                  num_obstacles=0,
                  hidden_obstacles = False,
-                 fail_rate = 0.7):
+                 fail_rate = 0.0):
         
         self.render_mode = render_mode 
         self.render_speed = render_speed

@@ -32,21 +32,12 @@ algorithms += ["Swarm-GAP"]
 algorithms += ["CBBA"]
 #algorithms +=  ["TBTA"]
 algorithms +=  ["TBTA2"]
-#algorithms +=  ["CTBTA"]
+algorithms +=  ["CTBTA"]
 
 print(algorithms)
-episodes = 50
-
-
+episodes = 30
 
 #config=None
-
-simEnv = "PyGame"
-#worldModel = MultiDroneEnv(config)
-
-    
-#elif simEnv == "Godot":
-#    env = GodotEnv()
 if False:
 
     from pettingzoo.test import parallel_api_test
@@ -55,8 +46,6 @@ if False:
     parallel_api_test(worldModel, num_cycles=1000)
     #parallel_seed_test(env, num_cycles=100, test_kept_state=True)
    
-
-
 totalMetrics = []
 total_reward = {}
 process_time = {}
@@ -65,11 +54,11 @@ cases = []
 
 for i in range(1,12):
     case = {'case' : i, 'F1':2, 'F2': 2, "R1" : 3, 'R2' : 3}
-    case['Att'] = int(i/2) 
+    case['Att'] = int(i/2) + 1 
     case['Rec'] = i * 2
     cases.append(case)
 
-#cases =  [{'F1':2, 'F2': 2, "R1" : 3, 'R2' : 3, "Att" : 8, "Rec" : 22}]
+cases =  [{'case' : 0, 'F1':2, 'F2': 2, "R1" : 3, 'R2' : 3, "Att" : 8, "Rec" : 22}]
 
 for case in cases:
 
@@ -89,7 +78,7 @@ for case in cases:
             random_init_pos = False,
             num_obstacles = 0,
             hidden_obstacles = False,
-            fail_rate = 0.7 )
+            fail_rate = 0.0 )
         
         worldModel = MultiDroneEnv(config)        
         print("\nStarting Algorithm:", algorithm)
@@ -146,7 +135,7 @@ for case in cases:
             if algorithm == "CTBTA":
                 
                 policy = CBBA(worldModel.agents_obj, worldModel.tasks, worldModel.max_coord)
-                load_policy_name = 'policy_CustomNetMultiHeadEval_TBTA_03_pre_process_New_REW_step500.pth'            
+                load_policy_name = 'policy_CustomNetMultiHeadEval_TBTA_03_pre_process.pth'            
                 load_policy_path = os.path.join("dqn_Custom", load_policy_name)                    
                 policy2 = _get_model(model="CustomNetMultiHead", env=worldModel)
                 
@@ -223,7 +212,7 @@ for case in cases:
                                 
                 elif algorithm == "Swarm-GAP":
                     
-                    if worldModel.time_steps % agent.exchange_interval == 0:  
+                    if worldModel.time_steps % policy.exchange_interval == 0:  
                         
                         un_taks_obj = [worldModel.tasks[i] for i in worldModel.unallocated_tasks()]                   
                         if un_taks_obj != []:

@@ -455,7 +455,10 @@ class MultiDroneEnv(ParallelEnv):
                             else:                            
                                 action_reward += 0#-10                                
                                                         
-                            task_id = obs_task_id                                                               
+                            task_id = obs_task_id
+
+                            if task_id >= self.n_tasks:
+                                continue                                                               
                                 
                             if task_id != None and self.allocation_table.count(-1) != 0:                
                                                         
