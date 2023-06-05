@@ -633,7 +633,7 @@ class MultiDroneEnv(ParallelEnv):
                                           6.0 * quality_reward +   #Rand +6
                                           0.0 * self.n_tasks * time_reward +      #Rand -9
                                           0.0 * alloc_reward  +
-                                          2.0 * time_penaulty for agent in self.agents_obj} #Rand -28 
+                                          1.0 * time_penaulty for agent in self.agents_obj} #Rand -28 
             
             #[ self._cumulative_rewards[agent] = self.rewards[agent] for agent in self.possible_agents]
                                        
@@ -920,7 +920,7 @@ class MultiDroneEnv(ParallelEnv):
         ax.set_ylabel('Cummulative Means')
         ax.set_title(f'Convergence {algorithm} : ({n_agents} uavs, {n_tasks} tasks)')
         ax.legend()
-        ax.set_ylim(0, 1.5)
+        ax.set_ylim(0, 1.0)
             
         plt.tight_layout()
         plt.show()

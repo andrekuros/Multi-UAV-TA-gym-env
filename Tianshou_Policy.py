@@ -60,6 +60,15 @@ def _get_model(model="CustomNetMultiHead", env = None):
             hidden_sizes=[128,128],
             device="cuda" if torch.cuda.is_available() else "cpu",
         ).to("cuda" if torch.cuda.is_available() else "cpu")
+    CustomNetSimple
+    if model == "CustomNetSimple":
+         net = CustomNetSimple(            
+            state_shape_agent=state_shape_agent,
+            state_shape_task=state_shape_task,
+            action_shape=action_shape,
+            hidden_sizes=[128,128],
+            device="cuda" if torch.cuda.is_available() else "cpu",
+        ).to("cuda" if torch.cuda.is_available() else "cpu")
 
 
     optim = torch.optim.Adam(net.parameters(), lr=1e-4)
