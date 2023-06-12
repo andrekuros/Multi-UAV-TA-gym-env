@@ -50,17 +50,18 @@ cases = []
 
 # for i in range(1,29):
 #     case = {'case' : i, 'F1':2, 'F2': 2, "R1" : 3, 'R2' : 3}
-#     case['Att'] = 2 + 0 if i <= 14 else 1 
-#     case['Rec'] = i  if i<= 14 else i - 1
+#     case['Att'] = 2 + (0 if i <= 14 else 1)
+#     case['Rec'] = i  if i <= 14 else (i - 1)
 #     cases.append(case)
 
-# for i in range(1, 13):
-#     case = {'case' : i, 'F1':int(i/2), "R1" : i, 'F2': 0, 'R2' : 0}
-#     case['Att'] = 6
-#     case['Rec'] = 24
-#     cases.append(case)
 
-cases =  [{'case' : 0, 'F1':2, 'F2': 2, "R1" : 3, 'R2' : 3, "Att" : 8, "Rec" : 22}]
+for i in range(1, 13):
+    case = {'case' : i, 'F1':int(i/2), "R1" : i, 'F2': 0, 'R2' : 0}
+    case['Att'] = 6
+    case['Rec'] = 24
+    cases.append(case)
+
+#cases =  [{'case' : 0, 'F1':2, 'F2': 2, "R1" : 3, 'R2' : 3, "Att" : 8, "Rec" : 22}]
 
 caseResults = []
 totalMetrics = []
@@ -69,8 +70,8 @@ total_F_reward = {}
 process_time = {}
 process_times = {}
 
-episodes = 200
-fail_rate = 0.7
+episodes = 100
+fail_rate = 0.0
 
 caseResults = []
 
@@ -83,7 +84,7 @@ for case in cases:
         config = utils.DroneEnvOptions(     
             render_speed = -1,
             simulation_frame_rate = 1 / 60,
-            max_time_steps = 500,
+            max_time_steps = 300,
             action_mode= "TaskAssign",
             agents= {"F1" : case['F1'], "F2" : case['F2'], "R1" : case['R1'], "R2" : case['R2']},                 
             tasks= { "Att" : case['Att'], "Rec" : case['Rec']},
@@ -104,7 +105,7 @@ for case in cases:
             
         for episode in range(episodes):
             
-            observation, info  = worldModel.reset(seed=episode)                 
+            observation, info  = worldModel.reset(seed=episode+15)                 
             info         = worldModel.get_initial_state()
             
             drones = info["drones"]
@@ -133,7 +134,7 @@ for case in cases:
                 # load policy as in your original code
                 
                 if algorithm == "TBTA":
-                    load_policy_name = 'policy_CustomNetMultiHeadEval_TBTA_03_pre_process.pth'
+                    load_policy_name = 'policy_CustomNetMultiHeadEval_TBTA_03_pre_processBEST.pth'
                     load_policy_path = os.path.join("dqn_Custom", load_policy_name)                    
                     policy = _get_model(model="CustomNetMultiHead", env=worldModel)           
                     
@@ -275,7 +276,7 @@ for case in cases:
                         #print([agent.type for agent in worldModel.get_live_agents()], worldModel.time_steps)
                         action = np.argmax(action)
                         actions = {agent_id : action}
-                        print(actions)                        
+                        #print(actions)                        
                         end_time = time.time()
                         episode_process_time.append(end_time - start_time)
                 
@@ -310,6 +311,7 @@ for case in cases:
                     metrics['S_Reward'] = episode_reward
                     metrics["Algorithm"] = algorithm                
                     totalMetrics.append(metrics)
+                    #print(episode_reward)
                                                         
             total_reward[algorithm].append(episode_reward)
             total_F_reward[algorithm].append(totalMetrics[-1]['F_Reward'])         
@@ -337,23 +339,30 @@ for case in cases:
 
 print(caseResults)
 
+casesDf = pd.DataFrame(caseResults)
+casesDf.to_csv('Cases_Qualy_Tasks.csv', index=False)
+
 metricsDf = pd.DataFrame(totalMetrics)
-# Salvar o DataFrame em um arquivo CSV
-metricsDf.to_csv('Resultados_Final_01_07ob_Trein100Est_Dyn07.csv', index=False)
+metricsDf.to_csv('Resultados_Qualy_Tasks.csv', index=False)
 
 #%%
-#metricsDf.to_csv('Resultado_Final_Qualify_Principal01_DYN.csv', index=False)
+#metricsDf.to_csv('Resultado_Final_Qualify_Principal01_CaseMegaDist.csv', index=False)
+import pandas as pd
+import seaborn as sns
+import matplotlib as mpl
 
-metricsDf = pd.read_csv('Resultado_Final_Qualify_Principal01_DYN.csv')
+fail_rate = 0.0
+metricsDf = pd.read_csv('Resultados_Qualy_UAVs.csv')
 
 #worldModel.plot_metrics(metricsDf, len(worldModel.agents), worldModel.n_tasks)
 import seaborn as sns
-import matplotlib as mpl
+import numpy as np
+import matplotlib.pyplot as plt
 
 # Define o estilo seaborn como 'whitegrid'
 sns.set_style("whitegrid")
 
-df = metricsDf#.drop(['F_load', 'F_Reward'], axis=1)#[metricsDf['Algorithm'] != 'Greedy']
+df = metricsDf#.drop(['F_load', 'S_Reward'], axis=1)#[metricsDf['Algorithm'] != 'Greedy']
 df = df[df.Algorithm != 'Greedy']
 #print(metricsDf.mean())
 grouped = df.groupby('Algorithm', sort=False)
@@ -389,16 +398,16 @@ for i, (algo, data) in enumerate(grouped):
 
 ax.set_xlabel('Metrics',fontsize=12)
 ax.set_ylabel('Values',fontsize=12)
-ax.set_title(f'Task Allocation: ([2-30] drones, 30 tasks)  |  Dynamic: fails({fail_rate})',fontsize=14)
+ax.set_title(f'Task Allocation: (10 drones, [2-30] tasks)  |  Dynamic: fails({fail_rate})',fontsize=14)
 
 ax.set_xticks(np.arange(num_metrics) * group_spacing + (bar_width * (num_algorithms - 1) / 2))
 ax.set_xticklabels(list(df.columns)[:-1], fontsize=12)
 
-ax.set_yticks(np.arange(0,max_val*1.4, 0.20))
+ax.set_yticks(np.arange(0,max_val*1.7, 0.20))
 
 
 ax.legend(loc='upper left', fontsize=13)
-ax.set_ylim(0, max_val*1.4)
+ax.set_ylim(0, max_val*1.7)
 
 plt.tight_layout()
 plt.show()
@@ -442,9 +451,10 @@ plt.show()
 # Create a single plot
 fig, ax = plt.subplots(figsize=(6, 3.2))
 
-dfC = pd.DataFrame(caseResults)
+
+dfC = pd.read_csv('Cases_Qualy_Tasks.csv')
 #dfC = dfC[dfC['case'] <= 29]
-eval = 'n_Tasks'
+eval = 'n_Agents'
 dfC['total_process_time'] = dfC['mean_process_time'] * dfC['process_runs']
 dfC['mean_F_reward'] =  dfC['mean_R_reward'] 
 sns.lineplot(x=eval, y='mean_process_time', hue='algorithm', data=dfC)
@@ -452,13 +462,35 @@ plt.title('Process Time for Each Algorithm')
 
 #%%
 fig, ax = plt.subplots(figsize=(6, 3.5))
+
 sns.lineplot(x=eval, y='total_process_time', hue='algorithm', data=dfC)
 plt.title('Process Time for Each Algorithm')
 
 #%%
 fig, ax = plt.subplots(figsize=(6, 3))
-sns.lineplot(x=eval, y='mean_F_reward', hue='algorithm', data=dfC)
-plt.title('Process Time for Each Algorithm')
+dfC = pd.read_csv('Cases_Qualy_Tasks.csv')
+#dfC = dfC.groupby(eval).mean().reset_index()
+# Escolha o algoritmo de referência para normalização
+algorithm_reference = 'Random'
+MetricRef = 'mean_R_reward'
+dfC= dfC[dfC.n_Agents >= 3]
+
+# Filtra o DataFrame para obter apenas as linhas com o algoritmo de referência
+df_reference = dfC[dfC['algorithm'] == algorithm_reference]
+
+# Realiza a mesclagem (merge) do DataFrame original com os valores de referência
+dfC_merged = dfC.merge(df_reference[[eval, MetricRef]], on=eval, suffixes=('', '_reference'))
+
+# Calcula a coluna com os valores normalizados
+dfC_merged['normalized_'+ MetricRef] = dfC_merged[MetricRef] / dfC_merged[MetricRef + '_reference']
+
+# Plota o line plot com os valores normalizados
+sns.lineplot(x=eval, y='normalized_'+ MetricRef, hue='algorithm', data=dfC_merged)
+#plt.title('Normalized Process Time for Each Algorithm')
+ax.set_ylim(0.8, 2.0)
+            
+#sns.lineplot(x=eval, y='normalized_mean_F_reward', hue='algorithm', data=dfC)
+plt.title('S_Reward for Each Algorithm')
 
 
 #%%
@@ -509,7 +541,7 @@ def plot_convergence(i, df, n_agents, n_tasks, algorithm):
         ax.set_ylabel('Cummulative Means')
         ax.set_title(f'Convergence {algorithm} : ({n_agents} uavs, {n_tasks} tasks) - Dynamic: Fail(0.7)')
         ax.legend(['Random','Swarm-GAP','CBBA','TBTA'])
-        ax.set_ylim(0.6, 1.2)
+        ax.set_ylim(0.0, 1.2)
     
         plt.tight_layout()
         
