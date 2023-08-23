@@ -5,7 +5,7 @@ class DroneEnvOptions:
     def __init__(self, 
                  render_mode = 'human',                  
                  render_speed=-1,
-                 simulation_frame_rate = 0.2, 
+                 simulation_frame_rate = 0.02, 
                  action_mode="TaskAssign",
                  simulator_module = "Internal", 
                  max_time_steps=300, 

@@ -130,7 +130,9 @@ class MultiDroneEnv(ParallelEnv):
         self.time_steps = 0
         self.total_distance = 0
         self.drone_distances = None
-        self.drone_directions = None  
+        self.drone_directions = None 
+
+        self.F_Reward = 0 
 
         self.event_list = []      
                 
@@ -310,6 +312,8 @@ class MultiDroneEnv(ParallelEnv):
         if self.obstacles != None:
             self.obstacles.clear()
         
+        self.F_Reward = 0 
+
         self.agents = self.possible_agents                             
                         
         #-------------------  Define Obstacles  -------------------#
@@ -633,7 +637,7 @@ class MultiDroneEnv(ParallelEnv):
                                           6.0 * quality_reward +   #Rand +6
                                           0.0 * self.n_tasks * time_reward +      #Rand -9
                                           0.0 * alloc_reward  +
-                                          2.0 * time_penaulty for agent in self.agents_obj} #Rand -28 
+                                          1.0 * time_penaulty for agent in self.agents_obj} #Rand -28 
             
             #[ self._cumulative_rewards[agent] = self.rewards[agent] for agent in self.possible_agents]
                                        
@@ -666,6 +670,10 @@ class MultiDroneEnv(ParallelEnv):
                 self.infos['metrics'] = metrics
                 #if not -1 in self.allocation_table:
                     #print("", end=".")
+                #print(self.F_Reward )
+
+                self.rewards = {agent.name :  self.F_Reward * 30 for agent in self.agents_obj} #Rand -28
+                
                 return self.observations, self.rewards, self.terminations, self.truncations, self.infos #metrics
             else:
                 return self.observations, self.rewards, self.terminations, self.truncations, self.infos
@@ -852,10 +860,22 @@ class MultiDroneEnv(ParallelEnv):
         #load_balancing = self.calculate_load_balancing()
         load_balancing_std = self.calculate_load_balancing_std()
         
+        # F_quality = np.mean([0 if t.final_quality == -1 else t.final_quality  for t in self.tasks])        
+        # F_Time = 1 / (self.conclusion_time / self.max_time_steps * 5)
+        # F_distance = 1 / (total_distance/self.n_agents / self.max_coord)
+        
+        # self.F_Reward = 0.25 * F_distance + 0.6 * F_quality + 0.15 * F_Time
+
+        # if self.conclusion_time == self.max_time_steps:
+        #     F_quality = 0
+        #     F_Time = 0
+        #     F_distance = 0
+        #     self.F_Reward = 0
+
         F_quality = np.mean([0 if t.final_quality == -1 else t.final_quality  for t in self.tasks])        
         F_Time = 1 / self.conclusion_time * self.max_time_steps
         F_distance = 1 / total_distance * self.max_coord
-        F_Reward = 0.25 * F_distance + 0.6 * F_quality + 0.15 * F_Time
+        self.F_Reward = 0.25 * F_distance + 0.6 * F_quality + 0.15 * F_Time
 
         return { 
             "F_time": F_Time ,
@@ -863,7 +883,7 @@ class MultiDroneEnv(ParallelEnv):
             #"load_balancing": load_balancing,
             "F_load": 1 / load_balancing_std,
             "F_quality": F_quality,
-            "F_Reward": F_Reward 
+            "F_Reward": self.F_Reward 
         }
 
     def plot_metrics(self, df, n_agents, n_tasks):
@@ -920,7 +940,7 @@ class MultiDroneEnv(ParallelEnv):
         ax.set_ylabel('Cummulative Means')
         ax.set_title(f'Convergence {algorithm} : ({n_agents} uavs, {n_tasks} tasks)')
         ax.legend()
-        ax.set_ylim(0, 1.5)
+        ax.set_ylim(0, 1.0)
             
         plt.tight_layout()
         plt.show()

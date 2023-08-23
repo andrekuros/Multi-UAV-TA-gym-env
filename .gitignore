@@ -1,12 +1,2 @@
-__pycache__/Custom_Classes_simplified.cpython-310.pyc
-__pycache__/Custom_Classes.cpython-310.pyc
-__pycache__/CustomClass_MultiHead_Transformer.cpython-310.pyc
-__pycache__/CustomClasses_Transformer_Reduced.cpython-310.pyc
-__pycache__/DroneEnv.cpython-310.pyc
-__pycache__/DroneEnvComponents.cpython-310.pyc
-__pycache__/MultiDroneEnvData.cpython-310.pyc
-__pycache__/MultiDroneEnvUtils.cpython-310.pyc
-__pycache__/swarm_gap.cpython-310.pyc
-__pycache__/tessi.cpython-310.pyc
-__pycache__/tianshou_DQN.cpython-310.pyc
-__pycache__/Tianshou_Policy.cpython-310.pyc
+.gitignore
+*.pyc
