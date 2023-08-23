@@ -28,10 +28,10 @@ algorithms = []
 algorithms += ['Random']
 #algorithms += ['Random2']
 #algorithms += ["Greedy"]
-algorithms += ["Swarm-GAP"]
+#algorithms += ["Swarm-GAP"]
 algorithms += ["CBBA"]
 algorithms +=  ["TBTA"]
-#algorithms +=  ["TBTA2"]
+algorithms +=  ["TBTA2"]
 #algorithms +=  ["CTBTA"]
 
 print(algorithms)
@@ -61,7 +61,7 @@ for i in range(1, 13):
     case['Rec'] = 24
     cases.append(case)
 
-#cases =  [{'case' : 0, 'F1':2, 'F2': 2, "R1" : 3, 'R2' : 3, "Att" : 8, "Rec" : 22}]
+cases =  [{'case' : 0, 'F1':2, 'F2': 2, "R1" : 3, 'R2' : 3, "Att" : 8, "Rec" : 22}]
 
 caseResults = []
 totalMetrics = []
@@ -70,7 +70,7 @@ total_F_reward = {}
 process_time = {}
 process_times = {}
 
-episodes = 100
+episodes = 30
 fail_rate = 0.0
 
 caseResults = []
@@ -134,15 +134,15 @@ for case in cases:
                 # load policy as in your original code
                 
                 if algorithm == "TBTA":
-                    load_policy_name = 'policy_CustomNetMultiHeadEval_TBTA_03_pre_processBEST.pth'
+                    load_policy_name = 'policy_CustomNetMultiHead_Eval_TBTA_01_simplified_UCF1.pth'
                     load_policy_path = os.path.join("dqn_Custom", load_policy_name)                    
                     policy = _get_model(model="CustomNetMultiHead", env=worldModel)           
                     
 
                 if algorithm == "TBTA2": 
-                    load_policy_name = 'policy_CustomNetSimpleEval_TBTA_03_pre_process_N.pth'            
+                    load_policy_name = 'policy_CustomNetMultiHeadEval_TBTA_03_pre_processBEST.pth'            
                     load_policy_path = os.path.join("dqn_Custom", load_policy_name)                    
-                    policy = _get_model(model="CustomNetSimple", env=worldModel)
+                    policy = _get_model(model="CustomNetMultiHead", env=worldModel)
                 
                 saved_state = torch.load(load_policy_path )           
                 policy.load_state_dict(saved_state)
@@ -352,7 +352,7 @@ import seaborn as sns
 import matplotlib as mpl
 
 fail_rate = 0.0
-metricsDf = pd.read_csv('Resultados_Qualy_UAVs.csv')
+metricsDf = pd.read_csv('Resultados_Qualy_Tasks.csv')
 
 #worldModel.plot_metrics(metricsDf, len(worldModel.agents), worldModel.n_tasks)
 import seaborn as sns
