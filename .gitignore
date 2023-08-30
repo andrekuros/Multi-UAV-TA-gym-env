@@ -1,2 +1,7 @@
 .gitignore
-*.pyc
+__pycache__/
+Results/
+.venv/
+.vscode/
+Logs/
+
