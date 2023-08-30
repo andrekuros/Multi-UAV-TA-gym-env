@@ -31,7 +31,7 @@ algorithms += ['Random']
 #algorithms += ["Swarm-GAP"]
 algorithms += ["CBBA"]
 algorithms +=  ["TBTA"]
-algorithms +=  ["TBTA2"]
+#algorithms +=  ["TBTA2"]
 #algorithms +=  ["CTBTA"]
 
 print(algorithms)
@@ -70,7 +70,7 @@ total_F_reward = {}
 process_time = {}
 process_times = {}
 
-episodes = 30
+episodes = 2
 fail_rate = 0.0
 
 caseResults = []
@@ -82,7 +82,7 @@ for case in cases:
     for algorithm in algorithms:
         
         config = utils.DroneEnvOptions(     
-            render_speed = -1,
+            render_speed = 1.5,
             simulation_frame_rate = 1 / 60,
             max_time_steps = 300,
             action_mode= "TaskAssign",
@@ -91,7 +91,8 @@ for case in cases:
             random_init_pos = False,
             num_obstacles = 0,
             hidden_obstacles = False,
-            fail_rate = fail_rate  )
+            fail_rate = fail_rate,
+            info = algorithm  )
         
         worldModel = MultiDroneEnv(config)       
         n_tasks = worldModel.n_tasks 

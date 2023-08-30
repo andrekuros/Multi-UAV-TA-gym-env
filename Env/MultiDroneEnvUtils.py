@@ -14,7 +14,8 @@ class DroneEnvOptions:
                  random_init_pos=True,
                  num_obstacles=0,
                  hidden_obstacles = False,
-                 fail_rate = 0.0):
+                 fail_rate = 0.0,
+                 info = "No Info"):
         
         self.render_mode = render_mode 
         self.render_speed = render_speed
@@ -28,6 +29,7 @@ class DroneEnvOptions:
         self.num_obstacles = num_obstacles
         self.hidden_obstacles = hidden_obstacles
         self.fail_rate = fail_rate
+        self.info = info
 
 def generate_random_tasks_all(drones, tasks, seed = 0):
     

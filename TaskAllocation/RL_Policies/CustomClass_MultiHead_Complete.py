@@ -133,10 +133,7 @@ class CustomNetMultiHeadComplete(Net):
         
         print("task_embeddings_query",task_embeddings.shape )
         print("own_attention_output:", task_attention_output.shape)
-        
-
-        
-        
+ 
         own_attention_output, _ = self.decoder_attention(task_attention_output, own_attention_output, own_attention_output)
         own_attention_output = self.norm2(own_attention_output + task_embeddings)  # Add skip connection and normalization
         

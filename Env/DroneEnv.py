@@ -81,6 +81,8 @@ class MultiDroneEnv(ParallelEnv):
         self.simulation_frame_rate = self.config.simulation_frame_rate
         self.conclusion_time = self.max_time_steps
 
+        self.info = self.config.info
+
         self.render_speed = self.config.render_speed        
         self.render_enabled = self.config.render_speed != -1 #Render is activated if speed != -1
         self.render_mode = self.config.render_mode        
@@ -217,21 +219,21 @@ class MultiDroneEnv(ParallelEnv):
         agents_values = []
          
         for agent in self.agents_obj:
-            #print("taks", task.task_id)
-            #distance = self.euclidean_distance(agent.next_free_position, task.position)  # Compute the distance
-            agents_values.extend(self._one_hot(agent.typeIdx, 6))
             
+            #One-hot expansion for the agent type
+            #agents_values.extend(self._one_hot(agent.typeIdx, len(self.sceneData.self.UavTypes)))
+                        
             agents_values.extend([
-                #distance / self.max_coord,  # Normalize the distance
-                #agent.fit2Task[task.typeIdx],                
+                agent.typeIdx,
                 agent.next_free_position[0] / self.max_coord,
                 agent.next_free_position[1] / self.max_coord,
                 agent.next_free_time / self.max_time_steps,                                                
 
                 ])
             
+        #Pad with -1 if the number of agents is smaller than the max_agents
         agents_values.extend([-1] * (self._observation_spaces["agent0"]["agents_info"].shape[0] - len(agents_values)))
-        #print(agents_values)
+        
         agents_values = np.array(agents_values, dtype=np.float32)  
 
         return agents_values
@@ -240,7 +242,6 @@ class MultiDroneEnv(ParallelEnv):
     def observation_space(self, agent):
            return self._observation_spaces[agent]  
     
-
     def _generate_observations(self):
                 
         #self.last_tasks_obs = []
@@ -262,12 +263,8 @@ class MultiDroneEnv(ParallelEnv):
             for agent in self.agents_obj
         }
 
-        self.last_tasks_info = [task.task_id for task in self.tasks if task.status == 0]
-        
-    def _one_hot(self, idx, num_classes):
-        one_hot_vector = np.zeros(num_classes)
-        one_hot_vector[idx] = 1
-        return one_hot_vector
+        self.last_tasks_info = [task.task_id for task in self.tasks if task.status == 0]            
+
 
     #@functools.lru_cache(maxsize=None)
     def action_space(self, agent):
@@ -707,7 +704,12 @@ class MultiDroneEnv(ParallelEnv):
         # Calculate reward (you can adjust the penalty factor as needed)
         reward = -1.0 * total_distance / self.max_coord
     
-        return reward        
+        return reward    
+
+    def _one_hot(self, idx, num_classes):
+        one_hot_vector = np.zeros(num_classes)
+        one_hot_vector[idx] = 1
+        return one_hot_vector    
 
 
     def detect_segments(self, detection_distance=30):
@@ -1023,6 +1025,7 @@ class MultiDroneEnv(ParallelEnv):
         pygame.draw.rect(agents_surface, (10,80,30), (base_x-base_size/2, base_y-base_size/2, base_size, base_size))
         
         font = pygame.font.Font(None, 18)
+        font2 = pygame.font.Font(None, 24)
                         
         # Desenhar drones
         for i,drone in enumerate(self.agents_obj):
@@ -1083,6 +1086,9 @@ class MultiDroneEnv(ParallelEnv):
         texto = font.render(str(self.time_steps), True, (200,200,200))
         self.screen.blit(texto, (self.sceneData.GameArea[0] - 35, self.sceneData.GameArea[1] - 20))
         
+        info = font2.render(self.info, True, (250,250,250))
+        self.screen.blit(info, (20, 20))
+        
         pygame.display.flip()
         
         # Salvar a imagem atual do jogo
@@ -1090,7 +1096,7 @@ class MultiDroneEnv(ParallelEnv):
             self.recrdr.click(self.screen) # save frame as png to _temp_/ folder
         
         # Limitar a taxa de quadros
-        self.clock.tick(self.render_speed * 60)
+        self.clock.tick(self.render_speed * 10)
         
         # Verificar se a janela está fechada
         for event in pygame.event.get():
