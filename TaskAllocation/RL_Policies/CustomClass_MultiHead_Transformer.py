@@ -107,7 +107,37 @@ class CustomNetMultiHead(Net):
         #own_embeddings = self.own_encoder(own_embeddings)
         #own_embeddings = own_embeddings.unsqueeze(1)  # Now own_embeddings has shape (10, 1, 64)
 
-        tasks_info = torch.tensor(obs["tasks_info"], dtype=torch.float32).to(self.device)  # Convert tasks_info to tensor         
+        task_values = []
+
+        for task in obs["tasks_info"]:
+            
+            print("TASK:", task)
+            if task["status"] != 0:
+                continue
+            else:
+                #print("taks", task.task_id)
+                distance = self.euclidean_distance(obs["next_free_position"], task["position"])  # Compute the distance
+                
+                #task_values.extend(self._one_hot(task.typeIdx, 2))
+
+                task_values.extend([
+                    distance,                         #1
+                    self._one_hot(obs["agent_type"]), #6
+                    self._one_hot(task["type"],2),  #2
+                    
+                    #1 if task.status == 0 else 0,                
+
+                    ])
+        
+        # Pad the task_values array to match the maximum number of tasks
+        task_values.extend( [-1] * (self.task_size) * (len(task_values) - self.max_tasks ))
+
+        
+        #tasks_info = torch.tensor(obs["tasks_info"], dtype=torch.float32).to(self.device)  # Convert tasks_info to tensor         
+        tasks_info = torch.tensor(task_values, dtype=torch.float32).to(self.device)  # Convert tasks_info to tensor         
+        
+        print("TaskINFO: ", tasks_info)
+
         tasks_info = tasks_info.view(-1, self.max_tasks, self.task_size)#int(len(tasks_info[0]/10))) #calculate the size of each tasks, and consider 10 max tasks                         
         task_embeddings = self.task_encoder(tasks_info)
         
@@ -150,6 +180,11 @@ class CustomNetMultiHead(Net):
         softmax_output = torch.squeeze(softmax_output, -1)
         #print("softmax_output_Final:" , softmax_output.shape)     
         return softmax_output, state
+    
+    def _one_hot(self, idx, num_classes):
+        one_hot_vector = np.zeros(num_classes)
+        one_hot_vector[idx] = 1
+        return one_hot_vector   
 
 
 class ScaledDotProductAttentionReduced(nn.Module):

@@ -14,9 +14,9 @@ from pettingzoo import ParallelEnv
 from pettingzoo.utils import parallel_to_aec, wrappers
 from pettingzoo.utils import agent_selector
 
-from DroneEnvComponents import Drone, Task, Obstacle
-import MultiDroneEnvData as data
-import MultiDroneEnvUtils as utils
+from .DroneEnvComponents import Drone, Task, Obstacle
+from .MultiDroneEnvData import SceneData 
+from .MultiDroneEnvUtils import DroneEnvOptions, DroneEnvUtils 
 
 import pygame
 
@@ -63,14 +63,14 @@ class MultiDroneEnv(ParallelEnv):
         super(MultiDroneEnv, self).__init__()        
         
         if config == None:
-            self.config = utils.DroneEnvOptions()
+            self.config = DroneEnvOptions()
         else:
             self.config = config              
             
         self._seed = 0
         self.rndGen = random.Random(self._seed)
         
-        self.sceneData = data.sceneData()
+        self.sceneData = SceneData()
         self.area_width = self.sceneData.GameArea[0]
         self.area_height = self.sceneData.GameArea[1]
         self.max_coord = max(self.area_height, self.area_width)
@@ -183,31 +183,41 @@ class MultiDroneEnv(ParallelEnv):
 
     def get_task_info(self, agent: Drone):
 
-        task_values = []     
-
-        for task in self.tasks:
-            if task.status != 0:
-                continue
-            else:
-                #print("taks", task.task_id)
-                distance = self.euclidean_distance(agent.next_free_position, task.position)  # Compute the distance
+        task_values = [ {
                 
-                #task_values.extend(self._one_hot(task.typeIdx, 2))
+                "id": task.task_id,
+                "position": task.position / self.max_coord,
+                "type": task.typeIdx,
+                "status": task.status,                
+                "quality": task.final_quality                
+                }  for task in self.tasks
+            ]
+            
+        
 
-                task_values.extend([
-                    distance / self.max_coord,  # Normalize the distance
-                    agent.fit2Task[task.typeIdx],
-                    #task.position[0] / self.max_coord,
-                    #task.position[1] / self.max_coord,
+        # for task in self.tasks:
+        #     if task.status != 0:
+        #         continue
+        #     else:
+        #         #print("taks", task.task_id)
+        #         distance = self.euclidean_distance(agent.next_free_position, task.position)  # Compute the distance
+                
+        #         #task_values.extend(self._one_hot(task.typeIdx, 2))
 
-                    1 if task.status == 0 else 0,                
+        #         task_values.extend([
+        #             distance / self.max_coord,  # Normalize the distance
+        #             agent.fit2Task[task.typeIdx],
+        #             #task.position[0] / self.max_coord,
+        #             #task.position[1] / self.max_coord,
 
-                    ])
+        #             1 if task.status == 0 else 0,                
+
+        #             ])
                 
                 
         
         # Pad the task_values array to match the maximum number of tasks
-        task_values.extend([-1] * (self._observation_spaces["agent0"]["tasks_info"].shape[0] - len(task_values)))
+        #task_values.extend([-1] * (self._observation_spaces["agent0"]["tasks_info"].shape[0] - len(task_values)))
 
         #task_values = np.array(task_values, dtype=np.float32)
         
@@ -250,12 +260,16 @@ class MultiDroneEnv(ParallelEnv):
 
         self.observations = {
             agent.name : {
+                #Add Own Data for relative features
+                "agent_id": agent.drone_id,
                 "agent_position": agent.position / self.max_coord,
                 "agent_state": self._one_hot(agent.state, 5),
                 "agent_type": self._one_hot(agent.typeIdx, 6),
                 "next_free_time": [agent.next_free_time / self.max_time_steps],
-                "position_after_last_task": agent.next_free_position / self.max_coord,
+                "position_after_last_task": agent.next_free_position / self.max_coord,                
                 #"agent_relay_area": agent.relay_area,
+
+                #Complete data for tasks and agents
                 "tasks_info": self.get_task_info(agent),   
                 "agents_info": agents_info,              
                 
@@ -598,10 +612,10 @@ class MultiDroneEnv(ParallelEnv):
                      if np.linalg.norm(drone.position - self.bases[0]) < drone.max_speed + 5:
                          drone.state = 0
                      else:
-                         movement = utils.norm_vector(self.bases[0]  - drone.position)
+                         movement = DroneEnvUtils.norm_vector(self.bases[0]  - drone.position)
                          avoid_vector = drone.avoid_obstacles(drone, self.obstacles, movement, self.sceneData)     
                                                                                                                       
-                movement = utils.norm_vector(movement + avoid_vector) * drone.max_speed
+                movement = DroneEnvUtils.norm_vector(movement + avoid_vector) * drone.max_speed
                 
                 #print(movement + avoid_vector, movement , avoid_vector)
                 
@@ -773,7 +787,7 @@ class MultiDroneEnv(ParallelEnv):
         
         raise ValueError(f'Error to build a valid scenario, can´t find no space for more {len(obstacles)-1} then obstacles')        
                 
-    def calculate_capacities_table(self, drones, tasks, sceneData):
+    def calculate_capacities_table(self, drones, tasks, SceneData):
         
         # Cria uma matriz de capacidade inicializada com zeros
         capacity_matrix = [[0 for _ in tasks] for _ in drones]

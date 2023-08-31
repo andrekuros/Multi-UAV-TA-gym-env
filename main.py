@@ -2,15 +2,18 @@
 import os
 import random
 import numpy as np
-from DroneEnv import MultiDroneEnv
-from DroneEnv import env
-from swarm_gap import SwarmGap
-from tessi import TessiAgent
-from CBBA import CBBA
 import pandas as pd
 import matplotlib.pyplot as plt
 import time
-from Tianshou_Policy import _get_model
+
+#Task Allocation Algorithms
+from mUAV_TA.DroneEnv import MultiDroneEnv
+from mUAV_TA.DroneEnv import env
+from TaskAllocation.BehaviourBased.swarm_gap import SwarmGap
+from TaskAllocation.MarketBased.CBBA import CBBA
+
+#RL Models/Policies
+from TaskAllocation.RL_Policies.Tianshou_Policy import _get_model
 import torch
 from tianshou.data import Batch
 import torch.nn.functional as F
@@ -22,7 +25,7 @@ import torch.nn.functional as F
 def softmax_stable(x):
     return(np.exp(x - np.max(x)) / np.exp(x - np.max(x)).sum())
 
-import MultiDroneEnvUtils as utils
+import mUAV_TA.MultiDroneEnvUtils as utils
 
 algorithms = []
 algorithms += ['Random']
