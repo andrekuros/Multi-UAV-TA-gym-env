@@ -114,9 +114,10 @@ class CustomNetMultiHead(Net):
         # agents_info = torch.tensor(obs["agents_info"], dtype=torch.float32).to(self.device)  # Convert agents_info to tensor         
         # agents_info = agents_info.view(-1, self.max_agents, self.agent_size)#int(len(tasks_info[0]/10))) #calculate the size of each tasks, and consider 10 max tasks                         
         # agents_embeddings = self.agents_encoder(agents_info)        
-        
-        #print("tasks_info",tasks_info.shape )
-        #print("task_embeddings:", task_embeddings.shape)
+        # print("taskOBS:",obs["tasks_info"])
+        # print("Task_init:", tasks_info)
+        # print("tasks_info",tasks_info.shape )
+        # print("task_embeddings:", task_embeddings.shape)        
         
         
         # Prepare the queries, keys, and values

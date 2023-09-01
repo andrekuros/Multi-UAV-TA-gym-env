@@ -1,7 +1,7 @@
 import numpy as np
 
 
-class sceneData:
+class SceneData:
     def __init__(self):
         
         # Tamanho da tela        

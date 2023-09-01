@@ -2,21 +2,21 @@
 import torch
 from tianshou.env.pettingzoo_env import PettingZooEnv
 
-from Custom_Classes import CustomNet
-from Custom_Classes import CustomCollector
-from Custom_Classes import CustomParallelToAECWrapper
+from .Custom_Classes import CustomNet
+from .Custom_Classes import CustomCollector
+from .Custom_Classes import CustomParallelToAECWrapper
 
 from tianshou.policy import BasePolicy,  MultiAgentPolicyManager, RandomPolicy
-from EvalDqn import DQNPolicy
+from .EvalDqn import DQNPolicy
 
 #from CustomClass_multi_head import CustomNet
-from Custom_Classes_simplified import CustomNetSimple
+from .Custom_Classes_simplified import CustomNetSimple
 #from Custom_Classes_simplified import CustomCollectorSimple
 #from Custom_Classes_simplified import CustomParallelToAECWrapperSimple
 
-from CustomClasses_Transformer_Reduced import CustomNetReduced
-from CustomClass_MultiHead_Transformer import CustomNetMultiHead
-from DroneEnv import MultiDroneEnv
+from .CustomClasses_Transformer_Reduced import CustomNetReduced
+from .CustomClass_MultiHead_Transformer import CustomNetMultiHead
+from mUAV_TA.DroneEnv import MultiDroneEnv
 
 # "CustomNet" or "CustomNetSimple" or "CustomNetReduced" or "CustomNetMultiHead"
 def _get_model(model="CustomNetMultiHead", env = None):

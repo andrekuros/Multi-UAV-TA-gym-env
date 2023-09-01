@@ -1,6 +1,6 @@
 import numpy as np
 import math
-import MultiDroneEnvUtils as utils
+from .MultiDroneEnvUtils import DroneEnvUtils as utils
 
 
 #---------- Class UAV ----------#

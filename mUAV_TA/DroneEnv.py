@@ -14,9 +14,9 @@ from pettingzoo import ParallelEnv
 from pettingzoo.utils import parallel_to_aec, wrappers
 from pettingzoo.utils import agent_selector
 
-from DroneEnvComponents import Drone, Task, Obstacle
-import MultiDroneEnvData as data
-import MultiDroneEnvUtils as utils
+from .DroneEnvComponents import Drone, Task, Obstacle
+from .MultiDroneEnvData import SceneData 
+from .MultiDroneEnvUtils import DroneEnvOptions, DroneEnvUtils 
 
 import pygame
 
@@ -63,14 +63,14 @@ class MultiDroneEnv(ParallelEnv):
         super(MultiDroneEnv, self).__init__()        
         
         if config == None:
-            self.config = utils.DroneEnvOptions()
+            self.config = DroneEnvOptions()
         else:
             self.config = config              
             
         self._seed = 0
         self.rndGen = random.Random(self._seed)
         
-        self.sceneData = data.sceneData()
+        self.sceneData = SceneData()
         self.area_width = self.sceneData.GameArea[0]
         self.area_height = self.sceneData.GameArea[1]
         self.max_coord = max(self.area_height, self.area_width)
@@ -598,10 +598,10 @@ class MultiDroneEnv(ParallelEnv):
                      if np.linalg.norm(drone.position - self.bases[0]) < drone.max_speed + 5:
                          drone.state = 0
                      else:
-                         movement = utils.norm_vector(self.bases[0]  - drone.position)
+                         movement = DroneEnvUtils .norm_vector(self.bases[0]  - drone.position)
                          avoid_vector = drone.avoid_obstacles(drone, self.obstacles, movement, self.sceneData)     
                                                                                                                       
-                movement = utils.norm_vector(movement + avoid_vector) * drone.max_speed
+                movement = DroneEnvUtils .norm_vector(movement + avoid_vector) * drone.max_speed
                 
                 #print(movement + avoid_vector, movement , avoid_vector)
                 
