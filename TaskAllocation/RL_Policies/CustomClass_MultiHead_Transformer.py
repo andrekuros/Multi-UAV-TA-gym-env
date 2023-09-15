@@ -12,6 +12,8 @@ from pettingzoo.utils.wrappers import OrderEnforcingWrapper
 
 import torch.nn.functional as F
 
+from mUAV_TA.MultiDroneEnvData import SceneData
+
 class CustomNetMultiHead(Net):
     def __init__(
         self,
@@ -34,7 +36,9 @@ class CustomNetMultiHead(Net):
         self.task_size = int(state_shape_task / self.max_tasks)
 
         self.max_agents = 10
-        self.agent_size = 5                                                                     
+        self.agent_size = 5    
+
+        self.sceneData = SceneData()                                                                 
                 
         # self.agents_encoder = nn.Sequential(
         #     nn.Linear(self.agent_size, 64),
@@ -91,8 +95,10 @@ class CustomNetMultiHead(Net):
         
     def forward(self, obs: Dict[str, torch.Tensor], state: Optional[Any] = None, info: Optional[Any] = None):
         
-        # Drone embeddings: input (12) from agent_obs | output (32) to combined_output
-        #print(obs)
+        
+        # Drone embeddings: input (12) from agent_obs | output (32) to combined_output                   
+        #obs = obs.reshape((1,-1))
+
         agent_position = torch.tensor(obs["agent_position"], dtype=torch.float32).to(self.device)
         agent_state = torch.tensor(obs["agent_state"], dtype=torch.float32)
         agent_type = torch.tensor(obs["agent_type"], dtype=torch.float32).to(self.device)
@@ -107,38 +113,60 @@ class CustomNetMultiHead(Net):
         #own_embeddings = self.own_encoder(own_embeddings)
         #own_embeddings = own_embeddings.unsqueeze(1)  # Now own_embeddings has shape (10, 1, 64)
 
-        task_values = []
-
-        for task in obs["tasks_info"]:
+        
+    
+        task_values = []       
+               
+        for i,batch in enumerate(obs["tasks_info"]):
             
-            print("TASK:", task)
-            if task["status"] != 0:
-                continue
-            else:
-                #print("taks", task.task_id)
-                distance = self.euclidean_distance(obs["next_free_position"], task["position"])  # Compute the distance
-                
-                #task_values.extend(self._one_hot(task.typeIdx, 2))
-
-                task_values.extend([
-                    distance,                         #1
-                    self._one_hot(obs["agent_type"]), #6
-                    self._one_hot(task["type"],2),  #2
+            #print("agentType", obs["agent_type"])
+            #print("agentTypeSel", obs["agent_type"][i])
+            ownType = int(np.argmax(obs["agent_type"][i]))
+            
+            batch_tasks = []
+            for task in batch:
+                            
+                if task["status"] != 0:
+                    continue
+                else:
+                    #print("taks", task)
                     
-                    #1 if task.status == 0 else 0,                
+                    distance = self.euclidean_distance(obs["position_after_last_task"][i], task["position"])  # Compute the distance
+                    fit2Task = self.sceneData.UavCapTableByIdx[ownType][task["type"]] 
+                    #task_values.extend(self._one_hot(task.typeIdx, 2))
 
-                    ])
-        
-        # Pad the task_values array to match the maximum number of tasks
-        task_values.extend( [-1] * (self.task_size) * (len(task_values) - self.max_tasks ))
+                    batch_tasks.append([
+                        distance, 
+                        fit2Task
+                        
+                        #list(obs["agent_type"][i]) + #change to append and others as list too
+                        
+                        #list(self._one_hot(task["type"], 2))
+                        
+                        ])
+            
+            # Pad the task_values array to match the maximum number of tasks
+            #batch_tasks.extend( [[-1] * (self.task_size) for _ in range(self.max_tasks - len(batch_tasks)) ])
+            num_padding_needed = self.max_tasks - len(batch_tasks)
+            padding = [[-1] * self.task_size for _ in range(num_padding_needed)]
+            batch_tasks.extend(padding)
 
+
+            task_values.append(batch_tasks)
+
+            
         
+        #print("Task_value1 Shape:" , len(task_values))
+                       
+        
+
         #tasks_info = torch.tensor(obs["tasks_info"], dtype=torch.float32).to(self.device)  # Convert tasks_info to tensor         
         tasks_info = torch.tensor(task_values, dtype=torch.float32).to(self.device)  # Convert tasks_info to tensor         
         
-        print("TaskINFO: ", tasks_info)
 
-        tasks_info = tasks_info.view(-1, self.max_tasks, self.task_size)#int(len(tasks_info[0]/10))) #calculate the size of each tasks, and consider 10 max tasks                         
+        #print("TaskINFO: ", tasks_info.shape)
+
+        #tasks_info = tasks_info.view(-1, self.max_tasks, self.task_size)#int(len(tasks_info[0]/10))) #calculate the size of each tasks, and consider 10 max tasks                         
         task_embeddings = self.task_encoder(tasks_info)
         
         # agents_info = torch.tensor(obs["agents_info"], dtype=torch.float32).to(self.device)  # Convert agents_info to tensor         
@@ -176,15 +204,19 @@ class CustomNetMultiHead(Net):
         #task_probabilities = F.softmax(task_scores, dim=-1)            
         
               
-        softmax_output = F.softmax(output, dim=1) 
-        softmax_output = torch.squeeze(softmax_output, -1)
+        #softmax_output = F.softmax(output, dim=1) 
+        #softmax_output = torch.squeeze(softmax_output, -1)
         #print("softmax_output_Final:" , softmax_output.shape)     
-        return softmax_output, state
+        #return softmax_output, state
+        return output, state
     
     def _one_hot(self, idx, num_classes):
         one_hot_vector = np.zeros(num_classes)
         one_hot_vector[idx] = 1
         return one_hot_vector   
+    
+    def euclidean_distance(self, point1, point2):
+        return np.sqrt(np.sum((np.array(point1) - np.array(point2)) ** 2))
 
 
 class ScaledDotProductAttentionReduced(nn.Module):

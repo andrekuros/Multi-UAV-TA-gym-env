@@ -19,6 +19,8 @@ class SceneData:
                             "C1" : np.array([   0.0  ,  0.0  ,  0.0  ,  1.0  ,  0.8  ]),
                             "C2" : np.array([   0.0  ,  0.0  ,  0.0  ,  0.7  ,  1.0  ])}
         
+        self.UavCapTableByIdx = np.array([self.UavCapTable[ut] for ut in self.UavTypes])
+        
         self.UavIndex =  {name : idx  for idx, name in enumerate(self.UavTypes)}
         self.TaskIndex = {name : idx  for idx, name in enumerate(self.TaskTypes)}
         

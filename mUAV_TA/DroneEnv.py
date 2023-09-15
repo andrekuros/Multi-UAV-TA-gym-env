@@ -79,7 +79,7 @@ class MultiDroneEnv(ParallelEnv):
         self.max_time_steps = self.config.max_time_steps
         self.time_steps = 0 
         self.simulation_frame_rate = self.config.simulation_frame_rate
-        self.conclusion_time = self.max_time_steps
+        self.conclusion_time = self.max_time_steps + 1
 
         self.info = self.config.info
 
@@ -155,11 +155,11 @@ class MultiDroneEnv(ParallelEnv):
         self._observation_space = Dict({
             "agent_position": Box(low=0, high=1, shape=(2,), dtype=np.float32),
             "agent_state": Box(low=0, high=1, shape=(5,), dtype=np.float32),  # Assuming 5 possible states (0, 1, 2, 3 and 4)
-            "agent_type": Box(low=0, high=1, shape=(2,), dtype=np.float32),  # One-hot encoded agent types  # Assuming 2 possible types
+            "agent_type": Box(low=0, high=1, shape=(6,), dtype=np.float32),  # One-hot encoded agent types  # Assuming 2 possible types
             "next_free_time": Box(low=0, high=1, shape=(1,), dtype=np.float32),
             "position_after_last_task": Box(low=0, high=1, shape=(2,), dtype=np.float32),
             #"agent_relay_area": Box(low=0, high=max(self.area_width, self.area_height), shape=(2,), dtype=np.float32),           
-            "tasks_info": Box(low=0, high=1, shape=((self.max_tasks ) * 3,), dtype=np.float32),
+            "tasks_info": Box(low=0, high=1, shape=((self.max_tasks ) * 2,), dtype=np.float32),
             "agents_info": Box(low=0, high=1, shape=((self.max_agents ) * 5,), dtype=np.float32),
             #"task_type": Discrete(2)  # Assuming 2 possible types
         }) 
@@ -344,8 +344,10 @@ class MultiDroneEnv(ParallelEnv):
                                       self.random_position(self.rndAgentGen, obstacles = self.obstacles) if self.random_init_pos else self.bases[0],
                                       agent_type, self.sceneData) for i in range(n_agents)]
             #self.agents_obj += [Drone(n_previous + i, self.agents[i + n_previous], self.bases[0], agent_type, self.sceneData) for i in range(n_agents)]
-            
-                        
+        random.shuffle(self.agents_obj)  
+        for i, agent in enumerate(self.agents_obj):
+            agent.drone_id = i
+                               
         
         #-------------------  Define Fail Condition  -------------------#
         for agent in self.agents_obj:
@@ -890,9 +892,14 @@ class MultiDroneEnv(ParallelEnv):
 
         F_quality = np.mean([0 if t.final_quality == -1 else t.final_quality  for t in self.tasks])        
         F_Time = 1 / self.conclusion_time * self.max_time_steps
-        F_distance = 1 / total_distance * self.max_coord
-        self.F_Reward = 0.25 * F_distance + 0.6 * F_quality + 0.15 * F_Time
+        
+        if self.conclusion_time == (self.max_time_steps + 1):
+            print("Fail to Conclude")#F_Time = -100
 
+        F_distance = 1 / total_distance * self.max_coord
+        self.F_Reward = 0.25 * F_distance/0.06 + 0.6 * F_quality/0.9 + 0.15 * F_Time / 1.4
+
+        
         return { 
             "F_time": F_Time ,
             "F_distance": F_distance ,

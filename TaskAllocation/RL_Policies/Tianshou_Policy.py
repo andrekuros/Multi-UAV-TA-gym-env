@@ -38,7 +38,9 @@ def _get_model(model="CustomNetMultiHead", env = None):
                      )                 
     
 
-    state_shape_task = env.observation_space["tasks_info"].shape[0]
+    #state_shape_task = env.observation_space["tasks_info"].shape[0]
+
+    state_shape_task = 30 * 2 #env.observation_space["tasks_info"].shape[0]
                   
     action_shape = env.action_space[agent_name].shape[0]
     #action_shape = env.action_space[agent_name].n
