@@ -1,15 +1,9 @@
+from math import inf
 import torch
 import torch.nn as nn
 from typing import Optional, Any, List, Dict
 from tianshou.utils.net.common import Net
-from tianshou.data import Collector
-from copy import deepcopy
 import numpy as np
-import torch.nn.functional as F
-
-from pettingzoo.utils.wrappers import BaseWrapper
-from pettingzoo.utils.wrappers import OrderEnforcingWrapper
-
 import torch.nn.functional as F
 
 from mUAV_TA.MultiDroneEnvData import SceneData
@@ -32,11 +26,19 @@ class CustomNetMultiHead(Net):
             device=device,
         )               
 
-        self.max_tasks = 30
-        self.task_size = int(state_shape_task / self.max_tasks)
+        self.nhead = nhead
+
+        self.obs_mode = "Pre_Process"
+        #self.obs_mode = "Raw_Data"
+
+        self.max_tasks = 31
+        self.task_size = 3#int(state_shape_task / self.max_tasks)
 
         self.max_agents = 10
-        self.agent_size = 5    
+        self.agent_size = 5 
+
+        
+        self.random_weights = False  
 
         self.sceneData = SceneData()                                                                 
                 
@@ -62,22 +64,20 @@ class CustomNetMultiHead(Net):
             # nn.ReLU(),
             # nn.Linear(32, 64),
             # nn.ReLU(),
-            # nn.Linear(64, 128),
-            # nn.ReLU(),
-            # nn.Linear(128, 64)
+            nn.Linear(64, 128),
+            nn.ReLU(),
+            nn.Linear(128, 64)
         ).to(device)
-               
-        self.embedding_size = 64 #sum of drone and task encoder
-        
+                       
+        self.embedding_size = 64 #sum of drone and task encoder        
 
         #self.multihead_attention = nn.MultiheadAttention(embed_dim=self.embedding_size, num_heads=nhead).to(device)
-        self.own_attention = nn.MultiheadAttention(embed_dim=self.embedding_size, num_heads=nhead, batch_first=True).to(device)
+        self.own_attention = nn.MultiheadAttention(embed_dim=self.embedding_size, num_heads=self.nhead, batch_first=True).to(device)
         #self.agents_attention = nn.MultiheadAttention(embed_dim=32, num_heads=nhead).to(device)
 
-        self.norm1 = nn.LayerNorm(self.embedding_size)
-        self.norm2 = nn.LayerNorm(self.embedding_size)
-        self.norm3 = nn.LayerNorm(self.embedding_size)
-        
+        self.norm1 = nn.LayerNorm(self.embedding_size).to(device)
+        self.norm2 = nn.LayerNorm(self.embedding_size).to(device)
+       
         # self.task_score_seq = nn.Sequential(
         #         nn.Linear(32, 64),
         #         nn.ReLU(),
@@ -88,127 +88,150 @@ class CustomNetMultiHead(Net):
         
         self.decoder_attention = nn.MultiheadAttention(embed_dim=self.embedding_size, num_heads=nhead, batch_first=True).to(device)
         #self.output = nn.Linear(sizes[-1], action_shape).to(device)  
-        
-        
-        self.output = nn.Linear(64, 1).to(device)
+     
+        self.output = nn.Linear(64, 1).to(device) 
+
+        if self.random_weights:
+            self.weigths_reset()      
                 
-        
+
+    def weigths_reset(self):
+
+        with torch.no_grad():
+            # Initialize the weights of the query linear layer
+            self.own_attention.in_proj_weight[:self.embedding_size].uniform_(-1, 1)
+            
+            # Initialize the weights of the key linear layer
+            self.own_attention.in_proj_weight[self.embedding_size:2*self.embedding_size].uniform_(-1, 1)
+            
+            # Initialize the weights of the value linear layer
+            self.own_attention.in_proj_weight[2*self.embedding_size:].uniform_(-1, 1)
+            
+            # If you also want to initialize the biases:
+            self.own_attention.in_proj_bias[:self.embedding_size].uniform_(-1, 1) # for query
+            self.own_attention.in_proj_bias[self.embedding_size:2*self.embedding_size].uniform_(-1, 1) # for key
+            self.own_attention.in_proj_bias[2*self.embedding_size:].uniform_(-1, 1) # for value
+
+        with torch.no_grad():
+            # Initialize the weights of the query linear layer
+            self.decoder_attention.in_proj_weight[:self.embedding_size].uniform_(-1, 1)
+            
+            # Initialize the weights of the key linear layer
+            self.decoder_attention.in_proj_weight[self.embedding_size:2*self.embedding_size].uniform_(-1, 1)
+            
+            # Initialize the weights of the value linear layer
+            self.decoder_attention.in_proj_weight[2*self.embedding_size:].uniform_(-1, 1)
+            
+            # If you also want to initialize the biases:
+            self.decoder_attention.in_proj_bias[:self.embedding_size].uniform_(-1, 1) # for query
+            self.decoder_attention.in_proj_bias[self.embedding_size:2*self.embedding_size].uniform_(-1, 1) # for key
+            self.decoder_attention.in_proj_bias[2*self.embedding_size:].uniform_(-1, 1) # for value
+
+        with torch.no_grad():
+            self.output.weight.uniform_(-1, 1)  # random values between -1 and 1
+
+        with torch.no_grad():
+            for layer in self.task_encoder:
+                if isinstance(layer, nn.Linear):
+                    layer.weight.uniform_(-1, 1)
+                    layer.bias.uniform_(-1, 1)
+
     def forward(self, obs: Dict[str, torch.Tensor], state: Optional[Any] = None, info: Optional[Any] = None):
-        
-        
+              
         # Drone embeddings: input (12) from agent_obs | output (32) to combined_output                   
-        #obs = obs.reshape((1,-1))
+        # agent_position = torch.tensor(obs["agent_position"], dtype=torch.float32).to(self.device)
+        # agent_state = torch.tensor(obs["agent_state"], dtype=torch.float32)
+        # agent_type = torch.tensor(obs["agent_type"], dtype=torch.float32).to(self.device)
+        # next_free_time = torch.tensor(obs["next_free_time"], dtype=torch.float32).to(self.device)
+        # position_after_last_task = torch.tensor(obs["position_after_last_task"], dtype=torch.float32).to(self.device)                 
 
-        agent_position = torch.tensor(obs["agent_position"], dtype=torch.float32).to(self.device)
-        agent_state = torch.tensor(obs["agent_state"], dtype=torch.float32)
-        agent_type = torch.tensor(obs["agent_type"], dtype=torch.float32).to(self.device)
-        next_free_time = torch.tensor(obs["next_free_time"], dtype=torch.float32).to(self.device)
-        position_after_last_task = torch.tensor(obs["position_after_last_task"], dtype=torch.float32).to(self.device)         
-        
-        #drone_embeddings = self.drone_encoder(torch.cat((tasks_info,position_after_last_task, next_free_time, agent_type ), dim=-1))               
-
-        # own_embeddings = torch.cat((agent_type,
-        #                             position_after_last_task,                                                         
-        #                             next_free_time), dim=1)                            
-        #own_embeddings = self.own_encoder(own_embeddings)
-        #own_embeddings = own_embeddings.unsqueeze(1)  # Now own_embeddings has shape (10, 1, 64)
-
-        
-    
         task_values = []       
                
-        for i,batch in enumerate(obs["tasks_info"]):
-            
-            #print("agentType", obs["agent_type"])
-            #print("agentTypeSel", obs["agent_type"][i])
-            ownType = int(np.argmax(obs["agent_type"][i]))
-            
-            batch_tasks = []
-            for task in batch:
+        if self.obs_mode == "Pre_Process":
+        
+            for i,batch in enumerate(obs["tasks_info"]):
+                        
+                ownType = int(np.argmax(obs["agent_type"][i]))
+                
+                batch_tasks = []
+                for task in batch:
+                                
+                    if task["status"] == -1:  
+                        #print("Task Wrong")                                     
+                        continue
+                    else:
+                        #print("tasks", task)
+                        
+                        distance = self.euclidean_distance(obs["position_after_last_task"][i], task["position"])  # Compute the distance
+                        fit2Task = self.sceneData.UavCapTableByIdx[ownType][task["type"]]
+
+                        #task_values.extend(self._one_hot(task.typeIdx, 2))
+
+                        batch_tasks.append([
+                            distance, 
+                            fit2Task,
+                            task["status"]                        
+                            #list(obs["agent_type"][i]) + #change to append and others as list too                        
+                            #list(self._one_hot(task["type"], 2))
                             
-                if task["status"] != 0:
-                    continue
-                else:
-                    #print("taks", task)
-                    
-                    distance = self.euclidean_distance(obs["position_after_last_task"][i], task["position"])  # Compute the distance
-                    fit2Task = self.sceneData.UavCapTableByIdx[ownType][task["type"]] 
-                    #task_values.extend(self._one_hot(task.typeIdx, 2))
-
-                    batch_tasks.append([
-                        distance, 
-                        fit2Task
-                        
-                        #list(obs["agent_type"][i]) + #change to append and others as list too
-                        
-                        #list(self._one_hot(task["type"], 2))
-                        
-                        ])
-            
-            # Pad the task_values array to match the maximum number of tasks
-            #batch_tasks.extend( [[-1] * (self.task_size) for _ in range(self.max_tasks - len(batch_tasks)) ])
-            num_padding_needed = self.max_tasks - len(batch_tasks)
-            padding = [[-1] * self.task_size for _ in range(num_padding_needed)]
-            batch_tasks.extend(padding)
-
-
-            task_values.append(batch_tasks)
-
-            
-        
-        #print("Task_value1 Shape:" , len(task_values))
-                       
-        
-
+                            ])
+                
+                # Pad the task_values array to match the maximum number of tasks
+                #batch_tasks.extend( [[-1] * (self.task_size) for _ in range(self.max_tasks - len(batch_tasks)) ])
+                num_padding_needed = self.max_tasks - len(batch_tasks)
+                padding = [[-1] * self.task_size for _ in range(num_padding_needed)]
+                batch_tasks.extend(padding)
+                task_values.append(batch_tasks)
+       
+        #print(task_values)
         #tasks_info = torch.tensor(obs["tasks_info"], dtype=torch.float32).to(self.device)  # Convert tasks_info to tensor         
-        tasks_info = torch.tensor(task_values, dtype=torch.float32).to(self.device)  # Convert tasks_info to tensor         
         
-
-        #print("TaskINFO: ", tasks_info.shape)
-
+        tasks_info = torch.tensor(task_values, dtype=torch.float32).to(self.device)  # Convert tasks_info to tensor     
+        #print("Task_Info:\n ",tasks_info)
+        
         #tasks_info = tasks_info.view(-1, self.max_tasks, self.task_size)#int(len(tasks_info[0]/10))) #calculate the size of each tasks, and consider 10 max tasks                         
         task_embeddings = self.task_encoder(tasks_info)
+        #print("Task_Embeddings:\n ",task_embeddings.shape)
+           
+        # Create the mask based on your tasks_info tensor
+        #mask = tasks_info.ne(-1).any(dim=-1).bool()
+        #mask = torch.tensor(obs["mask"], dtype=torch.bool).to(self.device)
+        #attn_mask = ~mask                       
+        # Expected shape is (L, N) where L is target sequence length and N is batch size
+        #attn_mask = attn_mask.unsqueeze(1).expand(-1, tasks_info.size(1), -1)
+        #attn_mask = attn_mask.repeat(self.nhead, 1, 1)
+
+        attn_mask = torch.tensor(obs["mask"], dtype=torch.bool).to(self.device)
+        attn_mask = None#~attn_mask
+        # Use the mask in your attention layers
         
-        # agents_info = torch.tensor(obs["agents_info"], dtype=torch.float32).to(self.device)  # Convert agents_info to tensor         
-        # agents_info = agents_info.view(-1, self.max_agents, self.agent_size)#int(len(tasks_info[0]/10))) #calculate the size of each tasks, and consider 10 max tasks                         
-        # agents_embeddings = self.agents_encoder(agents_info)        
+        # Use the mask in your attention layers
+        attention_output, attention_output1 = self.own_attention(task_embeddings, task_embeddings, task_embeddings, key_padding_mask=attn_mask)
+        attention_output = attention_output + task_embeddings
+        #print("attention_output:\n ",attention_output.shape)
+        #print("attention_output1:\n ",attention_output1.shape)
+        #attention_output.masked_fill_(~mask.unsqueeze(-1), 0.0)        
         
-        #print("tasks_info",tasks_info.shape )
-        #print("task_embeddings:", task_embeddings.shape)
+        attention_output = self.norm1(attention_output)
+
+        attention_output, _ = self.decoder_attention(attention_output, attention_output, attention_output, key_padding_mask=attn_mask)
+        attention_output = attention_output + task_embeddings
+        #attention_output.masked_fill_(~mask.unsqueeze(-1), 0.0)        
+        attention_output = self.norm2(attention_output)                                                            
+        #print("attention_output2:\n ",attention_output.shape)
+
+        softmax_output = self.output(attention_output)     
+
+        # print("output:\n ",output)
+        #softmax_output = output
+        softmax_output = F.softmax(softmax_output, dim=1) 
+        softmax_output = torch.squeeze(softmax_output, -1)            
         
-        
-        # Prepare the queries, keys, and values
-        #queries = task_embeddings.transpose(0, 1)  # MultiheadAttention expects input in shape (seq_len, batch, embedding_dim)
-        
-        own_attention_output, _ = self.own_attention(task_embeddings, task_embeddings, task_embeddings)
-        #print("own_attention_output:", own_attention_output.shape)
-        # own_attention_output, _ = self.own_attention(queries, own_embeddings.transpose(0, 1), own_embeddings.transpose(0, 1))
-        # agents_attention_output, _ = self.agents_attention(queries, agents_embeddings.transpose(0, 1), agents_embeddings.transpose(0, 1))
-        own_attention_output = self.norm1(own_attention_output + task_embeddings)  # Add skip connection and normalization        
-        #print("own_attention_output:", own_attention_output.shape)
-        
-        own_attention_output, _ = self.decoder_attention(own_attention_output, own_attention_output, own_attention_output)
-        own_attention_output = self.norm2(own_attention_output + task_embeddings)  # Add skip connection and normalization
-        # Combine the attention outputs
-        #print("own_attention_output:", own_attention_output.shape)
-        attention_output = own_attention_output#torch.cat((own_attention_output, agents_attention_output), dim=-1)
-        
-        #attention_output = attention_output.transpose(0, 1) 
-                        
-        #task_scores = self.task_score_seq(attention_output)
-        #task_scores = task_scores.squeeze(-1)
-        #print("Task_Scores:" , task_scores.shape)
-        
-        output = self.output(attention_output)
-        #print("own_attention_output:", own_attention_output.shape)
-        #task_probabilities = F.softmax(task_scores, dim=-1)            
-        
-              
-        #softmax_output = F.softmax(output, dim=1) 
-        #softmax_output = torch.squeeze(softmax_output, -1)
-        #print("softmax_output_Final:" , softmax_output.shape)     
-        #return softmax_output, state
-        return output, state
+        # print("softmax_output:",softmax_output)
+
+        return softmax_output, state   
+
+
     
     def _one_hot(self, idx, num_classes):
         one_hot_vector = np.zeros(num_classes)

@@ -169,9 +169,13 @@ class CustomCollector(Collector):
     #         actions[agent_id] = action
     #     return actions
 
-    def collect(self, n_step: Optional[int] = None, n_episode: Optional[int] = None, random: Optional[bool] = False, render: Optional[float] = None) -> Dict[str, Any]:
-        #print("CustomCollector collect method called")
-        return super().collect(n_step=n_step, n_episode=n_episode, random=random, render=render)
+    def collect(self, 
+                n_step: Optional[int] = None, 
+                n_episode: Optional[int] = None, 
+                random: Optional[bool] = False, 
+                render: Optional[float] = None,
+                gym_reset_kwargs: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:        
+        return super().collect(n_step=n_step, n_episode=n_episode, random=random, render=render, gym_reset_kwargs=gym_reset_kwargs)
 
 
 

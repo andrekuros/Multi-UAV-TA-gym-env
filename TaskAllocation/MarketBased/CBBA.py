@@ -2,8 +2,10 @@ import numpy as np
 import random
 
 class CBBA():
-    def __init__(self, drones, tasks, max_dist):          
+    def __init__(self, drones, tasks, max_dist, seed = 0):          
         self.max_dist = max_dist        
+        self.seed = seed
+        self.rndGen = random.Random(seed)
         
        
     def allocate_tasks(self, agents, tasks, Qs=None):
@@ -18,7 +20,8 @@ class CBBA():
 
         while remaining_tasks:
             for task_id in remaining_tasks:
-                random.shuffle(agents)  # Randomize the order of agents
+                self.rndGen.shuffle(agents)  # Randomize the order of agents
+                #print([agent.drone_id for agent in agents])
                 for agent in agents:
                     task = task_dict[task_id]
                     if task_id not in bundles[agent.drone_id]:
@@ -30,6 +33,7 @@ class CBBA():
                             paths[agent.drone_id].insert(insertion_point, task_id)
 
             # Consensus phase
+            tasks_to_remove = []
             for task_id, bid_info in self.bids.items():
                 for agent in agents:
                     if task_id in bundles[agent.drone_id] and agent.drone_id != bid_info['agent_id']:
@@ -37,7 +41,11 @@ class CBBA():
                         paths[agent.drone_id].remove(task_id)
                 if bid_info['agent_id'] is not None and task_id not in bundles[bid_info['agent_id']]:
                     bundles[bid_info['agent_id']].append(task_id)
-                    remaining_tasks.remove(task_id)
+                    tasks_to_remove.append(task_id)
+
+            for task_id in tasks_to_remove:
+                remaining_tasks.remove(task_id)
+            
             # Update makespan
             self.current_makespan = max(self.calculate_total_time(agent, paths[agent.drone_id]) for agent in agents)           
 

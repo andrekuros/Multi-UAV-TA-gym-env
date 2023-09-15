@@ -11,13 +11,13 @@ class SceneData:
         
         self.UavTypes = [ "R1", "R2", "F1", "F2", "C1", "C2"]
                                          
-        self.TaskTypes =                    [ "Rec"  , "Att" , "Esc" , "Jam" , "Com" ]
-        self.UavCapTable ={ "R1" : np.array([   1.0  ,  0.0  ,  0.0  ,  0.5  ,  0.5  ]),
-                            "R2" : np.array([   0.8  ,  0.0  ,  0.0  ,  0.3  ,  1.0  ]),
-                            "F1" : np.array([   0.2  ,  1.0  ,  1.0  ,  0.3  ,  0.5  ]),
-                            "F2" : np.array([   0.3  ,  0.85  ,  0.8  ,  0.5  ,  0.5  ]),                            
-                            "C1" : np.array([   0.0  ,  0.0  ,  0.0  ,  1.0  ,  0.8  ]),
-                            "C2" : np.array([   0.0  ,  0.0  ,  0.0  ,  0.7  ,  1.0  ])}
+        self.TaskTypes =                    [ "Idle" , "Rec"  , "Att" , "Esc" , "Jam" , "Com" ]
+        self.UavCapTable ={ "R1" : np.array([   0.0  ,  1.0  ,  0.0  ,  0.0  ,  0.5  ,  0.5  ]),
+                            "R2" : np.array([   0.0  ,  0.8  ,  0.0  ,  0.0  ,  0.3  ,  1.0  ]),
+                            "F1" : np.array([   0.0  ,  0.2  ,  1.0  ,  1.0  ,  0.3  ,  0.5  ]),
+                            "F2" : np.array([   0.0  ,  0.3  ,  0.85  ,  0.8  ,  0.5  , 0.5  ]),                            
+                            "C1" : np.array([   0.0  ,  0.0  ,  0.0  ,  0.0  ,  1.0  ,  0.8  ]),
+                            "C2" : np.array([   0.0  ,  0.0  ,  0.0  ,  0.0  ,  0.7  ,  1.0  ])}
         
         self.UavCapTableByIdx = np.array([self.UavCapTable[ut] for ut in self.UavTypes])
         
@@ -59,7 +59,8 @@ class SceneData:
                                        [0.0, 1.0, 0.0, 0.3]])   
     def getTaskDuration(self, task_type):
         
-        expectedDurations = {"Att" : 1,
+        expectedDurations = {"Idle": 1,
+                             "Att" : 1,
                              "Jam" : 1,
                              "Esc" : 1,
                              "Rec" : 1,

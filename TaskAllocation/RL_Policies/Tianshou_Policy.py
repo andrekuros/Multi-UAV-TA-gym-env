@@ -19,11 +19,11 @@ from .CustomClass_MultiHead_Transformer import CustomNetMultiHead
 from mUAV_TA.DroneEnv import MultiDroneEnv
 
 # "CustomNet" or "CustomNetSimple" or "CustomNetReduced" or "CustomNetMultiHead"
-def _get_model(model="CustomNetMultiHead", env = None):
-        
-    env = _get_env(env)
-    agent_name = env.agents[0]  # Get the name of the first agent
-           
+def _get_model(model="CustomNetMultiHead", env = None, seed = 0):
+    
+    env = _get_env(env, seed)
+     
+    agent_name = env.agents[0]  # Get the name of the first agent        
     agent_observation_space = env.observation_space # assuming 'agent0' is a valid agent name
     state_shape_agent_position = agent_observation_space["agent_position"].shape[0]
     state_shape_agent_state = agent_observation_space["agent_state"].shape[0]
@@ -40,7 +40,7 @@ def _get_model(model="CustomNetMultiHead", env = None):
 
     #state_shape_task = env.observation_space["tasks_info"].shape[0]
 
-    state_shape_task = 30 * 2 #env.observation_space["tasks_info"].shape[0]
+    state_shape_task = 30 * 3 #env.observation_space["tasks_info"].shape[0]
                   
     action_shape = env.action_space[agent_name].shape[0]
     #action_shape = env.action_space[agent_name].n
@@ -84,14 +84,15 @@ def _get_model(model="CustomNetMultiHead", env = None):
     return agent_learn
 
 
-def _get_env(env = None):
+def _get_env(env = None, seed = 0):
     """This function is needed to provide callables for DummyVectorEnv."""
-    if env == None:
-        env_paralell = MultiDroneEnv()
+   
+    if env is None:         
+        env_paralell = MultiDroneEnv()                 
     else:
-        env_paralell = env
-    #env = parallel_to_aec_wrapper(env_paralell)    
-    env = CustomParallelToAECWrapper(env_paralell)
+        env_paralell = env          
+    #env = parallel_to_aec_wrapper(env_paralell)              
+    env = CustomParallelToAECWrapper(env_paralell) 
     
-    return PettingZooEnv(env)
+    return PettingZooEnv(env, seed)
 

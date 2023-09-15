@@ -130,8 +130,11 @@ class Task:
         
         self.status = 0 # 0 - waiting Allocation / 1 - Allocated / 2 - Concluded
         self.task_window = task_window
+                
+        
         self.task_duration = sceneData.getTaskDuration(self.type)
                     
+        #self.task_allocated = task_alloc_resources
         self.final_quality = -1
 
 #---------- Class Obstacle ----------#
@@ -141,4 +144,19 @@ class Obstacle:
         self.position = position
         self.size = size
         self.detected_segments = []
+        
+#----------- Square Area ------------#
+
+class SquareArea:
+    def __init__(self, center, width, height):
+        self.center = center #[x,y]
+        self.width = width
+        self.height = height
+        
+        self.top_left     = (center[0] - width/2 , center[1] - height/2)
+        self.top_right    = (center[0] + width/2 , center[1] - height/2) 
+        self.bottom_left  = (center[0] - width/2 , center[1] + height/2)  
+        self.bottom_right = (center[0] + width/2 , center[1] + height/2)                
+         
+       
         
