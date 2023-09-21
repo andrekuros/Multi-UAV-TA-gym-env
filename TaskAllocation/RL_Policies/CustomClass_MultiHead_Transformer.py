@@ -38,7 +38,7 @@ class CustomNetMultiHead(Net):
         self.agent_size = 5 
 
         
-        self.random_weights = False  
+        self.random_weights = True  
 
         self.sceneData = SceneData()                                                                 
                 
@@ -206,21 +206,21 @@ class CustomNetMultiHead(Net):
         # Use the mask in your attention layers
         
         # Use the mask in your attention layers
-        attention_output, attention_output1 = self.own_attention(task_embeddings, task_embeddings, task_embeddings, key_padding_mask=attn_mask)
-        attention_output = attention_output + task_embeddings
+        attention_output1, _ = self.own_attention(task_embeddings, task_embeddings, task_embeddings, key_padding_mask=attn_mask)
+        attention_output1 = attention_output1 + task_embeddings
         #print("attention_output:\n ",attention_output.shape)
         #print("attention_output1:\n ",attention_output1.shape)
         #attention_output.masked_fill_(~mask.unsqueeze(-1), 0.0)        
         
-        attention_output = self.norm1(attention_output)
+        #attention_output1 = self.norm1(attention_output1)
 
-        attention_output, _ = self.decoder_attention(attention_output, attention_output, attention_output, key_padding_mask=attn_mask)
-        attention_output = attention_output + task_embeddings
+        attention_output2, _ = self.decoder_attention(attention_output1, attention_output1, attention_output1, key_padding_mask=attn_mask)
+        attention_output2 = attention_output2 + attention_output1
         #attention_output.masked_fill_(~mask.unsqueeze(-1), 0.0)        
-        attention_output = self.norm2(attention_output)                                                            
+        #attention_output2 = self.norm2(attention_output2)                                                            
         #print("attention_output2:\n ",attention_output.shape)
 
-        softmax_output = self.output(attention_output)     
+        softmax_output = self.output(attention_output2)     
 
         # print("output:\n ",output)
         #softmax_output = output

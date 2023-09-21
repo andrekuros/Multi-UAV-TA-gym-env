@@ -120,7 +120,7 @@ class Drone:
 #---------- Class Task ----------#                    
 
 class Task:
-    def __init__(self, task_id, position, task_type, task_window, sceneData, is_active=True ):
+    def __init__(self, task_id, position, task_type, task_window, sceneData,  is_active=True ):
         
         self.task_id = task_id
         self.position = position
@@ -130,7 +130,7 @@ class Task:
         
         self.status = 0 # 0 - waiting Allocation / 1 - Allocated / 2 - Concluded
         self.task_window = task_window
-                
+            
         
         self.task_duration = sceneData.getTaskDuration(self.type)
                     

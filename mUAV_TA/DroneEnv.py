@@ -116,7 +116,7 @@ class MultiDroneEnv(ParallelEnv):
         self.tasks = None
         self.last_tasks_info = None
 
-        self.n_mission_areas = 0
+        self.n_mission_areas = 3
         self.mission_areas = None
         
         #Dynamic Conditions        

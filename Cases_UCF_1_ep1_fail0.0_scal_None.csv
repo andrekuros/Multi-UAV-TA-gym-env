@@ -1,0 +1,2 @@
+case,algorithm,mean_S_reward,mean_process_time,process_runs,mean_R_reward,time_reward,distance_reward,quality_reward,load_reward,n_Tasks,n_Agents,caseData
+10,Random,[61.0],[1.9547144571940104e-05],[300],[0],[0],[0.14336917562724014],[0.29047619047619044],[0.0024585464998365864],21,10,"{'case': 0, 'F1': 2, 'F2': 2, 'R1': 3, 'R2': 3, 'Att': 6, 'Rec': 14}"
