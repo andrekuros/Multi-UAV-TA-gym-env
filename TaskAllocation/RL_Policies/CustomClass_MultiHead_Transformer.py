@@ -38,7 +38,7 @@ class CustomNetMultiHead(Net):
         self.agent_size = 5 
 
         
-        self.random_weights = True  
+        self.random_weights = False  
 
         self.sceneData = SceneData()                                                                 
                 
@@ -153,7 +153,8 @@ class CustomNetMultiHead(Net):
                         
                 ownType = int(np.argmax(obs["agent_type"][i]))
                 
-                batch_tasks = []
+                batch_tasks = []                
+
                 for task in batch:
                                 
                     if task["status"] == -1:  
@@ -162,7 +163,8 @@ class CustomNetMultiHead(Net):
                     else:
                         #print("tasks", task)
                         
-                        distance = self.euclidean_distance(obs["position_after_last_task"][i], task["position"])  # Compute the distance
+                        #distance = self.euclidean_distance(obs["position_after_last_task"][i], task["position"])  # Compute the distance
+                        distance = self.euclidean_distance(obs["agent_position"][i], task["position"])  # Compute the distance
                         fit2Task = self.sceneData.UavCapTableByIdx[ownType][task["type"]]
 
                         #task_values.extend(self._one_hot(task.typeIdx, 2))

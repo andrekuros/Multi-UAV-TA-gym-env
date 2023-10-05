@@ -16,7 +16,7 @@ from .Custom_Classes_simplified import CustomNetSimple
 
 from .CustomClasses_Transformer_Reduced import CustomNetReduced
 from .CustomClass_MultiHead_Transformer import CustomNetMultiHead
-from mUAV_TA.DroneEnv import MultiDroneEnv
+from mUAV_TA.DroneEnv import MultiUAVEnv
 
 # "CustomNet" or "CustomNetSimple" or "CustomNetReduced" or "CustomNetMultiHead"
 def _get_model(model="CustomNetMultiHead", env = None, seed = 0):

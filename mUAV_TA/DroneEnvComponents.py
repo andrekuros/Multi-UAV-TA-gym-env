@@ -1,15 +1,15 @@
 import numpy as np
 import math
-from .MultiDroneEnvUtils import DroneEnvUtils as utils
-
+from .MultiDroneEnvUtils import EnvUtils as utils
 
 #---------- Class UAV ----------#
-class Drone:
+class UAV:
     
-    def __init__(self, drone_id, name, position, uavType,  sceneData, altitude=1000 ):
+    def __init__(self, id, name, position, uavType, env, altitude=1000):
         
+        self.env = env
         self.name = name
-        self.drone_id = drone_id
+        self.id = id
         
         self.position = position
         self.altitude = altitude    
@@ -21,75 +21,112 @@ class Drone:
         self.fail_event = -1        
                 
         self.type = uavType
-        self.typeIdx = sceneData.UavIndex[self.type]        
-        self.fit2Task = sceneData.UavCapTable[self.type]                        
-        self.max_speed = sceneData.maxSpeeds[self.type]
-        self.relay_area = sceneData.relayArea[self.type]             
-        self.fail_multiplier = sceneData.failTable[self.type]  
+        self.typeIdx = env.sceneData.UavIndex[self.type]        
+        
+        self.initialCap2Task = env.sceneData.UavCapTable[self.type] 
+        self.currentCap2Task = env.sceneData.UavCapTable[self.type] 
+        self.expectedCap2Task = env.sceneData.UavCapTable[self.type]
+        #self.timeAtTask = 0
+
+        self.attackCap = 0
+
+        if uavType == "F1" or uavType == "F2" :
+            self.attackCap = 4
+
+        self.max_speed = env.sceneData.maxSpeeds[self.type]
+        self.relay_area = env.sceneData.relayArea[self.type]             
+        self.fail_multiplier = env.sceneData.failTable[self.type] 
+        self.engage_range = env.sceneData.engage_range[self.type] 
             
         self.tasks = []
-        self.tasks_done = []
+        self.tasks_done = {}
         
         self.next_free_time = 0
         self.next_free_position = position
-        
-        self.has_capability = True        
-        
+             
 #---------- UAV Internal Capabilities ----------#
-    def allocate(self, task, time_step, max_time_steps):
+    def allocate(self, task):
                 
-        if not task.task_id in self.tasks:
-        
-            time_to_task = np.linalg.norm(self.next_free_position - self.position) / self.max_speed + task.task_duration                        
-            end_time = self.next_free_time + time_to_task
+        if task not in self.tasks and task.status != 2:
+                                
+            time_to_task = np.linalg.norm(self.next_free_position - task.position) / self.max_speed 
+            end_time = self.next_free_time + time_to_task + task.task_duration
             
             #if end_time < max_time_steps: 
             
-            self.tasks.append(task.task_id)
+            self.tasks.append(task)
             self.next_free_time = end_time
-            self.next_free_position = task.position                
+            self.next_free_position = task.position
             
-            return 1.0                        
-        return -1.0    
+            #Update the task requirements considering the new allocation
+            task.addAgentCap(self, time_to_task)
+                                
+            return True                        
+        
+        return False
     
-    def desallocateAll(self, time_step):
-        
-        self.tasks = []
-        self.next_free_time = time_step
-        self.next_free_position = self.position   
-        
-
-
-
-    def doTask(self, drone_dir, task_dir, distance, task_type):
+    def desAllocate(self, task):
+                
+        if task in self.tasks:
+                                
+            self.tasks.remove(task)                        
+            self.next_free_time = self.env.time_steps
+            self.next_free_position = self.position
                         
-        desired_dir = task_dir
+            task.removeAgentCap(self)
+                                
+            return True
+        else:                        
+            print(f'Warming: Task {task.id} is not in agent {self.id} list')
+            return False
+
+    def desallocateAll(self):
+
+        for task in self.tasks:
+            self.desAllocate(task)
+        
+    def inIdle(self):
+
+        #self.tasks.append(0)
+        self.tasks = []
+        self.next_free_time = 0
+        self.next_free_position = self.position
+
+    def outOfService(self):
+
+        self.state = 4        
+        for task in self.tasks:
+            self.desAllocate(task)
+
+
+        
+    def doTask(self, agent_dir, task_dir, distance, task_type):
+                        
+        desired_dir = task_dir        
         
         if True:#task_type == "Rec":
             
-            #if np.dot(drone_dir, task_dir) < 0 and distance < 20:
+            #if np.dot(agent_dir, task_dir) < 0 and distance < 20:
             #    return -task_dir
             return np.array([0,0])
-               
-                
+                            
         return desired_dir
             
 
-
-    def avoid_obstacles(self, drone, obstacles, movement, sceneData):
+    def avoid_obstacles(self, agent, obstacles, movement, sceneData):
         
         avoid_vector = np.array([0.0, 0.0])
         
         for obstacle in obstacles:
             
-            #direction_to_task = task - drone.position        
+            #direction_to_task = task - agent.position        
             #distance_to_task = np.linalg.norm(direction_to_task)
             
-            direction_to_obstacle = obstacle.position - drone.position
+            direction_to_obstacle = obstacle.position - agent.position
             distance_to_obstacle = np.linalg.norm(direction_to_obstacle)
             distance_to_zone = distance_to_obstacle - obstacle.size
     
-            # Verificar se o drone está muito próximo do obstáculo
+            # Verificar se o agent está muito próximo do obstáculo
             #if distance_to_obstacle < obstacle.size * 3:
             if distance_to_zone < 40:
                                 
@@ -115,30 +152,101 @@ class Drone:
     
         return avoid_vector
     
-    
-
 #---------- Class Task ----------#                    
 
 class Task:
-    def __init__(self, task_id, position, task_type, task_window, sceneData,  is_active=True ):
+    def __init__(self, task_id, position, task_type, task_reqs, task_window, sceneData, max_time_steps,  is_active=True, info = None ):
         
-        self.task_id = task_id
+        self.id = task_id
         self.position = position
+        self.info = info
         self.type = task_type
-        self.typeIdx = sceneData.TaskIndex[self.type]
-        self.fit2Agent = [cap[self.typeIdx] for cap in sceneData.UavCapTable.values()]#sceneData.UavCapTable[self.type] 
         
-        self.status = 0 # 0 - waiting Allocation / 1 - Allocated / 2 - Concluded
+        #Task Requirements
+        self.orgReqs       = self.getRequirements(task_reqs, sceneData) #reqs when created
+
+        self.allocationDetails = {} # {"Agent id" : (np.array["caps"], "time init")}
+
+        self.allocatedReqs = np.zeros(len(sceneData.TaskTypes)) #reqs considering allocated Agents
+        self.doneReqs      = np.zeros(len(sceneData.TaskTypes)) #reqs filled by concluded executions
+                
+        self.typeIdx     = sceneData.TaskIndex[self.type] #index of the type
+        self.fit2Agent   = [cap[self.typeIdx] for cap in sceneData.UavCapTable.values()]
+        
+        #Status: 0 - waiting Allocation / 1 - Allocated / 2 - Concluded
+        self.status      = 0 
         self.task_window = task_window
-            
-        
-        self.task_duration = sceneData.getTaskDuration(self.type)
+        self.max_time_steps = max_time_steps
                     
-        #self.task_allocated = task_alloc_resources
+        self.task_duration = sceneData.getTaskDuration(self.type)
+
+        self.allocated = 0
+        self.initTime = self.max_time_steps
+                            
         self.final_quality = -1
+    
+    def getRequirements (self, task_reqs, sceneData):
+       
+        # SceneData task type ordering
+        task_types = sceneData.TaskTypes
+
+        # Initialize requirements array
+        requirements = np.zeros(len(task_types))
+
+        # Fill in the requirements array based on task_reqs
+        for task_type, value in task_reqs.items():
+            index = task_types.index(task_type)
+            requirements[index] = value
+            
+        return requirements
+    
+    def removeAgentCap(self, agent):        
+        
+        if agent.id in self.allocationDetails:
+            self.allocatedReqs -= agent.currentCap2Task
+            details = self.allocationDetails.pop(agent.id)
+            
+            if len(self.allocationDetails) > 0:
+                                
+                if details[1] == self.initTime:
+                    self.initTime = min(self.allocationDetails.items(), key=lambda item: item[1][1])[1][1]
+                    #print("REM:", self.initTime)
+            else:
+                self.initTime = self.max_time_steps
+        else:
+            print(f'Warning: Tried to desAllocate {agent.id} without allocation in task {self.id}')
+
+    def addAgentCap(self, agent, time_in_task):  
+        
+        self.allocationDetails[agent.id] = (agent.currentCap2Task, time_in_task)
+        self.allocatedReqs += agent.currentCap2Task
+        
+        if time_in_task < self.initTime:
+            self.initTime = time_in_task
+
+        self.status = 1       
+       
+        
+
+#---------- Class Task ----------#     
+class Threat:
+    def __init__(self, id, position, max_speed, engage_range, attack, defence, target_agent=None):
+        self.id = id
+        self.position = position
+        self.max_speed = max_speed
+        
+        self.target_agent = None
+        self.relative_task = None
+        
+        self.engage_range = engage_range
+        self.attack = attack
+        self.defence = defence
+        self.attackCap = 4
+        
+        self.status = 1
+
 
 #---------- Class Obstacle ----------#
-
 class Obstacle:
     def __init__(self, position, size):
         self.position = position
@@ -146,7 +254,6 @@ class Obstacle:
         self.detected_segments = []
         
 #----------- Square Area ------------#
-
 class SquareArea:
     def __init__(self, center, width, height):
         self.center = center #[x,y]

@@ -1,13 +1,14 @@
 #%%
 import os
 import random
+
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import time
 
 #Task Allocation Algorithms
-from mUAV_TA.DroneEnv import MAX_INT, MultiDroneEnv
+from mUAV_TA.DroneEnv import MAX_INT, MultiUAVEnv
 from mUAV_TA.DroneEnv import env
 from TaskAllocation.BehaviourBased.swarm_gap import SwarmGap
 from TaskAllocation.MarketBased.CBBA import CBBA
@@ -27,29 +28,26 @@ import torch.nn.functional as F
 def softmax_stable(x):
     return(np.exp(x - np.max(x)) / np.exp(x - np.max(x)).sum())
 
-
-
 algorithms = []
 algorithms += ['Random']
 #algorithms += ['Random2']
 #algorithms += ["Greedy"]
-#algorithms += ["Swarm-GAP"]
+algorithms += ["Swarm-GAP"]
 #algorithms += ["CBBA"]
 #algorithms +=  ["TBTA"]
 #algorithms +=  ["TBTA2"]
 #algorithms +=  ["CTBTA"]
 
-
 print(algorithms)
 
 #config=None
-if False:
+# if False:
 
-    from pettingzoo.test import parallel_api_test
-    from pettingzoo.test import parallel_seed_test
+#     from pettingzoo.test import parallel_api_test
+#     from pettingzoo.test import parallel_seed_test
 
-    parallel_api_test(worldModel, num_cycles=1000)
-    #parallel_seed_test(env, num_cycles=100, test_kept_state=True)
+#     parallel_api_test(worldModel, num_cycles=1000)
+#     #parallel_seed_test(env, num_cycles=100, test_kept_state=True)
    
 
 scal_analysis = "None"
@@ -63,6 +61,7 @@ if scal_analysis == "Tasks":
         case['Rec'] = i 
         cases.append(case)
 
+
 elif scal_analysis == "Agents": 
 
     for i in range(1, 13):
@@ -71,8 +70,7 @@ elif scal_analysis == "Agents":
         case['Rec'] = 24
         cases.append(case)
 else:
-    cases =  [{'case' : 0, 'F1':2, 'F2': 2, "R1" : 3, 'R2' : 3, "Att" : 6, "Rec" : 14}]
-
+    cases =  [{'case' : 0, 'Att': 4, 'Rec' : 20, 'F1':2, 'F2': 2, "R1" : 6 }]
 
 caseResults = []
 totalMetrics = []
@@ -93,6 +91,8 @@ fail_rate = 0.0
 expName = f'UCF_1_ep{episodes}_fail{fail_rate}_scal_{scal_analysis}' 
 
 caseResults = []
+time.sleep(1)
+resolution_increase = 1
 
 for c_idx,case in enumerate(cases):
     
@@ -104,12 +104,12 @@ for c_idx,case in enumerate(cases):
     
     for algorithm in algorithms:
         
-        config = utils.DroneEnvOptions(     
-            render_speed = 1,
-            simulation_frame_rate = 0.02,
-            max_time_steps = 300,
+        config = utils.agentEnvOptions(     
+            render_speed = -1,
+            simulation_frame_rate = 0.02 * resolution_increase, #Std 0.02
+            max_time_steps = 300 * resolution_increase,
             action_mode= "TaskAssign",
-            agents= {"F1" : case['F1'], "F2" : case['F2'], "R1" : case['R1'], "R2" : case['R2']},                 
+            agents= {"F1" : case['F1'], "F2" : case['F2'], "R1" : case['R1']},                 
             tasks= { "Att" : case['Att'], "Rec" : case['Rec']},
             random_init_pos = False,
             num_obstacles = 0,
@@ -117,7 +117,7 @@ for c_idx,case in enumerate(cases):
             fail_rate = fail_rate,
             info = algorithm  )
         
-        worldModel = MultiDroneEnv(config)       
+        worldModel = MultiUAVEnv(config)       
         n_tasks = worldModel.n_tasks 
         n_agents = worldModel.n_agents
         print("\nStarting Algorithm:", algorithm)
@@ -142,7 +142,7 @@ for c_idx,case in enumerate(cases):
             observation, info  = worldModel.reset(seed=episode_seed)#episode+14)                 
             info         = worldModel.get_initial_state()
             
-            drones = info["drones"]
+            agents = info["agents"]
             tasks = info["tasks"]
             quality_table =  info["quality_table"]
            
@@ -150,13 +150,13 @@ for c_idx,case in enumerate(cases):
             truncations = {0 : False}
                             
             if algorithm == "Random":            
-                #planned_actions = utils.generate_random_tasks_all(drones, tasks, seed = episode ) 
+                #planned_actions = utils.generate_random_tasks_all(agents, tasks, seed = episode ) 
                 single_random_alloc = True
                 
                 #print(planned_actions)
                             
             if algorithm == "Greedy":
-                policy = TessiAgent(num_drones=worldModel.n_agents, n_tasks=worldModel.n_tasks, max_dist=worldModel.max_coord, tessi_model = 1)               
+                policy = TessiAgent(num_agents=worldModel.n_agents, n_tasks=worldModel.n_tasks, max_dist=worldModel.max_coord, tessi_model = 1)               
             
             if algorithm == "Swarm-GAP":
                 policy = SwarmGap(worldModel.agents_obj, worldModel.tasks, exchange_interval = 1)
@@ -211,18 +211,20 @@ for c_idx,case in enumerate(cases):
                         #if info['events'] == ["Reset_Allocation"]:
                             #print("New TAsks Alloc")                        
                         if algorithm == "Random":
-                            un_taks_obj = [worldModel.tasks[i] for i in worldModel.unallocated_tasks()] 
+                                                        
+                            #un_taks_obj = [worldModel.tasks[i] for i in worldModel.unallocated_tasks()] 
                             
                             un_taks_obj = worldModel.tasks 
 
                             if un_taks_obj != []: 
                                 
                                 start_time = time.time()
-                                task = rndGen.choice(un_taks_obj)
-                                #agent = rndGen.choice(worldModel.get_live_agents()).name
-                                agent = worldModel.agent_selection
-                                actions = {agent : task.task_id}
-                                #print(actions)
+                                task = rndGen.choice(un_taks_obj)                                
+                                agent = rndGen.choice(worldModel.get_live_agents())
+                                #agent = worldModel.agent_selection
+                                
+                                if agent.state == 0:                                
+                                    actions = {agent.name : task.id}                                
 
                                 end_time = time.time()
                                 episode_process_time.append(end_time - start_time)
@@ -282,8 +284,8 @@ for c_idx,case in enumerate(cases):
                         
                         if un_taks_obj != []:
                             
-                            drones = [worldModel.agents_obj[worldModel.agent_name_mapping[worldModel.agent_selection]]]
-                            actions = policy.allocate_tasks(drones, un_taks_obj )
+                            agents = [worldModel.agents_obj[worldModel.agent_name_mapping[worldModel.agent_selection]]]
+                            actions = policy.allocate_tasks(agents, un_taks_obj )
                         
                         
                 elif algorithm == "CBBA":
@@ -346,7 +348,7 @@ for c_idx,case in enumerate(cases):
 
                             #print(observation[uav.name]["tasks_info"])
                             #print(f'{uav.name} Max_tasK: {observation[uav.name]["tasks_info"][idx_max]["id"]}')                        
-                        
+                   
                         #actions = policy.allocate_tasks(live_agents , un_taks_obj, Qs=Qs ) 
                         actions = {best_uav : best_task_id}
                         print(actions)
@@ -369,6 +371,8 @@ for c_idx,case in enumerate(cases):
                     metrics['S_Reward'] = episode_reward
                     metrics["Algorithm"] = algorithm                
                     totalMetrics.append(metrics)
+
+                    worldModel.exporter.export_to_acmi("sim1.acmi")
                     #print(episode_reward)
                                                         
             total_reward[algorithm].append(episode_reward)
@@ -472,7 +476,7 @@ for i, (algo, data) in enumerate(grouped):
 
 ax.set_xlabel('Metrics',fontsize=12)
 ax.set_ylabel('Values',fontsize=12)
-ax.set_title(f'Task Allocation: (10 drones, [2-30] tasks)  |  Dynamic: fails({fail_rate})',fontsize=14)
+ax.set_title(f'Task Allocation: (10 agents, [2-30] tasks)  |  Dynamic: fails({fail_rate})',fontsize=14)
 
 ax.set_xticks(np.arange(num_metrics) * group_spacing + (bar_width * (num_algorithms - 1) / 2))
 ax.set_xticklabels(list(df.columns)[:-1], fontsize=12)
@@ -510,7 +514,7 @@ sns.boxplot(x='variable', y='value', hue='Algorithm', data=melted_df, palette='S
 
 plt.xlabel('Metrics', fontsize=12)
 plt.ylabel('Normalized Values', fontsize=12)
-plt.title(f'Task Allocation: ([2-30] drones, 30 tasks)  |  Dynamic: fails({fail_rate})', fontsize=14)
+plt.title(f'Task Allocation: ([2-30] agents, 30 tasks)  |  Dynamic: fails({fail_rate})', fontsize=14)
 
 plt.legend(loc='upper left', fontsize=13)
 plt.tight_layout()
