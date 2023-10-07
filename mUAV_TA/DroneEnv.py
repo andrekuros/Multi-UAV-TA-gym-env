@@ -126,6 +126,7 @@ class MultiUAVEnv(ParallelEnv):
         self.tasks: List[Optional[Task]] = []
         self.concluded_tasks: List[Optional[Task]] = []
         self.last_tasks_info = None
+        self.task_idle = None
 
         self.multiple_tasks_per_agent = self.config.multiple_tasks_per_agent
         self.multiple_agents_per_task = self.config.multiple_agents_per_task
@@ -207,11 +208,12 @@ class MultiUAVEnv(ParallelEnv):
         task_values = [ {
                 
                 "id": task.id,
-                "position": task.position / self.max_coord,
-                #"type": task.typeIdx,
+                "position": task.position / self.max_coord,                
                 "status": task.status,                
-                "reqs": task.orgReqs - task.allocatedReqs,
-                "exec_time" : (task.initTime - self.time_steps) / self.max_time_steps            
+                "current_reqs": task.currentReqs,                
+                "alloc_reqs":  task.allocatedReqs,
+                "init_time" : (task.initTime - self.time_steps) / self.max_time_steps,            
+                "end_time" : (task.doneTime - self.time_steps) / self.max_time_steps
                 }  for task in self.tasks
                 if task.status != 2 #status = 2 is concluded 
             ]          
@@ -258,18 +260,16 @@ class MultiUAVEnv(ParallelEnv):
                         
         #agents_info = self.get_agents_info()        
         tasks_info, mask = self.get_task_info(self.agents_obj[0])        
-                          
+                                                    
         self.observations = {
             agent.name : {
-                #Add Own Data for relative features
-                "agent_id": agent.id,
-                "agent_position": agent.position / self.max_coord,
-                "agent_state": self._one_hot(agent.state, 5),
-                "agent_type": self._one_hot(agent.typeIdx, 6),
+                #Add Own Data for relative features               
+                "agent_position": agent.position / self.max_coord,                
+                "agent_caps": agent.currentCap2Task,
                 "agent_attack_cap": agent.attackCap / 4,
-                "next_free_time": [agent.next_free_time / self.max_time_steps],
-                "position_after_last_task": agent.next_free_position / self.max_coord,                
-                #"agent_relay_area": agent.relay_area,
+                "next_free_time": agent.next_free_time / self.max_time_steps,
+                "position_after_last_task": agent.next_free_position / self.max_coord,                                
+                "alloc_task": agent.tasks[0].id, 
 
                 #Complete data for tasks and agents
                 "tasks_info": tasks_info,
@@ -280,7 +280,7 @@ class MultiUAVEnv(ParallelEnv):
             for agent in self.agents_obj
         }
 
-        self.last_tasks_info = [task for task in self.tasks ]            
+        self.last_tasks_info = [task for task in self.tasks if task.status != 2]            
 
     #@functools.lru_cache(maxsize=None)
     def action_space(self, agent):
@@ -356,6 +356,7 @@ class MultiUAVEnv(ParallelEnv):
                                                     
         #-------------------  Init Agents  -------------------#
         self.agents_obj = []
+        self.task_idle = Task(0 , np.array([0,0]), "Hold", {"Hold" : 0.0}, (0, self.max_time_steps), self.sceneData, self.max_time_steps) 
              
         agents_list = list(range(self.n_agents))
         
@@ -370,9 +371,10 @@ class MultiUAVEnv(ParallelEnv):
                 agent_id = agents_list.pop(0)
                 self.agents_obj[agent_id] = UAV(agent_id, f'agent{agent_id}', 
                                                 self.random_position(self.rndAgentGen, obstacles=self.obstacles) if self.random_init_pos else self.bases[0],
-                                                agent_type, 
+                                                agent_type,  
                                                 self)  
-                self.agents_obj[agent_id].max_speed = self.agents_obj[agent_id].max_speed / self.simulation_frame_rate * 0.02                            
+                self.agents_obj[agent_id].max_speed = self.agents_obj[agent_id].max_speed / self.simulation_frame_rate * 0.02               
+
         
         #-------------------  Define Fail Condition  -------------------#
         for agent in self.agents_obj:
@@ -401,12 +403,10 @@ class MultiUAVEnv(ParallelEnv):
 
         task_list = list(range(1, self.n_tasks))
         
-        self.rndAgentGen.shuffle(task_list)
-        
-        task_idle = Task(0 , np.array([0,0]), "Hold", {"Hold" : 0.0}, (0, self.max_time_steps), self.sceneData, self.max_time_steps) 
+        self.rndAgentGen.shuffle(task_list)                
         #task_idle.type = "Idle"       
         self.tasks: List[Optional[Task]] = []
-        self.tasks.append(task_idle)
+        self.tasks.append(self.task_idle)
        
         for task_type, n_tasks in self.tasks_config.items(): 
             for i in range(n_tasks):
@@ -526,24 +526,29 @@ class MultiUAVEnv(ParallelEnv):
                         #Multi agent per task and one task per agent
                         if not self.multiple_tasks_per_agent and self.multiple_agents_per_task:
 
-                            if len(agent.tasks) > 0 and agent.tasks[0].id == task.id:                              
+                            if len(agent.tasks) > 0 and agent.tasks[0].id == task.id:
+                                quality_reward += 0.05                              
                                 continue
 
                             EnvUtils.desallocateAll([agent], self)
-                            quality_reward -= 0.05
+                            quality_reward -= 0.1
                                 
 
                             if task.id == 0:
-                                #agent.inIdle()                                
+                                #agent.inIdle() 
+                                agent.next_free_position = agent.position
+                                agent.next_free_time = self.time_steps
                                 agent.state = 0
                                 continue
-                                                                                                               
+
+                            reqs = task.allocatedReqs
+
                             if agent.allocate(task) :                                                                            
                                 
                                 #self.tasks_current_quality[task_id] = self.quality_table[agent_index][task_id]                                                                      
                                 self.allocation_table[task.id].add(agent_index)
                                                                                                      
-                                quality_reward += (agent.currentCap2Task[task.typeIdx] / 10.0)
+                                quality_reward += agent.currentCap2Task[task.typeIdx] 
                                 task.status = 1
 
                                 #task.addAgentCap(agent)
@@ -568,7 +573,7 @@ class MultiUAVEnv(ParallelEnv):
                                     self.allocation_table[task.id] = agent_index
                                     task.status = 1                                        
                                     action_reward += 5.0 #* self.agents_obj[agent_index].fit2Task[task.typeIdx]#
-                                    quality_reward += self.agents_obj[agent_index].fit2Task[task.typeIdx]   # noqa: E501
+                                    quality_reward += self.agents_obj[agent_index].fit2Task[task.typeIdx]  # noqa: E501
                                     distance_reward += self.calculate_agent_expected_reward(self.agents_obj[agent_index])                                                  
                                     
                                     if len(self.unallocated_tasks()) == 0:                                            
@@ -652,15 +657,14 @@ class MultiUAVEnv(ParallelEnv):
                                 else:
                                     
                                     #Check if TASK is CONCLUDED
-                                    if (self.time_steps - agent.task_start) >= current_task.task_duration:
+                                    if (self.time_steps - agent.task_start) >= current_task.task_duration and current_task.id != 0:
                                                                            
-                                        task = agent.tasks.pop(0)                                          
-
-                                        #print(f'Agent{agent.id} concluded {task.id}')
-                                        agent.task_start = -1                                                                         
-                                        
+                                        task = agent.tasks.pop(0)
+                                                                                                                                                                                                      
+                                        agent.task_start = -1                                                                                                                 
                                         agent.tasks_done[task.id] = agent.currentCap2Task
                                         task.doneReqs += agent.currentCap2Task
+                                        task.currentReqs -= agent.currentCap2Task
 
                                         if task.type == "Att":                
                                                                                 
@@ -674,14 +678,22 @@ class MultiUAVEnv(ParallelEnv):
                                             
                                             #Reward if just concluded the task
                                             if task.status != 2:                                            
-                                                quality_reward += agent.currentCap2Task[task.typeIdx]
+                                                quality_reward += agent.currentCap2Task[task.typeIdx] * 10
                                                 task.status = 2   
                                                 #print(f'Concluded Task {task.id}')                                             
                                             
                                                                                     
                                         if len(agent.tasks) >= 1:
-                                            agent.state = 1                                    
+                                            if agent.tasks[0].id != 0:
+                                                agent.state = 1                                    
+                                            else:
+                                                agent.state = 0
                                         else:                                        
+                                            
+                                            agent.tasks = [self.task_idle]  
+                                            agent.next_free_time = -1
+                                            agent.next_free_position = agent.position   
+                                            
                                             if len(self.reached_tasks) == self.n_tasks:
                                                 self.conclusion_time = self.time_steps
                                                 agent.state = 3 
@@ -728,7 +740,7 @@ class MultiUAVEnv(ParallelEnv):
             # rewards for all agents are placed in the rewards dictionary to be returned
             self.rewards = {agent.name :  0.0 * action_reward  +   #Rand +50
                                           0.0 * distance_reward +  #Rand -4
-                                          10.0 * quality_reward +   #Rand +6
+                                          1.0 * quality_reward +   #Rand +6
                                           0.0 * self.n_tasks * time_reward +      #Rand -9
                                           0.0 * alloc_reward  +
                                           0.0 * time_penaulty + 
@@ -957,6 +969,7 @@ class MultiUAVEnv(ParallelEnv):
 
         return [agent for agent in self.agents_obj if agent.state != -1]  
        
+
 ####---------------------Dynamic Conditions ----------------------------------###
 
     def generate_threat(self):
@@ -1013,7 +1026,7 @@ class MultiUAVEnv(ParallelEnv):
 
                 if np.linalg.norm(np.array(threat.target_agent.position) - np.array(threat.position)) < threat.engage_range:
                     self.handle_threat_engagement(threat)
-            self.tasks[threat.id - 1].position = threat.position
+            threat.relative_task.position = threat.position
                 
 
     def handle_threat_engagement(self, threat: Threat):
@@ -1299,12 +1312,12 @@ class MultiUAVEnv(ParallelEnv):
             pygame.draw.circle(comm_surface, (40, 40, 40), (int(agent.position[0]), int(agent.position[1])), agent.relay_area)
             
             if show_lines:
-                if len(agent.tasks) > 0: 
+                if len(agent.tasks) > 0 and agent.tasks[0].id != 0: 
                     # Desenhar linha entre o agent e seu alvo atual            
                     pygame.draw.line(agents_surface, (210, 210, 210), agent.position, agent.tasks[0].position, 1)
             
                 # Desenhar linha entre o alvo atual e o próximo (mais clara)
-                if len(agent.tasks) > 1:                
+                if len(agent.tasks) > 1 :                                    
                     pygame.draw.line(agents_surface, (100, 100, 100), self.tasks[agent.tasks[0]].position, agent.tasks[1].position, 1)
             
             #pygame.draw.circle(self.screen, (0, 0, 255), (int(agent.position[0]), int(agent.position[1])), 7)

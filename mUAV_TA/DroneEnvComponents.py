@@ -1,5 +1,6 @@
 import numpy as np
 import math
+
 from .MultiDroneEnvUtils import EnvUtils as utils
 
 #---------- Class UAV ----------#
@@ -19,7 +20,7 @@ class UAV:
         self.task_start = -1
         self.task_finished = -1
         self.fail_event = -1        
-                
+        
         self.type = uavType
         self.typeIdx = env.sceneData.UavIndex[self.type]        
         
@@ -38,7 +39,7 @@ class UAV:
         self.fail_multiplier = env.sceneData.failTable[self.type] 
         self.engage_range = env.sceneData.engage_range[self.type] 
             
-        self.tasks = []
+        self.tasks = [env.task_idle]
         self.tasks_done = {}
         
         self.next_free_time = 0
@@ -48,36 +49,54 @@ class UAV:
     def allocate(self, task):
                 
         if task not in self.tasks and task.status != 2:
-                                
-            time_to_task = np.linalg.norm(self.next_free_position - task.position) / self.max_speed 
-            end_time = self.next_free_time + time_to_task + task.task_duration
-            
-            #if end_time < max_time_steps: 
-            
-            self.tasks.append(task)
-            self.next_free_time = end_time
-            self.next_free_position = task.position
-            
-            #Update the task requirements considering the new allocation
-            task.addAgentCap(self, time_to_task)
-                                
-            return True                        
+           
+            if task.id != 0:
+                                                        
+                    time_to_task = np.linalg.norm(self.next_free_position - task.position) / self.max_speed 
+                    end_time = self.next_free_time + time_to_task + task.task_duration
+                    
+                    #if end_time < max_time_steps: 
+                    
+                    if self.tasks[0].id == 0:
+                        self.tasks[0] = task
+                    else:
+                        self.tasks.append(task)
+
+                    self.next_free_time = end_time
+                    self.next_free_position = task.position
+                    
+                    #Update the task requirements considering the new allocation
+                    task.addAgentCap(self, time_to_task)
+                                        
+                    return True 
+            else:
+                
+                self.tasks = [task]
+                self.next_free_time = -1
+                self.next_free_position = self.position   
+                
+                return False                 
+
         
         return False
     
     def desAllocate(self, task):
                 
-        if task in self.tasks:
+        if task in self.tasks and task.id != 0:
                                 
             self.tasks.remove(task)                        
             self.next_free_time = self.env.time_steps
             self.next_free_position = self.position
                         
-            task.removeAgentCap(self)
-                                
+            task.removeAgentCap(self)  
+
+            if len(self.tasks) == 0:
+                self.tasks = [self.env.task_idle]
+                                          
             return True
         else:                        
-            print(f'Warming: Task {task.id} is not in agent {self.id} list')
+            if task.id != 0:
+                print(f'Warming: Task {task.id} is not in agent {self.id} list')            
             return False
 
     def desallocateAll(self):
@@ -85,12 +104,6 @@ class UAV:
         for task in self.tasks:
             self.desAllocate(task)
         
-    def inIdle(self):
-
-        #self.tasks.append(0)
-        self.tasks = []
-        self.next_free_time = 0
-        self.next_free_position = self.position
 
     def outOfService(self):
 
@@ -169,6 +182,7 @@ class Task:
 
         self.allocatedReqs = np.zeros(len(sceneData.TaskTypes)) #reqs considering allocated Agents
         self.doneReqs      = np.zeros(len(sceneData.TaskTypes)) #reqs filled by concluded executions
+        self.currentReqs   = self.orgReqs.copy()
                 
         self.typeIdx     = sceneData.TaskIndex[self.type] #index of the type
         self.fit2Agent   = [cap[self.typeIdx] for cap in sceneData.UavCapTable.values()]
@@ -181,7 +195,8 @@ class Task:
         self.task_duration = sceneData.getTaskDuration(self.type)
 
         self.allocated = 0
-        self.initTime = self.max_time_steps
+        self.initTime = -1
+        self.doneTime = -1
                             
         self.final_quality = -1
     
@@ -202,29 +217,50 @@ class Task:
     
     def removeAgentCap(self, agent):        
         
-        if agent.id in self.allocationDetails:
-            self.allocatedReqs -= agent.currentCap2Task
-            details = self.allocationDetails.pop(agent.id)
-            
-            if len(self.allocationDetails) > 0:
-                                
-                if details[1] == self.initTime:
-                    self.initTime = min(self.allocationDetails.items(), key=lambda item: item[1][1])[1][1]
-                    #print("REM:", self.initTime)
+        if self.status != 2:
+            if agent.id in self.allocationDetails:
+                self.allocatedReqs -= agent.currentCap2Task
+                details = self.allocationDetails.pop(agent.id)            
+                
+                if len(self.allocationDetails) > 0:
+                                    
+                    if details[1] == self.initTime:
+                        self.initTime = min(self.allocationDetails.items(), key=lambda item: item[1][1])[1][1]
+                    
+                    if details[1] + self.task_duration == self.doneTime:
+                        self.doneTime = max(self.allocationDetails.items(), key=lambda item: item[1][1])[1][1] + self.task_duration
+
+                else:
+
+                    self.initTime = -1
+                    self.doneTime = -1
             else:
-                self.initTime = self.max_time_steps
+                print(f'Warning: Tried to desAllocate {agent.id} without allocation in task {self.id}')
+        #else:
+        #    print("Warning: Tried Desallocate Concluded Task")
+
+
+    def addAgentCap(self, agent, time_at_task):  
+        
+        if self.status != 2:
+            time_end_task = time_at_task + self.task_duration
+
+            self.allocationDetails[agent.id] = (agent.currentCap2Task, time_at_task)
+
+            self.allocatedReqs += agent.currentCap2Task
+            
+            if time_at_task < self.initTime or self.initTime == -1:
+                self.initTime = time_at_task
+                
+                if self.doneTime  == -1:
+                    self.doneTime = time_end_task
+                        
+            if time_end_task > self.doneTime:
+                self.doneTime = time_end_task
+
+            self.status = 1 
         else:
-            print(f'Warning: Tried to desAllocate {agent.id} without allocation in task {self.id}')
-
-    def addAgentCap(self, agent, time_in_task):  
-        
-        self.allocationDetails[agent.id] = (agent.currentCap2Task, time_in_task)
-        self.allocatedReqs += agent.currentCap2Task
-        
-        if time_in_task < self.initTime:
-            self.initTime = time_in_task
-
-        self.status = 1       
+            print("Warning: Tried Allocate Concluded Task")
        
         
 

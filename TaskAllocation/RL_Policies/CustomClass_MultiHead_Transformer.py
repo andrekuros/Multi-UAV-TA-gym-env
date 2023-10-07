@@ -1,4 +1,5 @@
 from math import inf
+from sympy import PythonIntegerRing
 import torch
 import torch.nn as nn
 from typing import Optional, Any, List, Dict
@@ -16,7 +17,7 @@ class CustomNetMultiHead(Net):
         action_shape: int,
         hidden_sizes: List[int],
         device: str,
-        nhead: int = 4,
+        nhead: int = 8,
         num_layers: int = 1,
     ):
         super().__init__(            
@@ -32,7 +33,7 @@ class CustomNetMultiHead(Net):
         #self.obs_mode = "Raw_Data"
 
         self.max_tasks = 31
-        self.task_size = 3#int(state_shape_task / self.max_tasks)
+        self.task_size = 12#int(state_shape_task / self.max_tasks)
 
         self.max_agents = 10
         self.agent_size = 5 
@@ -61,10 +62,10 @@ class CustomNetMultiHead(Net):
         
         self.task_encoder = nn.Sequential(
             nn.Linear(self.task_size, 64),
-            # nn.ReLU(),
-            # nn.Linear(32, 64),
-            # nn.ReLU(),
+            nn.ReLU(),
             nn.Linear(64, 128),
+            # nn.ReLU(),
+            # nn.Linear(128, 128),
             nn.ReLU(),
             nn.Linear(128, 64)
         ).to(device)
@@ -75,10 +76,10 @@ class CustomNetMultiHead(Net):
         self.own_attention = nn.MultiheadAttention(embed_dim=self.embedding_size, num_heads=self.nhead, batch_first=True).to(device)
         #self.agents_attention = nn.MultiheadAttention(embed_dim=32, num_heads=nhead).to(device)
 
-        self.norm1 = nn.LayerNorm(self.embedding_size).to(device)
-        self.norm2 = nn.LayerNorm(self.embedding_size).to(device)
+        # self.norm1 = nn.LayerNorm(self.embedding_size).to(device)
+        # self.norm2 = nn.LayerNorm(self.embedding_size).to(device)
        
-        # self.task_score_seq = nn.Sequential(
+        #  self.task_score_seq = nn.Sequential(
         #         nn.Linear(32, 64),
         #         nn.ReLU(),
         #         nn.Linear(64, 128),
@@ -86,7 +87,7 @@ class CustomNetMultiHead(Net):
         #         nn.Linear(128, 32 )
         #     ).to(device)
         
-        self.decoder_attention = nn.MultiheadAttention(embed_dim=self.embedding_size, num_heads=nhead, batch_first=True).to(device)
+        # self.decoder_attention = nn.MultiheadAttention(embed_dim=self.embedding_size, num_heads=nhead, batch_first=True).to(device)
         #self.output = nn.Linear(sizes[-1], action_shape).to(device)  
      
         self.output = nn.Linear(64, 1).to(device) 
@@ -138,9 +139,21 @@ class CustomNetMultiHead(Net):
 
     def forward(self, obs: Dict[str, torch.Tensor], state: Optional[Any] = None, info: Optional[Any] = None):
               
-        # Drone embeddings: input (12) from agent_obs | output (32) to combined_output                   
-        # agent_position = torch.tensor(obs["agent_position"], dtype=torch.float32).to(self.device)
-        # agent_state = torch.tensor(obs["agent_state"], dtype=torch.float32)
+        # Agent States
+        #agent_position   = torch.tensor(obs["agent_position"], dtype=torch.float32).to(self.device)
+        #agent_caps       = torch.tensor(obs["agent_caps"], dtype=torch.float32).to(self.device)
+        #agent_attack_cap = torch.tensor(obs["agent_attack_cap"], dtype=torch.float32).to(self.device)
+        #next_free_time = torch.tensor(obs["next_free_time"], dtype=torch.float32).to(self.device)
+        #pos_after_last_task = torch.tensor(obs["position_after_last_task"], dtype=torch.float32).to(self.device)
+        #alloc_task       = torch.tensor(obs["alloc_task"], dtype=torch.float32).to(self.device) 
+
+        agent_position   = obs["agent_position"]
+        agent_caps       = obs["agent_caps"]
+        #agent_attack_cap = torch.tensor(obs["agent_attack_cap"], dtype=torch.float32).to(self.device)
+        #next_free_time = torch.tensor(obs["next_free_time"], dtype=torch.float32).to(self.device)
+        #pos_after_last_task = torch.tensor(obs["position_after_last_task"], dtype=torch.float32).to(self.device)
+        alloc_task       = obs["alloc_task"]
+        
         # agent_type = torch.tensor(obs["agent_type"], dtype=torch.float32).to(self.device)
         # next_free_time = torch.tensor(obs["next_free_time"], dtype=torch.float32).to(self.device)
         # position_after_last_task = torch.tensor(obs["position_after_last_task"], dtype=torch.float32).to(self.device)                 
@@ -151,32 +164,53 @@ class CustomNetMultiHead(Net):
         
             for i,batch in enumerate(obs["tasks_info"]):
                         
-                ownType = int(np.argmax(obs["agent_type"][i]))
+                #ownType = int(np.argmax(obs["agent_type"][i]))
                 
                 batch_tasks = []                
 
                 for task in batch:
-                                
-                    if task["status"] == -1:  
-                        #print("Task Wrong")                                     
-                        continue
-                    else:
-                        #print("tasks", task)
-                        
-                        #distance = self.euclidean_distance(obs["position_after_last_task"][i], task["position"])  # Compute the distance
-                        distance = self.euclidean_distance(obs["agent_position"][i], task["position"])  # Compute the distance
-                        fit2Task = self.sceneData.UavCapTableByIdx[ownType][task["type"]]
+                                                   
+                    #print("tasks", task)
+                    
+                    distance = self.euclidean_distance(agent_position[i], task["position"])  # Compute the distance
+                    # Calculate the heading (angle) from A to B
+                    theta = np.arctan2(task["position"][1] - agent_position[i][1], task["position"][0] - agent_position[i][0])                    
+                    sin_theta = np.sin(theta)
+                    cos_theta = np.cos(theta)
 
-                        #task_values.extend(self._one_hot(task.typeIdx, 2))
-
-                        batch_tasks.append([
-                            distance, 
-                            fit2Task,
-                            task["status"]                        
-                            #list(obs["agent_type"][i]) + #change to append and others as list too                        
-                            #list(self._one_hot(task["type"], 2))
+                    is_alloc_task = 1 if task['id'] == alloc_task[i] else 0
+                                    
+                    if task['id'] != 0:
+                        if task['id'] != alloc_task[i]:
+                            #print(task['current_reqs'],task['alloc_reqs'], agent_caps[i])
+                            reqs_result = task['current_reqs']  - task['alloc_reqs'] + agent_caps[i]
                             
-                            ])
+                        else:
+                            reqs_result = task['current_reqs']  - task['alloc_reqs'] 
+                    else:
+                        reqs_result = agent_caps[i] * 0
+                        task['init_time'] = 0
+                        task['end_time'] = 0
+                        distance = 0
+                        theta = 0
+                        sin_theta = 0
+                        cos_theta = 0
+                    
+                    #task_values.extend(self._one_hot(task.typeIdx, 2))
+
+                    batch_tasks.append([
+                        distance,      #1
+                        sin_theta,     #1
+                        cos_theta,     #1                        
+                        task['init_time'], #1
+                        task['end_time'],   #1
+                        is_alloc_task,    #1
+                        #list(obs["agent_type"][i]) + #change to append and others as list too                        
+                        #list(self._one_hot(task["type"], 2))
+                        
+                        ])
+                    
+                    batch_tasks[-1].extend(reqs_result)
                 
                 # Pad the task_values array to match the maximum number of tasks
                 #batch_tasks.extend( [[-1] * (self.task_size) for _ in range(self.max_tasks - len(batch_tasks)) ])
@@ -186,13 +220,13 @@ class CustomNetMultiHead(Net):
                 task_values.append(batch_tasks)
        
         #print(task_values)
-        #tasks_info = torch.tensor(obs["tasks_info"], dtype=torch.float32).to(self.device)  # Convert tasks_info to tensor         
-        
+        #tasks_info = torch.tensor(obs["tasks_info"], dtype=torch.float32).to(self.device)  # Convert tasks_info to tensor                 
         tasks_info = torch.tensor(task_values, dtype=torch.float32).to(self.device)  # Convert tasks_info to tensor     
         #print("Task_Info:\n ",tasks_info)
-        
+        #print(tasks_info)
         #tasks_info = tasks_info.view(-1, self.max_tasks, self.task_size)#int(len(tasks_info[0]/10))) #calculate the size of each tasks, and consider 10 max tasks                         
         task_embeddings = self.task_encoder(tasks_info)
+
         #print("Task_Embeddings:\n ",task_embeddings.shape)
            
         # Create the mask based on your tasks_info tensor
@@ -216,20 +250,20 @@ class CustomNetMultiHead(Net):
         
         #attention_output1 = self.norm1(attention_output1)
 
-        attention_output2, _ = self.decoder_attention(attention_output1, attention_output1, attention_output1, key_padding_mask=attn_mask)
-        attention_output2 = attention_output2 + attention_output1
+        # attention_output2, _ = self.decoder_attention(attention_output1, attention_output1, attention_output1, key_padding_mask=attn_mask)
+        # attention_output2 = attention_output2 + attention_output1
         #attention_output.masked_fill_(~mask.unsqueeze(-1), 0.0)        
         #attention_output2 = self.norm2(attention_output2)                                                            
         #print("attention_output2:\n ",attention_output.shape)
 
-        softmax_output = self.output(attention_output2)     
+        softmax_output = self.output(attention_output1)     
 
         # print("output:\n ",output)
         #softmax_output = output
         softmax_output = F.softmax(softmax_output, dim=1) 
         softmax_output = torch.squeeze(softmax_output, -1)            
         
-        # print("softmax_output:",softmax_output)
+        #print("softmax_output:",softmax_output)
 
         return softmax_output, state   
 

@@ -11,10 +11,10 @@ class agentEnvOptions:
                  simulator_module = "Internal", 
                  max_time_steps=300, 
                  agents= {"F1" : 2, "F2" : 2, "R1" : 6},                 
-                 tasks= { "Att" : 6 , "Rec" : 20},
+                 tasks= { "Att" : 4 , "Rec" : 20},
                  multiple_tasks_per_agent = False,
                  multiple_agents_per_task = True,
-                 random_init_pos=True,
+                 random_init_pos=False,
                  num_obstacles=0,
                  hidden_obstacles = False,
                  fail_rate = 0.0,
@@ -121,7 +121,8 @@ class EnvUtils:
                 if agent.desAllocate(task):
                     env.allocation_table[task.id].remove(agent.id)
                     
-            agent.tasks = []
+            agent.tasks = [env.task_idle]
+            agent.status = 0
             agent.next_free_time = env.time_steps
             agent.next_free_position = agent.position
 

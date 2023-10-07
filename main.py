@@ -32,9 +32,9 @@ algorithms = []
 algorithms += ['Random']
 #algorithms += ['Random2']
 #algorithms += ["Greedy"]
-algorithms += ["Swarm-GAP"]
+#algorithms += ["Swarm-GAP"]
 #algorithms += ["CBBA"]
-#algorithms +=  ["TBTA"]
+algorithms +=  ["TBTA"]
 #algorithms +=  ["TBTA2"]
 #algorithms +=  ["CTBTA"]
 
@@ -70,7 +70,7 @@ elif scal_analysis == "Agents":
         case['Rec'] = 24
         cases.append(case)
 else:
-    cases =  [{'case' : 0, 'Att': 4, 'Rec' : 20, 'F1':2, 'F2': 2, "R1" : 6 }]
+    cases =  [{'case' : 0, 'Att': 6, 'Rec' : 20, 'F1':2, 'F2': 2, "R1" : 6 }]
 
 caseResults = []
 totalMetrics = []
@@ -91,7 +91,7 @@ fail_rate = 0.0
 expName = f'UCF_1_ep{episodes}_fail{fail_rate}_scal_{scal_analysis}' 
 
 caseResults = []
-time.sleep(1)
+#time.sleep(1)
 resolution_increase = 1
 
 for c_idx,case in enumerate(cases):
@@ -105,15 +105,17 @@ for c_idx,case in enumerate(cases):
     for algorithm in algorithms:
         
         config = utils.agentEnvOptions(     
-            render_speed = -1,
+            render_speed = 1,
             simulation_frame_rate = 0.02 * resolution_increase, #Std 0.02
             max_time_steps = 300 * resolution_increase,
             action_mode= "TaskAssign",
             agents= {"F1" : case['F1'], "F2" : case['F2'], "R1" : case['R1']},                 
             tasks= { "Att" : case['Att'], "Rec" : case['Rec']},
-            random_init_pos = False,
+            random_init_pos = True,
             num_obstacles = 0,
             hidden_obstacles = False,
+            multiple_tasks_per_agent = False,
+            multiple_agents_per_task = True,
             fail_rate = fail_rate,
             info = algorithm  )
         
@@ -135,7 +137,7 @@ for c_idx,case in enumerate(cases):
             
         for episode in range(episodes):
 
-            episode_seed = episode#1622124873183273465
+            episode_seed = 0#episode#1622124873183273465
             #print("Start_Episode", episode )
             rndGen = random.Random(episode_seed)
             
@@ -168,7 +170,7 @@ for c_idx,case in enumerate(cases):
                 # load policy as in your original code
                 
                 if algorithm == "TBTA":
-                    load_policy_name = 'policy_CustomNetMultiHead_Eval_TBTA_02_simplified_UCF_mask01_seed0All.pth'
+                    load_policy_name = 'policy_CustomNetMultiHead_Eval_TBTA_Relative_Representation_01_.pth'
                     load_policy_path = os.path.join("dqn_Custom", load_policy_name)                    
                     policy = _get_model(model="CustomNetMultiHead", env=worldModel)           
                     
@@ -223,8 +225,11 @@ for c_idx,case in enumerate(cases):
                                 agent = rndGen.choice(worldModel.get_live_agents())
                                 #agent = worldModel.agent_selection
                                 
-                                if agent.state == 0:                                
-                                    actions = {agent.name : task.id}                                
+                                if agent.state != 99:                                
+                                    actions = {agent.name : task.id}                                                                
+                                    #print(actions)
+                                #else:
+                                 #   print(agent.state)
 
                                 end_time = time.time()
                                 episode_process_time.append(end_time - start_time)
@@ -302,8 +307,9 @@ for c_idx,case in enumerate(cases):
                             
                 elif algorithm == "TBTA" or algorithm == "TBTA2":
                     
-                    un_taks_obj = [worldModel.tasks[i] for i in worldModel.unallocated_tasks()] 
-                    
+                    #un_taks_obj = [worldModel.tasks[i] for i in worldModel.unallocated_tasks()] 
+                    un_taks_obj = worldModel.tasks 
+
                     if un_taks_obj != []:
                         
                         start_time = time.time()                        
