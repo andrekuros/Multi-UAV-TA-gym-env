@@ -311,7 +311,7 @@ class MultiUAVEnv(ParallelEnv):
         #print("Call def_seed :", seed)
 
     def reset(self, seed = None , return_info = True, options={"options":1}):
-        
+               
         #print("Seed:", seed)
         if seed is None:                
             self._seed = random.randint(0, MAX_INT)
@@ -447,9 +447,9 @@ class MultiUAVEnv(ParallelEnv):
         self.state = {agent.name : None for agent in self.agents_obj}
                         
         self.current_agent = self.agent_selector.reset()
-                              
+                                    
         self._generate_observations()
-                   
+                       
         return self.observations, self.infos
     
     def get_initial_state(self):
@@ -462,8 +462,7 @@ class MultiUAVEnv(ParallelEnv):
                    }
 
 #------------------ STEP FUNTION --------------------------#    
-    def step(self, actions):
-                      
+    def step(self, actions):                                  
         action_reward = 0
         distance_reward = 0
         quality_reward = 0
@@ -531,7 +530,7 @@ class MultiUAVEnv(ParallelEnv):
                                 continue
 
                             EnvUtils.desallocateAll([agent], self)
-                            quality_reward -= 0.1
+                            quality_reward -= 1.0
                                 
 
                             if task.id == 0:
@@ -1047,7 +1046,8 @@ class MultiUAVEnv(ParallelEnv):
             if threat.target_agent.attackCap <= 0:
                 threat.target_agent.currentCap2Task[3] = 0
             
-            self.threats.remove(threat)                        
+            self.threats.remove(threat)       
+            self.step_reward += 5.0                  
             # Provide reward or update agent state if necessary
         else:            
             threat.target_agent.outOfService()            
@@ -1223,7 +1223,7 @@ class MultiUAVEnv(ParallelEnv):
         else:
             pygame.draw.polygon(surface, color, points )
         
-        if state == 4:
+        if state == -1:
             line_width = 3
             pygame.draw.line(surface, (230, 0, 0), (x - 10, y - 10), (x + 10, y + 10), line_width)
             pygame.draw.line(surface, (230, 0, 0), (x - 10, y + 10), (x + 10, y - 10), line_width)
@@ -1295,8 +1295,8 @@ class MultiUAVEnv(ParallelEnv):
                         pygame.draw.circle(agents_surface, color, (int(task.position[0]), int(task.position[1])), 10) 
                     else:                    
                         line_width = 3
-                        pygame.draw.line(agents_surface, (230, 0, 0), (x - 10, y - 10), (x + 10, y + 10), line_width)
-                        pygame.draw.line(agents_surface, (230, 0, 0), (x - 10, y + 10), (x + 10, y - 10), line_width)
+                        pygame.draw.line(agents_surface, (230, 0, 0), (int(task.position[0]) - 10, (int(task.position[1]) - 10)), (int(task.position[0]) + 10, (int(task.position[1]) + 10)), line_width)
+                        pygame.draw.line(agents_surface, (230, 0, 0), (int(task.position[0]) - 10, (int(task.position[1]) + 10)), (int(task.position[0]) + 10, (int(task.position[1]) - 10)), line_width)
                 else:
                     color = (200, 0, 0) if task.status == 2 else (80, 40, 40)           
                     pygame.draw.circle(agents_surface, color, (int(task.position[0]), int(task.position[1])), 10) 

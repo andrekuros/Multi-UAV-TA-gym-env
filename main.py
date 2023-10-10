@@ -85,7 +85,7 @@ load_reward = {}
 process_time = {}
 process_times = {}
 
-episodes = 1
+episodes = 200
 fail_rate = 0.0
 
 expName = f'UCF_1_ep{episodes}_fail{fail_rate}_scal_{scal_analysis}' 
@@ -105,7 +105,7 @@ for c_idx,case in enumerate(cases):
     for algorithm in algorithms:
         
         config = utils.agentEnvOptions(     
-            render_speed = 1,
+            render_speed = -1,
             simulation_frame_rate = 0.02 * resolution_increase, #Std 0.02
             max_time_steps = 300 * resolution_increase,
             action_mode= "TaskAssign",
@@ -117,8 +117,8 @@ for c_idx,case in enumerate(cases):
             multiple_tasks_per_agent = False,
             multiple_agents_per_task = True,
             fail_rate = fail_rate,
-            info = algorithm  )
-        
+            info = algorithm  )                
+
         worldModel = MultiUAVEnv(config)       
         n_tasks = worldModel.n_tasks 
         n_agents = worldModel.n_agents
@@ -136,7 +136,7 @@ for c_idx,case in enumerate(cases):
         process_times[algorithm]  = []  
             
         for episode in range(episodes):
-
+           
             episode_seed = 0#episode#1622124873183273465
             #print("Start_Episode", episode )
             rndGen = random.Random(episode_seed)
@@ -221,8 +221,9 @@ for c_idx,case in enumerate(cases):
                             if un_taks_obj != []: 
                                 
                                 start_time = time.time()
+                               
                                 task = rndGen.choice(un_taks_obj)                                
-                                agent = rndGen.choice(worldModel.get_live_agents())
+                                agent =  worldModel.agents_obj[worldModel.agent_selector._current_agent]#rndGen.choice(worldModel.get_live_agents())
                                 #agent = worldModel.agent_selection
                                 
                                 if agent.state != 99:                                
@@ -378,7 +379,7 @@ for c_idx,case in enumerate(cases):
                     metrics["Algorithm"] = algorithm                
                     totalMetrics.append(metrics)
 
-                    worldModel.exporter.export_to_acmi("sim1.acmi")
+                    #worldModel.exporter.export_to_acmi("sim1.acmi")
                     #print(episode_reward)
                                                         
             total_reward[algorithm].append(episode_reward)

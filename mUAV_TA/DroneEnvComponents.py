@@ -107,7 +107,7 @@ class UAV:
 
     def outOfService(self):
 
-        self.state = 4        
+        self.state = -1        
         for task in self.tasks:
             self.desAllocate(task)
 
