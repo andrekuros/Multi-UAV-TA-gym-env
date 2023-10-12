@@ -40,7 +40,7 @@ def _get_model(model="CustomNetMultiHead", env = None, seed = 0):
 
     #state_shape_task = env.observation_space["tasks_info"].shape[0]
 
-    state_shape_task = 30 * 3 #env.observation_space["tasks_info"].shape[0]
+    state_shape_task = 30 * 12 #env.observation_space["tasks_info"].shape[0]
                   
     action_shape = env.action_space[agent_name].shape[0]
     #action_shape = env.action_space[agent_name].n
@@ -78,7 +78,7 @@ def _get_model(model="CustomNetMultiHead", env = None, seed = 0):
     agent_learn = DQNPolicy(
             model=net,
             optim=optim,
-            target_update_freq=100                        
+            target_update_freq=1500                        
         )  
   
     return agent_learn

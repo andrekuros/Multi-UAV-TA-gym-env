@@ -70,7 +70,7 @@ elif scal_analysis == "Agents":
         case['Rec'] = 24
         cases.append(case)
 else:
-    cases =  [{'case' : 0, 'Att': 6, 'Rec' : 20, 'F1':2, 'F2': 2, "R1" : 6 }]
+    cases =  [{'case' : 0, 'Hold': 4, 'Att': 4, 'Rec' : 16, 'F1':4, 'F2': 2, "R1" : 6 }]
 
 caseResults = []
 totalMetrics = []
@@ -85,7 +85,8 @@ load_reward = {}
 process_time = {}
 process_times = {}
 
-episodes = 200
+episodes = 1
+
 fail_rate = 0.0
 
 expName = f'UCF_1_ep{episodes}_fail{fail_rate}_scal_{scal_analysis}' 
@@ -106,12 +107,12 @@ for c_idx,case in enumerate(cases):
         
         config = utils.agentEnvOptions(     
             render_speed = -1,
-            simulation_frame_rate = 0.02 * resolution_increase, #Std 0.02
-            max_time_steps = 300 * resolution_increase,
+            simulation_frame_rate = 0.01 * resolution_increase, #Std 0.02
+            max_time_steps = 150 * resolution_increase,
             action_mode= "TaskAssign",
             agents= {"F1" : case['F1'], "F2" : case['F2'], "R1" : case['R1']},                 
-            tasks= { "Att" : case['Att'], "Rec" : case['Rec']},
-            random_init_pos = True,
+            tasks= { "Att" : case['Att'], "Rec" : case['Rec'],  "Hold" : case['Hold']},
+            random_init_pos = False,
             num_obstacles = 0,
             hidden_obstacles = False,
             multiple_tasks_per_agent = False,
@@ -170,7 +171,7 @@ for c_idx,case in enumerate(cases):
                 # load policy as in your original code
                 
                 if algorithm == "TBTA":
-                    load_policy_name = 'policy_CustomNetMultiHead_Eval_TBTA_Relative_Representation_01_.pth'
+                    load_policy_name = 'policy_CustomNetMultiHead_Eval_TBTA_Relative_Representation_01.pth'
                     load_policy_path = os.path.join("dqn_Custom", load_policy_name)                    
                     policy = _get_model(model="CustomNetMultiHead", env=worldModel)           
                     

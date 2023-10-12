@@ -176,7 +176,7 @@ class Task:
         self.type = task_type
         
         #Task Requirements
-        self.orgReqs       = self.getRequirements(task_reqs, sceneData) #reqs when created
+        self.orgReqs       = self.getRequirements(task_reqs, sceneData) #reqs when created       
 
         self.allocationDetails = {} # {"Agent id" : (np.array["caps"], "time init")}
 

@@ -17,7 +17,7 @@ class CustomNetMultiHead(Net):
         action_shape: int,
         hidden_sizes: List[int],
         device: str,
-        nhead: int = 8,
+        nhead: int = 4,
         num_layers: int = 1,
     ):
         super().__init__(            
@@ -35,7 +35,7 @@ class CustomNetMultiHead(Net):
         self.max_tasks = 31
         self.task_size = 12#int(state_shape_task / self.max_tasks)
 
-        self.max_agents = 10
+        self.max_agents = 20
         self.agent_size = 5 
 
         
@@ -64,8 +64,8 @@ class CustomNetMultiHead(Net):
             nn.Linear(self.task_size, 64),
             nn.ReLU(),
             nn.Linear(64, 128),
-            # nn.ReLU(),
-            # nn.Linear(128, 128),
+            nn.ReLU(),
+            nn.Linear(128, 128),
             nn.ReLU(),
             nn.Linear(128, 64)
         ).to(device)
@@ -87,15 +87,15 @@ class CustomNetMultiHead(Net):
         #         nn.Linear(128, 32 )
         #     ).to(device)
         
-        # self.decoder_attention = nn.MultiheadAttention(embed_dim=self.embedding_size, num_heads=nhead, batch_first=True).to(device)
-        #self.output = nn.Linear(sizes[-1], action_shape).to(device)  
+        self.decoder_attention = nn.MultiheadAttention(embed_dim=self.embedding_size, num_heads=nhead, batch_first=True).to(device)
+        #self.output = nn.Linear(sizes[-1], action_shape).to(device)          
      
         self.output = nn.Linear(64, 1).to(device) 
 
         if self.random_weights:
             self.weigths_reset()      
                 
-
+        
     def weigths_reset(self):
 
         with torch.no_grad():
@@ -209,6 +209,7 @@ class CustomNetMultiHead(Net):
                         #list(self._one_hot(task["type"], 2))
                         
                         ])
+                
                     
                     batch_tasks[-1].extend(reqs_result)
                 
@@ -219,9 +220,10 @@ class CustomNetMultiHead(Net):
                 batch_tasks.extend(padding)
                 task_values.append(batch_tasks)
        
+
         #print(task_values)
         #tasks_info = torch.tensor(obs["tasks_info"], dtype=torch.float32).to(self.device)  # Convert tasks_info to tensor                 
-        tasks_info = torch.tensor(task_values, dtype=torch.float32).to(self.device)  # Convert tasks_info to tensor     
+        tasks_info = torch.tensor(np.array(task_values), dtype=torch.float32).to(self.device)  # Convert tasks_info to tensor     
         #print("Task_Info:\n ",tasks_info)
         #print(tasks_info)
         #tasks_info = tasks_info.view(-1, self.max_tasks, self.task_size)#int(len(tasks_info[0]/10))) #calculate the size of each tasks, and consider 10 max tasks                         
@@ -237,11 +239,12 @@ class CustomNetMultiHead(Net):
         #attn_mask = attn_mask.unsqueeze(1).expand(-1, tasks_info.size(1), -1)
         #attn_mask = attn_mask.repeat(self.nhead, 1, 1)
 
-        attn_mask = torch.tensor(obs["mask"], dtype=torch.bool).to(self.device)
+        #attn_mask = torch.tensor(obs["mask"], dtype=torch.bool).to(self.device)
         attn_mask = None#~attn_mask
         # Use the mask in your attention layers
         
         # Use the mask in your attention layers
+        #attention_output1 = task_embeddings
         attention_output1, _ = self.own_attention(task_embeddings, task_embeddings, task_embeddings, key_padding_mask=attn_mask)
         attention_output1 = attention_output1 + task_embeddings
         #print("attention_output:\n ",attention_output.shape)
@@ -250,17 +253,17 @@ class CustomNetMultiHead(Net):
         
         #attention_output1 = self.norm1(attention_output1)
 
-        # attention_output2, _ = self.decoder_attention(attention_output1, attention_output1, attention_output1, key_padding_mask=attn_mask)
-        # attention_output2 = attention_output2 + attention_output1
+        attention_output2, _ = self.decoder_attention(attention_output1, attention_output1, attention_output1, key_padding_mask=attn_mask)
+        attention_output2 = attention_output2 + attention_output1
         #attention_output.masked_fill_(~mask.unsqueeze(-1), 0.0)        
         #attention_output2 = self.norm2(attention_output2)                                                            
         #print("attention_output2:\n ",attention_output.shape)
 
-        softmax_output = self.output(attention_output1)     
+        output = self.output(attention_output2)     
 
         # print("output:\n ",output)
         #softmax_output = output
-        softmax_output = F.softmax(softmax_output, dim=1) 
+        softmax_output = F.softmax(output, dim=1) 
         softmax_output = torch.squeeze(softmax_output, -1)            
         
         #print("softmax_output:",softmax_output)
