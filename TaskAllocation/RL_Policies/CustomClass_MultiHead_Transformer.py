@@ -17,7 +17,7 @@ class CustomNetMultiHead(Net):
         action_shape: int,
         hidden_sizes: List[int],
         device: str,
-        nhead: int = 4,
+        nhead: int = 8,
         num_layers: int = 1,
     ):
         super().__init__(            
@@ -76,8 +76,8 @@ class CustomNetMultiHead(Net):
         self.own_attention = nn.MultiheadAttention(embed_dim=self.embedding_size, num_heads=self.nhead, batch_first=True).to(device)
         #self.agents_attention = nn.MultiheadAttention(embed_dim=32, num_heads=nhead).to(device)
 
-        # self.norm1 = nn.LayerNorm(self.embedding_size).to(device)
-        # self.norm2 = nn.LayerNorm(self.embedding_size).to(device)
+        self.norm1 = nn.LayerNorm(self.embedding_size).to(device)
+        self.norm2 = nn.LayerNorm(self.embedding_size).to(device)
        
         #  self.task_score_seq = nn.Sequential(
         #         nn.Linear(32, 64),
@@ -251,12 +251,12 @@ class CustomNetMultiHead(Net):
         #print("attention_output1:\n ",attention_output1.shape)
         #attention_output.masked_fill_(~mask.unsqueeze(-1), 0.0)        
         
-        #attention_output1 = self.norm1(attention_output1)
+        attention_output1 = self.norm1(attention_output1)
 
         attention_output2, _ = self.decoder_attention(attention_output1, attention_output1, attention_output1, key_padding_mask=attn_mask)
         attention_output2 = attention_output2 + attention_output1
         #attention_output.masked_fill_(~mask.unsqueeze(-1), 0.0)        
-        #attention_output2 = self.norm2(attention_output2)                                                            
+        attention_output2 = self.norm2(attention_output2)                                                            
         #print("attention_output2:\n ",attention_output.shape)
 
         output = self.output(attention_output2)     

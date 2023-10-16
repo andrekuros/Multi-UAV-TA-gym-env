@@ -29,7 +29,7 @@ def softmax_stable(x):
     return(np.exp(x - np.max(x)) / np.exp(x - np.max(x)).sum())
 
 algorithms = []
-algorithms += ['Random']
+#algorithms += ['Random']
 #algorithms += ['Random2']
 #algorithms += ["Greedy"]
 #algorithms += ["Swarm-GAP"]
@@ -93,7 +93,7 @@ expName = f'UCF_1_ep{episodes}_fail{fail_rate}_scal_{scal_analysis}'
 
 caseResults = []
 #time.sleep(1)
-resolution_increase = 1
+resolution_increase = 3
 
 for c_idx,case in enumerate(cases):
     
@@ -106,7 +106,7 @@ for c_idx,case in enumerate(cases):
     for algorithm in algorithms:
         
         config = utils.agentEnvOptions(     
-            render_speed = -1,
+            render_speed = 1,
             simulation_frame_rate = 0.01 * resolution_increase, #Std 0.02
             max_time_steps = 150 * resolution_increase,
             action_mode= "TaskAssign",

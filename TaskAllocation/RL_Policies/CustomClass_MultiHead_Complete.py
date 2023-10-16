@@ -28,7 +28,13 @@ class CustomNetMultiHeadComplete(Net):
             action_shape=action_shape,
             hidden_sizes=hidden_sizes,
             device=device,
-        )               
+        )  
+
+        if torch.cuda.is_available(): 
+            dev = "cuda:0" 
+        else: 
+            dev = "cpu" 
+        device = torch.device(dev)              
 
         self.max_tasks = 30
         self.task_size = int(state_shape_task / self.max_tasks)

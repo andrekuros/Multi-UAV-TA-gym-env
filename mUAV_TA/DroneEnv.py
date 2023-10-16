@@ -764,12 +764,12 @@ class MultiUAVEnv(ParallelEnv):
             # rewards for all agents are placed in the rewards dictionary to be returned
             self.rewards = {agent.name :  0.0 * action_reward  +   #Rand +50
                                           0.0 * distance_reward +  #Rand -4
-                                          0.1 * quality_reward +   #Rand +6
+                                          -0.1 * quality_reward +   #Rand +6
                                           0.0 * S_quality_reward +   #Rand +6                                                                                    
                                           0.0 * self.n_tasks * time_reward +      #Rand -9
                                           0.0 * alloc_reward  +
                                           0.0 * time_penaulty + 
-                                          0.1 * self.step_reward for agent in self.agents_obj} #Rand -28 
+                                          -0.1 * self.step_reward for agent in self.agents_obj} #Rand -28 
                                                                
             self._cumulative_rewards["agent0"] += self.rewards["agent0"]
                         
