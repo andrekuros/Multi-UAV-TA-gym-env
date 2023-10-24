@@ -10,7 +10,7 @@ class agentEnvOptions:
                  action_mode="TaskAssign",
                  simulator_module = "Internal", 
                  max_time_steps=150, 
-                 agents= {"F1" : 8, "F2" : 0, "R1" : 6},                 
+                 agents= {"F1" : 4, "F2" : 0, "R1" : 6},                 
                  tasks= { "Att" : 0 , "Rec" : 16, "Hold" : 4},
                  multiple_tasks_per_agent = False,
                  multiple_agents_per_task = True,
