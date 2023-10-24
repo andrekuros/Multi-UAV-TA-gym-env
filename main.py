@@ -71,6 +71,7 @@ elif scal_analysis == "Agents":
         cases.append(case)
 else:
     cases =  [{'case' : 0, 'Hold': 4, 'Att': 4, 'Rec' : 16, 'F1':4, 'F2': 2, "R1" : 6 }]
+    cases =  [{'case' : 0, 'Hold': 4, 'Att': 0, 'Rec' : 16, 'F1':8, 'F2': 0, "R1" : 6 }]
 
 caseResults = []
 totalMetrics = []
@@ -93,7 +94,8 @@ expName = f'UCF_1_ep{episodes}_fail{fail_rate}_scal_{scal_analysis}'
 
 caseResults = []
 #time.sleep(1)
-resolution_increase = 3
+resolution_increase = 1
+
 
 for c_idx,case in enumerate(cases):
     
@@ -106,7 +108,7 @@ for c_idx,case in enumerate(cases):
     for algorithm in algorithms:
         
         config = utils.agentEnvOptions(     
-            render_speed = 1,
+            render_speed = -1,
             simulation_frame_rate = 0.01 * resolution_increase, #Std 0.02
             max_time_steps = 150 * resolution_increase,
             action_mode= "TaskAssign",
@@ -312,21 +314,36 @@ for c_idx,case in enumerate(cases):
                     #un_taks_obj = [worldModel.tasks[i] for i in worldModel.unallocated_tasks()] 
                     un_taks_obj = worldModel.tasks 
 
+
                     if un_taks_obj != []:
                         
-                        start_time = time.time()                        
-                        agent_id = "agent" + str(worldModel.agent_selector._current_agent)                
-                        obs_batch = Batch(obs=[observation[agent_id]], info=[{}])               
-                        #print(obs_batch)
-                        action = policy(obs_batch).act
-                        #print(action)
-                        #print([task.type for task in un_taks_obj])
-                        #print([agent.type for agent in worldModel.get_live_agents()], worldModel.time_steps)
-                        action = np.argmax(action)
-                        actions = {agent_id : action}
-                        #print(actions)                        
-                        end_time = time.time()
-                        episode_process_time.append(end_time - start_time)
+                        start_time = time.time() 
+                        actions = {}  
+                        parallelDecision = False
+
+                        if parallelDecision:
+                        
+                            for agent in worldModel.agents_obj:
+                                                                                
+                                agent_id = f'{worldModel.agents_obj[worldModel.agent_selector._current_agent].name}'                                            
+                                obs_batch = Batch(obs=[observation[agent_id]], info=[{}])                                               
+                                action = policy(obs_batch).act
+                                action = np.argmax(action)                                
+                                actions[agent_id] = action                                                                
+                                
+                            end_time = time.time()
+                            episode_process_time.append(end_time - start_time)
+                            
+                        else:
+                            agent_id = f'{worldModel.agents_obj[worldModel.agent_selector._current_agent].name}'                                            
+                            obs_batch = Batch(obs=[observation[agent_id]], info=[{}])               
+                            #print(obs_batch)
+                            if worldModel.agents_obj[worldModel.agent_selector._current_agent].type != "AA":                            
+                                action = policy(obs_batch).act
+                                action = np.argmax(action)                            
+                                actions[agent_id] = action                            
+                                end_time = time.time()
+                                episode_process_time.append(end_time - start_time)
                 
                 elif algorithm == "CTBTA":
                     

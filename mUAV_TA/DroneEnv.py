@@ -106,13 +106,23 @@ class MultiUAVEnv(ParallelEnv):
         self.random_init_pos = self.config.random_init_pos
         self.max_agents = 20
 
-        self.agent_selection = 'agent0'
         
+        
+        self.possible_agents = [] 
+        for agent_type, n_agents in self.agents_config.items():
+            for i in range(n_agents):                
+                self.possible_agents.append(f'{agent_type[0]}_agent{i}')
+
+        self.agent_selection = self.possible_agents[0] 
         self.agents_obj = None
-        self.possible_agents = ["agent" + str(i) for i in range(self.n_agents)]          
+        #self.possible_agents = ["agent" + str(i) for i in range(self.n_agents)]          
+        
         self.agent_name_mapping = dict(
             zip(self.possible_agents, list(range(len(self.possible_agents))))
         )
+
+        #print(self.possible_agents)
+        
         self.agents = self.possible_agents
 
         self.agent_selector = agent_selector(self.possible_agents)
@@ -263,7 +273,8 @@ class MultiUAVEnv(ParallelEnv):
                                                     
         self.observations = {
             agent.name : {
-                #Add Own Data for relative features               
+                #Add Own Data for relative features    
+                "agent_type": agent.typeIdx,              
                 "agent_position": agent.position / self.max_coord,                
                 "agent_caps": agent.currentCap2Task,
                 "agent_attack_cap": agent.attackCap / 4,
@@ -338,9 +349,7 @@ class MultiUAVEnv(ParallelEnv):
         
         self.conclusion_time = self.max_time_steps + 1
         self.F_Reward = 0 
-
-        self.agents = self.possible_agents   
-
+        
         self.threats = []  # List to store active threats 
         self.max_threats = 4
         self.threats: List[Optional[Threat]] = []
@@ -361,6 +370,11 @@ class MultiUAVEnv(ParallelEnv):
         agents_list = list(range(self.n_agents))
         
         self.rndAgentGen.shuffle(agents_list)
+        self.agents = self.possible_agents.copy()        
+        self.rndAgentGen.shuffle(self.agents)
+        
+        self.agent_selector = agent_selector(self.agents)
+        self.current_agent = self.agent_selector.next()
 
         # Initialize agents_obj with None placeholders
         #self.agents_obj = [None] * self.n_agents
@@ -369,7 +383,7 @@ class MultiUAVEnv(ParallelEnv):
         for agent_type, n_agents in self.agents_config.items():
             for i in range(n_agents):
                 agent_id = agents_list.pop(0)
-                self.agents_obj[agent_id] = UAV(agent_id, f'agent{agent_id}', 
+                self.agents_obj[agent_id] = UAV(agent_id, f'{agent_type[0]}_agent{i}', 
                                                 self.random_position(self.rndAgentGen, obstacles=self.obstacles) if self.random_init_pos else self.bases[0],
                                                 agent_type,  
                                                 self)  
@@ -483,12 +497,15 @@ class MultiUAVEnv(ParallelEnv):
         time_reward = 0
         self.step_reward = 0
 
-        done_events = []      
+        done_events = []  
+
+        #print(self.time_steps, end="")    
                                      
         #Select next available agent
         self.agent_selection = self.agent_selector.next()
         #while self.agents_obj[self.agent_name_mapping[self.agent_selection]].state == -1:
-        self.agent_selection = self.agent_selector.next()            
+        #self.agent_selection = self.agent_selector.next()            
+        
         self.current_agent = self.agent_selection
                         
         if self.action_mode == "TaskAssign":
@@ -545,8 +562,9 @@ class MultiUAVEnv(ParallelEnv):
                                     S_quality_reward += 0.05                              
                                 continue
 
+                            S_quality_reward -= agent.currentCap2Task[task.typeIdx]
                             EnvUtils.desallocateAll([agent], self)
-                            S_quality_reward -= 1.0
+                            
                                 
 
                             if task.id == 0:
@@ -563,13 +581,18 @@ class MultiUAVEnv(ParallelEnv):
                                 #self.tasks_current_quality[task_id] = self.quality_table[agent_index][task_id]                                                                      
                                 self.allocation_table[task.id].add(agent_index)
                                                                                                      
-                                S_quality_reward += agent.currentCap2Task[task.typeIdx] 
+                                missingCap = task.currentReqs[task.typeIdx]
+                                agentCap = agent.currentCap2Task[task.typeIdx] 
+                                
+                                addedCap =  agentCap if (missingCap - agentCap) > 0 else missingCap
+                                
+                                S_quality_reward += addedCap
                                 task.status = 1
 
                                 #task.addAgentCap(agent)
                                 #action_reward += 1.0 
                                 #quality_reward += self.agents_obj[agent_index].fit2Task[task.typeIdx]   # noqa: E501
-                                #distance_reward += self.calculate_agent_expected_reward(agent)                                                  
+                                distance_reward += self.calculate_agent_expected_reward(agent)                                                  
                                                                                                 
                                 #Agent state as doing task
                                 if agent.state != 1 and agent.state != -1: 
@@ -764,15 +787,15 @@ class MultiUAVEnv(ParallelEnv):
             # rewards for all agents are placed in the rewards dictionary to be returned
             self.rewards = {agent.name :  0.0 * action_reward  +   #Rand +50
                                           0.0 * distance_reward +  #Rand -4
-                                          -0.1 * quality_reward +   #Rand +6
-                                          0.0 * S_quality_reward +   #Rand +6                                                                                    
+                                          1.0 * quality_reward +   #Rand +6
+                                          0.1 * S_quality_reward +   #Rand +6                                                                                    
                                           0.0 * self.n_tasks * time_reward +      #Rand -9
                                           0.0 * alloc_reward  +
                                           0.0 * time_penaulty + 
-                                          -0.1 * self.step_reward for agent in self.agents_obj} #Rand -28 
+                                          0.0 * self.step_reward for agent in self.agents_obj} #Rand -28 
                                                                
-            self._cumulative_rewards["agent0"] += self.rewards["agent0"]
-                        
+            #self._cumulative_rewards["agent0"] += self.rewards["agent0"]
+                                                
             #done = (len(self.reached_tasks) == self.n_tasks or ((self.time_steps >= self.max_time_steps) and (self.max_time_steps > 0)))
             done = ((self.time_steps >= self.max_time_steps) and (self.max_time_steps > 0))
             
@@ -790,30 +813,14 @@ class MultiUAVEnv(ParallelEnv):
             
             self.infos = {agent.name: {} for agent in self.agents_obj}            
             self.infos['selected'] = self.agent_selection
-            self.infos['events'] = done_events
+            self.infos['events'] = done_events            
 
-            
-
-            self._generate_observations()
-                        
-            #print("Setp1:", self.current_agent, self.agent_selector._current_agent)
-            #self.current_agent = self.agent_selector.next()
-            
-            #print(self.current_agent, end=".")
+            self._generate_observations()                                    
 
             if done:
                 metrics =  self.calculate_metrics() 
-                self.infos['metrics'] = metrics
-                #if not -1 in self.allocation_table:
-                    #print("", end=".")
-
-                #self.rewards = {agent.name :  self.F_Reward for agent in self.agents_obj} #Rand -28
-
-                if self.F_Reward > 1000:
-                    print(f'Outlier: [{self.F_Reward} , {self._seed}]')                                
-
-                #if self.F_Reward < 100:
-                    #print(f'Outlier: [{self.F_Reward} , {self._seed}]')
+                self.infos['metrics'] = metrics                
+                #self.rewards = {agent.name :  self.F_Reward for agent in self.agents_obj} #Rand -28                
                 
                 return self.observations, self.rewards, self.terminations, self.truncations, self.infos #metrics
             else:                
@@ -829,14 +836,6 @@ class MultiUAVEnv(ParallelEnv):
  
     def calculate_agent_expected_reward(self, agent):
         
-        #total_distance = 0
-        
-        #if len(tasks) == 0:
-        #    return np.linalg.norm(uav_position - base_position) / self.max_coord
-        
-        # Calculate distance between current position and first task
-        #total_distance += np.linalg.norm(uav_position - self.tasks[0].position) 
-
         # Calculate distance between last task and base position
         if len(agent.tasks) >= 2:
             total_distance = np.linalg.norm(agent.next_free_position - agent.tasks[-2].position)
@@ -848,7 +847,51 @@ class MultiUAVEnv(ParallelEnv):
         # Calculate reward (you can adjust the penalty factor as needed)
         reward = -1.0 * total_distance / self.max_coord
     
-        return reward    
+        return reward  
+
+    def calculate_metrics(self):
+                
+        total_distance = self.total_distance       
+        #load_balancing = self.calculate_load_balancing()
+        load_balancing_std = self.calculate_load_balancing_std()
+        
+        # F_quality = np.mean([0 if t.final_quality == -1 else t.final_quality  for t in self.tasks])        
+        # F_Time = 1 / (self.conclusion_time / self.max_time_steps * 5)
+        # F_distance = 1 / (total_distance/self.n_agents / self.max_coord)
+        
+        # self.F_Reward = 0.25 * F_distance + 0.6 * F_quality + 0.15 * F_Time
+
+        # if self.conclusion_time == self.max_time_steps:
+        #     F_quality = 0
+        #     F_Time = 0
+        #     F_distance = 0
+        #     self.F_Reward = 0
+
+        F_quality = np.mean([0 if t.final_quality == -1 else t.final_quality  for t in self.tasks])        
+        F_Time = 1 / self.conclusion_time * self.max_time_steps
+                
+        F_distance = 1 / total_distance * self.max_coord
+        reward_weigths = [1.0, 1.0, 0.0]#[0.25, 0.6, 0.15]
+        
+        self.F_Reward = reward_weigths[0] * F_distance/0.06 + reward_weigths[1] * F_quality/0.9 + reward_weigths[2] * F_Time / 1.4
+
+        self.F_Reward = self.F_Reward * self.max_time_steps
+
+        if self.conclusion_time == (self.max_time_steps + 1):
+            #print("Fail to Conclude")
+            self.F_Reward = 0
+            F_Time = 0
+
+        #print( f'Q:{F_quality}|D:{F_distance}|T:{F_Time}|F:{self.F_Reward}|Rem:{self.allocation_table.count(-1)}' )
+
+        return { 
+            "F_time": F_Time ,
+            "F_distance": F_distance ,
+            #"load_balancing": load_balancing,
+            "F_load": 1 / load_balancing_std,
+            "F_quality": F_quality,
+            "F_Reward": self.F_Reward 
+        }
 
     def _one_hot(self, idx, num_classes):
         one_hot_vector = np.zeros(num_classes)
@@ -1028,16 +1071,38 @@ class MultiUAVEnv(ParallelEnv):
 
 
     def get_closest_agent(self, position):
-        min_distance = float('inf')
-        closest_agent = None
+        
+        min_distance_F = float('inf')
+        min_distance_W = float('inf')
+        
+        closest_F_agent = None #Figther Agents
+        closest_W_agent = None #Weaker Agents        
+
         for agent in self.agents_obj:
             if agent.state != -1 and agent.state != 4:
                 distance = np.linalg.norm(np.array(agent.position) - np.array(position))
-                if distance < min_distance:
-                    min_distance = distance
-                    closest_agent = agent
-        return closest_agent
+                
+                if agent.type == "F1" or agent.type == "F2":
+                    if distance < min_distance_F:
+                        min_distance_F = distance
+                        closest_F_agent = agent
+                else:
+                    if distance < min_distance_W:
+                        min_distance_W = distance
+                        closest_W_agent = agent
 
+        #Initial Enemy Behavior (chase closest)
+        if True:
+            if min_distance_F < min_distance_W:
+                return closest_F_agent
+            else: 
+                return closest_W_agent
+        
+        #Version 2 Enemy Behavior (chase closest not Fighter)
+        if closest_W_agent is not None:
+            return closest_W_agent
+        else:
+            return closest_F_agent
 
     def update_threats(self):
         for threat in self.threats:
@@ -1116,48 +1181,7 @@ class MultiUAVEnv(ParallelEnv):
         load_balancing = max_distance - min_distance
         return load_balancing
    
-    def calculate_metrics(self):
-                
-        total_distance = self.total_distance       
-        #load_balancing = self.calculate_load_balancing()
-        load_balancing_std = self.calculate_load_balancing_std()
-        
-        # F_quality = np.mean([0 if t.final_quality == -1 else t.final_quality  for t in self.tasks])        
-        # F_Time = 1 / (self.conclusion_time / self.max_time_steps * 5)
-        # F_distance = 1 / (total_distance/self.n_agents / self.max_coord)
-        
-        # self.F_Reward = 0.25 * F_distance + 0.6 * F_quality + 0.15 * F_Time
-
-        # if self.conclusion_time == self.max_time_steps:
-        #     F_quality = 0
-        #     F_Time = 0
-        #     F_distance = 0
-        #     self.F_Reward = 0
-
-        F_quality = np.mean([0 if t.final_quality == -1 else t.final_quality  for t in self.tasks])        
-        F_Time = 1 / self.conclusion_time * self.max_time_steps
-                
-        F_distance = 1 / total_distance * self.max_coord
-        reward_weigths = [1.0, 0.0, 0.0]#[0.25, 0.6, 0.15]
-        self.F_Reward = reward_weigths[0] * F_distance/0.06 + reward_weigths[1] * F_quality/0.9 + reward_weigths[2] * F_Time / 1.4
-
-        self.F_Reward = self.F_Reward * self.max_time_steps
-
-        if self.conclusion_time == (self.max_time_steps + 1):
-            #print("Fail to Conclude")
-            self.F_Reward = 0
-            F_Time = 0
-
-        #print( f'Q:{F_quality}|D:{F_distance}|T:{F_Time}|F:{self.F_Reward}|Rem:{self.allocation_table.count(-1)}' )
-
-        return { 
-            "F_time": F_Time ,
-            "F_distance": F_distance ,
-            #"load_balancing": load_balancing,
-            "F_load": 1 / load_balancing_std,
-            "F_quality": F_quality,
-            "F_Reward": self.F_Reward 
-        }
+    
 
     def plot_metrics(self, df, n_agents, n_tasks):
         # Group data by algorithm and calculate means and standard deviations

@@ -55,6 +55,8 @@ class UAV:
                     time_to_task = np.linalg.norm(self.next_free_position - task.position) / self.max_speed 
                     end_time = self.next_free_time + time_to_task + task.task_duration
                     
+                    self.task_start = -1
+                    
                     #if end_time < max_time_steps: 
                     
                     if self.tasks[0].id == 0:
@@ -62,6 +64,7 @@ class UAV:
                     else:
                         self.tasks.append(task)
 
+                        
                     self.next_free_time = end_time
                     self.next_free_position = task.position
                     
