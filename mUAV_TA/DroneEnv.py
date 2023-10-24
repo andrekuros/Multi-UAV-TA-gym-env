@@ -72,12 +72,17 @@ class MultiUAVEnv(ParallelEnv):
         
         self.exporter = ACMIExporter()
 
-        if config == None:
+        if config is None:
             self.config = agentEnvOptions()
         else:
             self.config = config            
-            
-        self._seed = 0
+                    
+        self.fixed_seed = self.config.fixed_seed
+        if self.fixed_seed != -1:
+            self._seed = self.fixed_seed
+        else:
+            self._seed = 0
+
         self.rndGen = random.Random(self._seed)
         
         self.sceneData = SceneData()
@@ -104,9 +109,7 @@ class MultiUAVEnv(ParallelEnv):
         self.agents_config = self.config.agents
         self.n_agents = sum(self.config.agents.values()) 
         self.random_init_pos = self.config.random_init_pos
-        self.max_agents = 20
-
-        
+        self.max_agents = 20                
         
         self.possible_agents = [] 
         for agent_type, n_agents in self.agents_config.items():
@@ -143,8 +146,9 @@ class MultiUAVEnv(ParallelEnv):
         
         #Define Threats
         self.threats = []  # List to store active threats
-        self.threat_generation_probability = 0.7  / self.simulation_frame_rate * 0.02#TODO: Frame rate Adjust as needed
-        self.max_threats = 4
+        self.threat_generation_probability = 0.7  / self.simulation_frame_rate * 0.02#TODO: Frame rate Adjust as needed        
+        self.max_threats = self.config.max_threats
+        self.n_threats = self.max_threats
 
         self.n_mission_areas = 3
         self.mission_areas = None
@@ -329,7 +333,9 @@ class MultiUAVEnv(ParallelEnv):
         else:
             self._seed = seed    
         
-        self._seed = 0 
+        if self.fixed_seed != -1:
+            self._seed = self.fixed_seed           
+                
 
         #print("Call reset_seed :", self._seed)
         self.rndAgentGen = random.Random(self._seed)
@@ -350,9 +356,9 @@ class MultiUAVEnv(ParallelEnv):
         self.conclusion_time = self.max_time_steps + 1
         self.F_Reward = 0 
         
-        self.threats = []  # List to store active threats 
-        self.max_threats = 4
+        self.threats = []  # List to store active threats         
         self.threats: List[Optional[Threat]] = []
+        self.n_threats = self.max_threats
                                   
                         
         #-------------------  Define Obstacles  -------------------#
@@ -1042,7 +1048,7 @@ class MultiUAVEnv(ParallelEnv):
 ####---------------------Dynamic Conditions ----------------------------------###
 
     def generate_threat(self):
-        if self.max_threats > 0 and self.time_steps % 10 == 0:
+        if self.n_threats > 0 and self.time_steps % 10 == 0:
             if self.rndAgentGen.random() < self.threat_generation_probability:
                 start_position = np.array([self.rndAgentGen.randint(0, self.sceneData.GameArea[0]), 0])
                 speed = self.sceneData.maxSpeeds["T1"]
@@ -1067,7 +1073,7 @@ class MultiUAVEnv(ParallelEnv):
                 new_threat.relative_task = relative_task
                 self.threats.append(new_threat)
 
-                self.max_threats -= 1
+                self.n_threats -= 1
 
 
     def get_closest_agent(self, position):

@@ -18,6 +18,8 @@ class agentEnvOptions:
                  num_obstacles=0,
                  hidden_obstacles = False,
                  fail_rate = 0.0,
+                 max_threats = 0,
+                 fixed_seed = -1,
                  info = "No Info"):
         
         self.render_mode = render_mode 
@@ -34,6 +36,8 @@ class agentEnvOptions:
         self.num_obstacles = num_obstacles
         self.hidden_obstacles = hidden_obstacles
         self.fail_rate = fail_rate
+        self.max_threats = max_threats
+        self.fixed_seed = fixed_seed
         self.info = info
 
 class EnvUtils:

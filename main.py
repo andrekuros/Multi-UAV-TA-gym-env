@@ -29,7 +29,7 @@ def softmax_stable(x):
     return(np.exp(x - np.max(x)) / np.exp(x - np.max(x)).sum())
 
 algorithms = []
-#algorithms += ['Random']
+algorithms += ['Random']
 #algorithms += ['Random2']
 #algorithms += ["Greedy"]
 #algorithms += ["Swarm-GAP"]
@@ -39,7 +39,7 @@ algorithms +=  ["TBTA"]
 #algorithms +=  ["CTBTA"]
 
 print(algorithms)
-
+same_policy = False
 #config=None
 # if False:
 
@@ -71,7 +71,7 @@ elif scal_analysis == "Agents":
         cases.append(case)
 else:
     cases =  [{'case' : 0, 'Hold': 4, 'Att': 4, 'Rec' : 16, 'F1':4, 'F2': 2, "R1" : 6 }]
-    cases =  [{'case' : 0, 'Hold': 4, 'Att': 0, 'Rec' : 16, 'F1':8, 'F2': 0, "R1" : 6 }]
+    cases =  [{'case' : 0, 'Hold': 4, 'Att': 0, 'Rec' : 16, 'F1':4, 'F2': 0, "R1" : 6 }]
 
 caseResults = []
 totalMetrics = []
@@ -86,7 +86,7 @@ load_reward = {}
 process_time = {}
 process_times = {}
 
-episodes = 1
+episodes = 10
 
 fail_rate = 0.0
 
@@ -120,6 +120,8 @@ for c_idx,case in enumerate(cases):
             multiple_tasks_per_agent = False,
             multiple_agents_per_task = True,
             fail_rate = fail_rate,
+            max_threats = 0,
+            fixed_seed = 0,
             info = algorithm  )                
 
         worldModel = MultiUAVEnv(config)       
@@ -140,7 +142,7 @@ for c_idx,case in enumerate(cases):
             
         for episode in range(episodes):
            
-            episode_seed = 0#episode#1622124873183273465
+            episode_seed = episode#1622124873183273465
             #print("Start_Episode", episode )
             rndGen = random.Random(episode_seed)
             
@@ -154,15 +156,9 @@ for c_idx,case in enumerate(cases):
             done = {0 : False}
             truncations = {0 : False}
                             
-            if algorithm == "Random":            
-                #planned_actions = utils.generate_random_tasks_all(agents, tasks, seed = episode ) 
+            if algorithm == "Random":                            
                 single_random_alloc = True
-                
-                #print(planned_actions)
-                            
-            if algorithm == "Greedy":
-                policy = TessiAgent(num_agents=worldModel.n_agents, n_tasks=worldModel.n_tasks, max_dist=worldModel.max_coord, tessi_model = 1)               
-            
+                                                                                    
             if algorithm == "Swarm-GAP":
                 policy = SwarmGap(worldModel.agents_obj, worldModel.tasks, exchange_interval = 1)
             
@@ -175,13 +171,13 @@ for c_idx,case in enumerate(cases):
                 if algorithm == "TBTA":
                     load_policy_name = 'policy_CustomNetMultiHead_Eval_TBTA_Relative_Representation_01.pth'
                     load_policy_path = os.path.join("dqn_Custom", load_policy_name)                    
-                    policy = _get_model(model="CustomNetMultiHead", env=worldModel)           
+                    policy = _get_model(model="CustomNetMultiHead", env=worldModel, seed = episode_seed)           
                     
 
                 if algorithm == "TBTA2": 
                     load_policy_name = 'policy_CustomNetMultiHead_Eval_TBTA_02_simplified_UCF1_new_rew_84.pth'            
                     load_policy_path = os.path.join("dqn_Custom", load_policy_name)                    
-                    policy = _get_model(model="CustomNetMultiHead", env=worldModel)
+                    policy = _get_model(model="CustomNetMultiHead", env=worldModel,  seed = episode_seed)
                 
                 saved_state = torch.load(load_policy_path )           
                 policy.load_state_dict(saved_state)
@@ -334,6 +330,7 @@ for c_idx,case in enumerate(cases):
                             end_time = time.time()
                             episode_process_time.append(end_time - start_time)
                             
+                            
                         else:
                             agent_id = f'{worldModel.agents_obj[worldModel.agent_selector._current_agent].name}'                                            
                             obs_batch = Batch(obs=[observation[agent_id]], info=[{}])               
@@ -344,6 +341,8 @@ for c_idx,case in enumerate(cases):
                                 actions[agent_id] = action                            
                                 end_time = time.time()
                                 episode_process_time.append(end_time - start_time)
+                            
+                            #print(actions)
                 
                 elif algorithm == "CTBTA":
                     
