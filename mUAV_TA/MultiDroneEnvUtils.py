@@ -123,7 +123,7 @@ class EnvUtils:
             #Remove the agent caps from the task
             for task in agent.tasks:                
                 if agent.desAllocate(task):
-                    env.allocation_table[task.id].remove(agent.id)
+                    env.allocation_table[task.id].remove(agent.name)
                     
             agent.tasks = [env.task_idle]
             agent.status = 0

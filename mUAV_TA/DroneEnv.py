@@ -120,9 +120,10 @@ class MultiUAVEnv(ParallelEnv):
         self.agents_obj = None
         #self.possible_agents = ["agent" + str(i) for i in range(self.n_agents)]          
         
-        self.agent_name_mapping = dict(
-            zip(self.possible_agents, list(range(len(self.possible_agents))))
-        )
+        #self.agent_name_mapping = dict(
+        #    zip(self.possible_agents, list(range(len(self.possible_agents))))
+        #)
+        self.agent_by_name = {}
 
         #print(self.possible_agents)
         
@@ -371,6 +372,7 @@ class MultiUAVEnv(ParallelEnv):
                                                     
         #-------------------  Init Agents  -------------------#
         self.agents_obj = []
+        self.agent_by_name = {}
         self.task_idle = Task(0 , np.array([0,0]), "Hold", {"Hold" : 0.0}, (0, self.max_time_steps), self.sceneData, self.max_time_steps) 
              
         agents_list = list(range(self.n_agents))
@@ -389,11 +391,13 @@ class MultiUAVEnv(ParallelEnv):
         for agent_type, n_agents in self.agents_config.items():
             for i in range(n_agents):
                 agent_id = agents_list.pop(0)
-                self.agents_obj[agent_id] = UAV(agent_id, f'{agent_type[0]}_agent{i}', 
+                agent = UAV(agent_id, f'{agent_type[0]}_agent{i}', 
                                                 self.random_position(self.rndAgentGen, obstacles=self.obstacles) if self.random_init_pos else self.bases[0],
                                                 agent_type,  
-                                                self)  
-                self.agents_obj[agent_id].max_speed = self.agents_obj[agent_id].max_speed / self.simulation_frame_rate * 0.02               
+                                                self) 
+                self.agents_obj[agent_id] = agent 
+                agent.max_speed = agent.max_speed / self.simulation_frame_rate * 0.02               
+                self.agent_by_name[agent.name] = agent
 
         
         #-------------------  Define Fail Condition  -------------------#
@@ -506,13 +510,14 @@ class MultiUAVEnv(ParallelEnv):
         done_events = []  
 
         #print(self.time_steps, end="")    
-                                     
+                                                                          
         #Select next available agent
         self.agent_selection = self.agent_selector.next()
+       
         #while self.agents_obj[self.agent_name_mapping[self.agent_selection]].state == -1:
         #self.agent_selection = self.agent_selector.next()            
         
-        self.current_agent = self.agent_selection
+        self.current_agent = self.agent_selection        
                         
         if self.action_mode == "TaskAssign":
                                  
@@ -531,12 +536,12 @@ class MultiUAVEnv(ParallelEnv):
             notAllocatedTasks = len(self.unallocated_tasks())
             
             if isinstance(actions,dict):               
-                                
+                                                                
                 #print(actions)
                 for agent_name, obs_task_ids in actions.items(): 
-                        
-                    agent_index = self.agent_name_mapping[agent_name]
-                    agent : UAV = self.agents_obj[agent_index]                       
+                                            
+                    agent : UAV = self.agent_by_name[agent_name]
+                    agent_index = agent.id                      
                     
                     #Agent Out of Order
                     if agent.state == -1:                                                
@@ -563,36 +568,41 @@ class MultiUAVEnv(ParallelEnv):
                         #Multi agent per task and one task per agent
                         if not self.multiple_tasks_per_agent and self.multiple_agents_per_task:
 
-                            if len(agent.tasks) > 0 and agent.tasks[0].id == task.id:
-                                if task.id != 0:
-                                    S_quality_reward += 0.05                              
-                                continue
-
-                            S_quality_reward -= agent.currentCap2Task[task.typeIdx]
-                            EnvUtils.desallocateAll([agent], self)
                             
-                                
+                            if len(agent.tasks) > 0:
 
+                                #If the agent change the current task receive a small penaulty                            
+                                if agent.tasks[0].id != task.id:
+                                    
+                                    if agent.tasks[0].id != 0:                                    
+                                        S_quality_reward -= 0.05                                                                        
+                                        S_quality_reward -= agent.currentCap2Task[task.typeIdx]                                    
+                                else:
+                                    continue                               
+                                                            
+                            EnvUtils.desallocateAll([agent], self)
+                                                            
                             if task.id == 0:
-                                #agent.inIdle() 
+                                
+                                agent.tasks = [self.task_idle]                                
                                 agent.next_free_position = agent.position
                                 agent.next_free_time = self.time_steps
                                 agent.state = 0
                                 continue
-
-                            reqs = task.allocatedReqs
-
+                                                       
                             if agent.allocate(task) :                                                                            
                                 
                                 #self.tasks_current_quality[task_id] = self.quality_table[agent_index][task_id]                                                                      
-                                self.allocation_table[task.id].add(agent_index)
+                                self.allocation_table[task.id].add(agent.name)
                                                                                                      
-                                missingCap = task.currentReqs[task.typeIdx]
                                 agentCap = agent.currentCap2Task[task.typeIdx] 
+                                missingCapBefore = task.currentReqs[task.typeIdx] - (task.allocatedReqs[task.typeIdx] - agentCap)  
+                                missingCapBefore = missingCapBefore if missingCapBefore > 0 else 0                                
                                 
-                                addedCap =  agentCap if (missingCap - agentCap) > 0 else missingCap
+                                addedCap =  agentCap if missingCapBefore > 0 else missingCapBefore
                                 
                                 S_quality_reward += addedCap
+                                #print(f'ACAP:{agentCap},Missing: {missingCapBefore} Rwd {S_quality_reward} / {addedCap}' )
                                 task.status = 1
 
                                 #task.addAgentCap(agent)

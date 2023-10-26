@@ -29,8 +29,8 @@ def softmax_stable(x):
     return(np.exp(x - np.max(x)) / np.exp(x - np.max(x)).sum())
 
 algorithms = []
-algorithms += ['Random']
-#algorithms += ['Random2']
+# algorithms += ['Random']
+# algorithms += ['Random2']
 #algorithms += ["Greedy"]
 #algorithms += ["Swarm-GAP"]
 #algorithms += ["CBBA"]
@@ -71,7 +71,7 @@ elif scal_analysis == "Agents":
         cases.append(case)
 else:
     cases =  [{'case' : 0, 'Hold': 4, 'Att': 4, 'Rec' : 16, 'F1':4, 'F2': 2, "R1" : 6 }]
-    cases =  [{'case' : 0, 'Hold': 4, 'Att': 0, 'Rec' : 16, 'F1':4, 'F2': 0, "R1" : 6 }]
+    cases =  [{'case' : 0, 'Hold': 4, 'Att': 0, 'Rec' : 16, 'F1':0, 'F2': 0, "R1" : 6 }]
 
 caseResults = []
 totalMetrics = []
@@ -86,7 +86,7 @@ load_reward = {}
 process_time = {}
 process_times = {}
 
-episodes = 10
+episodes = 1
 
 fail_rate = 0.0
 
@@ -108,7 +108,7 @@ for c_idx,case in enumerate(cases):
     for algorithm in algorithms:
         
         config = utils.agentEnvOptions(     
-            render_speed = -1,
+            render_speed = 1,
             simulation_frame_rate = 0.01 * resolution_increase, #Std 0.02
             max_time_steps = 150 * resolution_increase,
             action_mode= "TaskAssign",
@@ -121,7 +121,7 @@ for c_idx,case in enumerate(cases):
             multiple_agents_per_task = True,
             fail_rate = fail_rate,
             max_threats = 0,
-            fixed_seed = 0,
+            fixed_seed = -1,
             info = algorithm  )                
 
         worldModel = MultiUAVEnv(config)       
@@ -169,7 +169,7 @@ for c_idx,case in enumerate(cases):
                 # load policy as in your original code
                 
                 if algorithm == "TBTA":
-                    load_policy_name = 'policy_CustomNetMultiHead_Eval_TBTA_Relative_Representation_01.pth'
+                    load_policy_name = 'policy_CustomNetMultiHead_Eval_TBTA_OCT01.pth'
                     load_policy_path = os.path.join("dqn_Custom", load_policy_name)                    
                     policy = _get_model(model="CustomNetMultiHead", env=worldModel, seed = episode_seed)           
                     
@@ -212,39 +212,47 @@ for c_idx,case in enumerate(cases):
                         #if info['events'] == ["Reset_Allocation"]:
                             #print("New TAsks Alloc")                        
                         if algorithm == "Random":
-                                                        
-                            #un_taks_obj = [worldModel.tasks[i] for i in worldModel.unallocated_tasks()] 
-                            
-                            un_taks_obj = worldModel.tasks 
+                                                                                    
+                            un_taks_obj = [task for task in worldModel.tasks if (task.status == 0 and task.type != "Hold")]
+                            #print(" Len:" , len([(task.id, task.type) for task in un_taks_obj]))
 
                             if un_taks_obj != []: 
+                                
                                 
                                 start_time = time.time()
                                
                                 task = rndGen.choice(un_taks_obj)                                
-                                agent =  worldModel.agents_obj[worldModel.agent_selector._current_agent]#rndGen.choice(worldModel.get_live_agents())
-                                #agent = worldModel.agent_selection
+                                agent =  worldModel.agent_by_name[worldModel.current_agent]#rndGen.choice(worldModel.get_live_agents())                                                                
                                 
-                                if agent.state != 99:                                
-                                    actions = {agent.name : task.id}                                                                
-                                    #print(actions)
-                                #else:
-                                 #   print(agent.state)
+                                if agent.tasks == [worldModel.task_idle]:
+                                                                        
+                                    if agent.state != 99:                                
+                                        actions = {agent.name : worldModel.last_tasks_info.index(task)}                                                                
+                                        #print(actions, task.type)
+                                    #else:
+                                    #   print(agent.state)
 
-                                end_time = time.time()
-                                episode_process_time.append(end_time - start_time)
+                                    end_time = time.time()
+                                    episode_process_time.append(end_time - start_time)
                         
                         elif algorithm == "Random2":
 
-                            un_taks_obj = [worldModel.tasks[i] for i in worldModel.unallocated_tasks()] 
+                            un_taks_obj = [task for task in worldModel.tasks if (task.status != 2 and task.type != "Hold")]
+                            #print(" Len:" , len([(task.id, task.type) for task in un_taks_obj]))
+
                             if un_taks_obj != []: 
                                 
-                                task = rndGen.choice(un_taks_obj)
-                                agent = rndGen.choice(worldModel.get_live_agents()).name
-                                #agent = worldModel.agent_selection
-
-                                actions = {agent : task.task_id}
-
+                                
+                                start_time = time.time()
+                               
+                                task = rndGen.choice(un_taks_obj)                                
+                                agent =  worldModel.agent_by_name[worldModel.current_agent]#rndGen.choice(worldModel.get_live_agents())                                                                
+                                                                                                                                                                                                 
+                                actions = {agent.name : worldModel.last_tasks_info.index(task)}                                                                
+                                
+                                end_time = time.time()
+                                episode_process_time.append(end_time - start_time)
+                        
                         elif algorithm == "Random3":    
                                             
                             un_taks_obj = [worldModel.tasks[i] for i in worldModel.unallocated_tasks()]                                         
@@ -342,7 +350,7 @@ for c_idx,case in enumerate(cases):
                                 end_time = time.time()
                                 episode_process_time.append(end_time - start_time)
                             
-                            #print(actions)
+                            print(actions)
                 
                 elif algorithm == "CTBTA":
                     
