@@ -199,8 +199,8 @@ class MultiUAVEnv(ParallelEnv):
             "next_free_time": Box(low=0, high=1, shape=(1,), dtype=np.float32),
             "position_after_last_task": Box(low=0, high=1, shape=(2,), dtype=np.float32),
             #"agent_relay_area": Box(low=0, high=max(self.area_width, self.area_height), shape=(2,), dtype=np.float32),           
-            "tasks_info": Box(low=0, high=1, shape=((self.max_tasks ) * 3,), dtype=np.float32),
-            "agents_info": Box(low=0, high=1, shape=((self.max_agents ) * 5,), dtype=np.float32),
+            "tasks_info": Box(low=0, high=1, shape=((self.max_tasks ) * 12,), dtype=np.float32),
+            #"agents_info": Box(low=0, high=1, shape=((self.max_agents ) * 5,), dtype=np.float32),
             #"task_type": Discrete(2)  # Assuming 2 possible types
         }) 
         
@@ -233,7 +233,7 @@ class MultiUAVEnv(ParallelEnv):
                 if task.status != 2 #status = 2 is concluded 
             ]          
        
-
+        #print([f'Init: {task["init_time"]} / End: {task["end_time"]} / {task["alloc_reqs"]}' for task in task_values if task["id"] != 0])
         mask = [True for _ in task_values]
         mask.extend([False] * (self.max_tasks - len(task_values)))
 
@@ -283,7 +283,9 @@ class MultiUAVEnv(ParallelEnv):
                 "agent_position": agent.position / self.max_coord,                
                 "agent_caps": agent.currentCap2Task,
                 "agent_attack_cap": agent.attackCap / 4,
-                "next_free_time": agent.next_free_time / self.max_time_steps,
+                "next_free_time": 
+                     ((agent.next_free_time - self.time_steps) if (agent.next_free_time > self.time_steps) else 0) / self.max_time_steps,
+                
                 "position_after_last_task": agent.next_free_position / self.max_coord,                                
                 "alloc_task": agent.tasks[0].id, 
 
@@ -558,11 +560,11 @@ class MultiUAVEnv(ParallelEnv):
                             task: Task = self.last_tasks_info[obs_task_idx]
                             
                             if task is None:                            
-                                action_reward += -5                                
+                                action_reward += -1                                
                                 continue                                                           
                         else:                            
                             #Reward: Penaulty for allocate task with wrong index
-                            action_reward += -5
+                            action_reward += -1
                             continue                                
 
                         #Multi agent per task and one task per agent
@@ -576,7 +578,15 @@ class MultiUAVEnv(ParallelEnv):
                                     
                                     if agent.tasks[0].id != 0:                                    
                                         S_quality_reward -= 0.05                                                                        
-                                        S_quality_reward -= agent.currentCap2Task[task.typeIdx]                                    
+                                        S_quality_reward -= agent.currentCap2Task[agent.tasks[0].typeIdx]
+
+                                        dist_old = np.linalg.norm(agent.position - agent.tasks[0].position)
+                                        dist_new = np.linalg.norm(agent.position - task.position)
+                                        distance_reward += (dist_old - dist_new) / self.max_coord
+                                        #print(f'Srew:{S_quality_reward} | taskType {task.typeIdx} | Acgap {agent.currentCap2Task}' )
+                                    
+                                    #else: 
+                                    #    S_quality_reward += 0.05                                  
                                 else:
                                     continue                               
                                                             
@@ -584,13 +594,14 @@ class MultiUAVEnv(ParallelEnv):
                                                             
                             if task.id == 0:
                                 
+                                S_quality_reward -= 0.05 
                                 agent.tasks = [self.task_idle]                                
                                 agent.next_free_position = agent.position
                                 agent.next_free_time = self.time_steps
                                 agent.state = 0
                                 continue
                                                        
-                            if agent.allocate(task) :                                                                            
+                            if agent.allocate(task, self.time_steps) :                                                                            
                                 
                                 #self.tasks_current_quality[task_id] = self.quality_table[agent_index][task_id]                                                                      
                                 self.allocation_table[task.id].add(agent.name)
@@ -603,12 +614,12 @@ class MultiUAVEnv(ParallelEnv):
                                 
                                 S_quality_reward += addedCap
                                 #print(f'ACAP:{agentCap},Missing: {missingCapBefore} Rwd {S_quality_reward} / {addedCap}' )
-                                task.status = 1
+                                task.status = 1                                
 
                                 #task.addAgentCap(agent)
                                 #action_reward += 1.0 
                                 #quality_reward += self.agents_obj[agent_index].fit2Task[task.typeIdx]   # noqa: E501
-                                distance_reward += self.calculate_agent_expected_reward(agent)                                                  
+                                #distance_reward += self.calculate_agent_expected_reward(agent)                                                  
                                                                                                 
                                 #Agent state as doing task
                                 if agent.state != 1 and agent.state != -1: 
@@ -631,7 +642,7 @@ class MultiUAVEnv(ParallelEnv):
                                     distance_reward += self.calculate_agent_expected_reward(self.agents_obj[agent_index])                                                  
                                     
                                     if len(self.unallocated_tasks()) == 0:                                            
-                                        time_reward = max(self.agents_obj, key=lambda obj: obj.next_free_time).next_free_time / 200
+                                        time_reward = max(self.agents_obj, key=lambda obj: obj.next_free_time).next_free_time / self.max_time_steps
                                     
                                     if self.agents_obj[agent_index].state != 1 and self.agents_obj[agent_index].state != -1: 
                                         self.agents_obj[agent_index].state = 1
@@ -751,7 +762,7 @@ class MultiUAVEnv(ParallelEnv):
                                         else:                                        
                                             
                                             agent.tasks = [self.task_idle]  
-                                            agent.next_free_time = -1
+                                            agent.next_free_time = 0
                                             agent.next_free_position = agent.position   
                                             
                                             if len(self.reached_tasks) == self.n_tasks:
@@ -801,8 +812,8 @@ class MultiUAVEnv(ParallelEnv):
             self.update_threats()   
                                                                                                                                                                                                        
             # rewards for all agents are placed in the rewards dictionary to be returned
-            self.rewards = {agent.name :  0.0 * action_reward  +   #Rand +50
-                                          0.0 * distance_reward +  #Rand -4
+            self.rewards = {agent.name :  1.0 * action_reward  +   #Rand +50
+                                          0.1 * distance_reward +  #Rand -4
                                           1.0 * quality_reward +   #Rand +6
                                           0.1 * S_quality_reward +   #Rand +6                                                                                    
                                           0.0 * self.n_tasks * time_reward +      #Rand -9
@@ -887,7 +898,7 @@ class MultiUAVEnv(ParallelEnv):
         F_Time = 1 / self.conclusion_time * self.max_time_steps
                 
         F_distance = 1 / total_distance * self.max_coord
-        reward_weigths = [1.0, 1.0, 0.0]#[0.25, 0.6, 0.15]
+        reward_weigths = [0.0, 1.0, 0.0]#[0.25, 0.6, 0.15]
         
         self.F_Reward = reward_weigths[0] * F_distance/0.06 + reward_weigths[1] * F_quality/0.9 + reward_weigths[2] * F_Time / 1.4
 
@@ -904,7 +915,7 @@ class MultiUAVEnv(ParallelEnv):
             "F_time": F_Time ,
             "F_distance": F_distance ,
             #"load_balancing": load_balancing,
-            "F_load": 1 / load_balancing_std,
+            #"F_load": 1 / load_balancing_std,
             "F_quality": F_quality,
             "F_Reward": self.F_Reward 
         }

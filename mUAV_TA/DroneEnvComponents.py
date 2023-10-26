@@ -46,14 +46,16 @@ class UAV:
         self.next_free_position = position
              
 #---------- UAV Internal Capabilities ----------#
-    def allocate(self, task):
+    def allocate(self, task, time_step):
                 
         if task not in self.tasks and task.status != 2:
            
             if task.id != 0:
                                                         
                     time_to_task = np.linalg.norm(self.next_free_position - task.position) / self.max_speed 
-                    end_time = self.next_free_time + time_to_task + task.task_duration
+                    
+                    start_time = self.next_free_time if (self.next_free_time - time_step) > 0 else time_step
+                    end_time =  start_time + time_to_task + task.task_duration
                     
                     self.task_start = -1
                     
@@ -65,7 +67,7 @@ class UAV:
                         self.tasks.append(task)
 
                         
-                    self.next_free_time = end_time
+                    self.next_free_time = end_time 
                     self.next_free_position = task.position
                     
                     #Update the task requirements considering the new allocation
@@ -75,7 +77,7 @@ class UAV:
             else:
                 
                 self.tasks = [task]
-                self.next_free_time = -1
+                self.next_free_time = 0
                 self.next_free_position = self.position   
                 
                 return False                 

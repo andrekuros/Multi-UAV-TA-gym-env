@@ -29,8 +29,8 @@ def softmax_stable(x):
     return(np.exp(x - np.max(x)) / np.exp(x - np.max(x)).sum())
 
 algorithms = []
-# algorithms += ['Random']
-# algorithms += ['Random2']
+#algorithms += ['Random']
+#algorithms += ['Random2']
 #algorithms += ["Greedy"]
 #algorithms += ["Swarm-GAP"]
 #algorithms += ["CBBA"]
@@ -71,7 +71,7 @@ elif scal_analysis == "Agents":
         cases.append(case)
 else:
     cases =  [{'case' : 0, 'Hold': 4, 'Att': 4, 'Rec' : 16, 'F1':4, 'F2': 2, "R1" : 6 }]
-    cases =  [{'case' : 0, 'Hold': 4, 'Att': 0, 'Rec' : 16, 'F1':0, 'F2': 0, "R1" : 6 }]
+    cases =  [{'case' : 0, 'Hold': 0, 'Att': 0, 'Rec' : 5, 'F1':0, 'F2': 0, "R1" : 1 }]
 
 caseResults = []
 totalMetrics = []
@@ -350,7 +350,7 @@ for c_idx,case in enumerate(cases):
                                 end_time = time.time()
                                 episode_process_time.append(end_time - start_time)
                             
-                            print(actions)
+                            #print(actions)
                 
                 elif algorithm == "CTBTA":
                     
@@ -412,7 +412,7 @@ for c_idx,case in enumerate(cases):
             time_reward[algorithm].append(totalMetrics[-1]['F_time'])
             distance_reward[algorithm].append(totalMetrics[-1]['F_distance'])
             quality_reward[algorithm].append(totalMetrics[-1]['F_quality'])
-            load_reward[algorithm].append(totalMetrics[-1]['F_load'])
+#            load_reward[algorithm].append(totalMetrics[-1]['F_load'])
                  
             process_time[algorithm].append(np.mean(episode_process_time))         
             process_times[algorithm].append(len(episode_process_time))          
