@@ -71,7 +71,7 @@ elif scal_analysis == "Agents":
         cases.append(case)
 else:
     cases =  [{'case' : 0, 'Hold': 4, 'Att': 4, 'Rec' : 16, 'F1':4, 'F2': 2, "R1" : 6 }]
-    cases =  [{'case' : 0, 'Hold': 0, 'Att': 0, 'Rec' : 5, 'F1':0, 'F2': 0, "R1" : 1 }]
+    cases =  [{'case' : 0, 'Hold': 4, 'Att': 0, 'Rec' : 16, 'F1':0, 'F2': 0, "R1" : 6 }]
 
 caseResults = []
 totalMetrics = []
@@ -175,7 +175,7 @@ for c_idx,case in enumerate(cases):
                     
 
                 if algorithm == "TBTA2": 
-                    load_policy_name = 'policy_CustomNetMultiHead_Eval_TBTA_02_simplified_UCF1_new_rew_84.pth'            
+                    load_policy_name = 'policy_CustomNetMultiHead_Eval_TBTA_02_simplified_UCF1.pth'            
                     load_policy_path = os.path.join("dqn_Custom", load_policy_name)                    
                     policy = _get_model(model="CustomNetMultiHead", env=worldModel,  seed = episode_seed)
                 

@@ -381,7 +381,7 @@ class MultiUAVEnv(ParallelEnv):
         
         self.rndAgentGen.shuffle(agents_list)
         self.agents = self.possible_agents.copy()        
-        self.rndAgentGen.shuffle(self.agents)
+        #self.rndAgentGen.shuffle(self.agents)
         
         self.agent_selector = agent_selector(self.agents)
         self.current_agent = self.agent_selector.next()
@@ -539,7 +539,7 @@ class MultiUAVEnv(ParallelEnv):
             
             if isinstance(actions,dict):               
                                                                 
-                #print(actions)
+                #print(f'Step{self.time_steps} - {actions}' )
                 for agent_name, obs_task_ids in actions.items(): 
                                             
                     agent : UAV = self.agent_by_name[agent_name]
@@ -577,7 +577,7 @@ class MultiUAVEnv(ParallelEnv):
                                 if agent.tasks[0].id != task.id:
                                     
                                     if agent.tasks[0].id != 0:                                    
-                                        S_quality_reward -= 0.05                                                                        
+                                        S_quality_reward -= 0.1                                                                        
                                         S_quality_reward -= agent.currentCap2Task[agent.tasks[0].typeIdx]
 
                                         dist_old = np.linalg.norm(agent.position - agent.tasks[0].position)
@@ -588,13 +588,16 @@ class MultiUAVEnv(ParallelEnv):
                                     #else: 
                                     #    S_quality_reward += 0.05                                  
                                 else:
-                                    continue                               
+                                    if agent.tasks[0].id != 0:                                    
+                                        S_quality_reward += 0.1    
+                                    else:
+                                        S_quality_reward -= 0.05                                
                                                             
                             EnvUtils.desallocateAll([agent], self)
                                                             
                             if task.id == 0:
                                 
-                                S_quality_reward -= 0.05 
+                                #S_quality_reward -= 0.05 
                                 agent.tasks = [self.task_idle]                                
                                 agent.next_free_position = agent.position
                                 agent.next_free_time = self.time_steps
@@ -611,6 +614,10 @@ class MultiUAVEnv(ParallelEnv):
                                 missingCapBefore = missingCapBefore if missingCapBefore > 0 else 0                                
                                 
                                 addedCap =  agentCap if missingCapBefore > 0 else missingCapBefore
+
+                                if addedCap == 0:
+                                    S_quality_reward -= 0.1
+
                                 
                                 S_quality_reward += addedCap
                                 #print(f'ACAP:{agentCap},Missing: {missingCapBefore} Rwd {S_quality_reward} / {addedCap}' )
@@ -812,10 +819,10 @@ class MultiUAVEnv(ParallelEnv):
             self.update_threats()   
                                                                                                                                                                                                        
             # rewards for all agents are placed in the rewards dictionary to be returned
-            self.rewards = {agent.name :  1.0 * action_reward  +   #Rand +50
+            self.rewards = {agent.name :  0.0 * action_reward  +   #Rand +50
                                           0.1 * distance_reward +  #Rand -4
                                           1.0 * quality_reward +   #Rand +6
-                                          0.1 * S_quality_reward +   #Rand +6                                                                                    
+                                          1.0 * S_quality_reward +   #Rand +6                                                                                    
                                           0.0 * self.n_tasks * time_reward +      #Rand -9
                                           0.0 * alloc_reward  +
                                           0.0 * time_penaulty + 
@@ -834,7 +841,6 @@ class MultiUAVEnv(ParallelEnv):
                         
             #env_truncation = done#(self.time_steps >= self.max_time_steps) if self.max_time_steps > 0 else done             
             env_truncation = (self.time_steps >= self.max_time_steps) if self.max_time_steps > 0 else done             
-
 
             self.truncations = {agent.name: env_truncation for agent in self.agents_obj}     
             

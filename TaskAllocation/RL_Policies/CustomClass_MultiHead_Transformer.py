@@ -49,13 +49,16 @@ class CustomNetMultiHead(Net):
             nn.ReLU(),
             nn.Linear(128, 64)
         ).to(device)
+
+        #self.dropout = nn.Dropout(0.1) # 0.5 is the dropout probability
+
                        
         self.embedding_size = 64 #sum of drone and task encoder        
         
         self.own_attention = nn.MultiheadAttention(embed_dim=self.embedding_size, num_heads=self.nhead, batch_first=True).to(device)        
         
-        self.norm1 = nn.LayerNorm(self.embedding_size).to(device)
-        self.norm2 = nn.LayerNorm(self.embedding_size).to(device)
+        # self.norm1 = nn.LayerNorm(self.embedding_size).to(device)
+        # self.norm2 = nn.LayerNorm(self.embedding_size).to(device)
        
         self.decoder_attention = nn.MultiheadAttention(embed_dim=self.embedding_size, num_heads=nhead, batch_first=True).to(device)    
      
@@ -168,7 +171,10 @@ class CustomNetMultiHead(Net):
                 task_values.append(batch_tasks)
                
         tasks_info = torch.tensor(np.array(task_values), dtype=torch.float32).to(self.device)  # Convert tasks_info to tensor                 
+        
         task_embeddings = self.task_encoder(tasks_info)
+        #task_embeddings = self.dropout(self.task_encoder(tasks_info))
+
 
         # Create the mask based on your tasks_info tensor
         #mask = tasks_info.ne(-1).any(dim=-1).bool()        
@@ -176,16 +182,16 @@ class CustomNetMultiHead(Net):
         # Expected shape is (L, N) where L is target sequence length and N is batch size
         #attn_mask = attn_mask.unsqueeze(1).expand(-1, tasks_info.size(1), -1)
         #attn_mask = attn_mask.repeat(self.nhead, 1, 1)
-        #attn_mask = torch.tensor(obs["mask"], dtype=torch.bool).to(self.device)
-        attn_mask = None#~attn_mask
+        attn_mask = torch.tensor(obs["mask"], dtype=torch.bool).to(self.device)
+        #attn_mask = None#~attn_mask
                     
         attention_output1, _ = self.own_attention(task_embeddings, task_embeddings, task_embeddings, key_padding_mask=attn_mask)
         attention_output1 = attention_output1 + task_embeddings        
-        attention_output1 = self.norm1(attention_output1)
+        # attention_output1 = self.norm1(attention_output1)
 
         attention_output2, _ = self.decoder_attention(attention_output1, attention_output1, attention_output1, key_padding_mask=attn_mask)
         attention_output2 = attention_output2 + attention_output1        
-        attention_output2 = self.norm2(attention_output2)                                                                    
+        # attention_output2 = self.norm2(attention_output2)                                                                    
 
         output = self.output(attention_output2)     
         
