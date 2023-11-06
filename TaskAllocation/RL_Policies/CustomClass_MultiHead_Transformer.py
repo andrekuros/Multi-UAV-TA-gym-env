@@ -142,7 +142,8 @@ class CustomNetMultiHead(Net):
                             reqs_result = task['current_reqs']  - (task['alloc_reqs'] + agent_caps[i])
                             
                         else:
-                            reqs_result = task['current_reqs']  - task['alloc_reqs'] 
+                            # reqs_result = task['current_reqs']  - task['alloc_reqs'] 
+                            reqs_result = np.maximum(task['current_reqs'] - task['alloc_reqs'], 0)
                     else:
                         reqs_result = agent_caps[i] * 0
                         task['init_time'] = 0

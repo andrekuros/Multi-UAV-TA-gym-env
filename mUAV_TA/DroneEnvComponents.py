@@ -41,28 +41,35 @@ class UAV:
             
         self.tasks = [env.task_idle]
         self.tasks_done = {}
+        self.re_eval = False
+        self.last_task = None
         
         self.next_free_time = 0
         self.next_free_position = position
+
+        self.has_capability = True
              
 #---------- UAV Internal Capabilities ----------#
     def allocate(self, task, time_step):
                 
         if task not in self.tasks and task.status != 2:
            
+            self.re_eval = False
+            self.last_task = None
+
             if task.id != 0:
                                                         
                     time_to_task = np.linalg.norm(self.next_free_position - task.position) / self.max_speed 
                     
                     start_time = self.next_free_time if (self.next_free_time - time_step) > 0 else time_step
                     end_time =  start_time + time_to_task + task.task_duration
-                    
-                    self.task_start = -1
-                    
+                                                            
                     #if end_time < max_time_steps: 
                     
-                    if self.tasks[0].id == 0:
+                    if self.tasks[0].id == 0 or len(self.tasks) == 0:
                         self.tasks[0] = task
+                        self.task_start = -1
+                        self.state = 1
                     else:
                         self.tasks.append(task)
 
@@ -129,6 +136,45 @@ class UAV:
             return np.array([0,0])
                             
         return desired_dir
+    
+    def taskDone(self, task):
+
+        if task != self.tasks[0]:
+            print(f'Warning: Task ({task.id}) done is not first for {self.name}')
+            return False
+        else:
+            self.tasks.pop(0)
+        
+        self.task_start = -1                                                                                                                 
+        self.tasks_done[task.id] = self.currentCap2Task        
+                
+        if task.type == "Att":                
+                                                
+            self.attackCap -= 1
+            if self.attackCap <= 0:
+                self.currentCap2Task[task.typeIdx] = 0  
+                
+        while len(self.tasks) > 0:                    
+            
+            if self.tasks[0].status == 2 or self.tasks[0].id == 0:
+                self.tasks.pop(0)
+            else:
+                break
+        
+        if len(self.tasks) == 0 or self.tasks[0].id == 0:
+
+            if self.re_eval:
+                self.last_task = None
+                self.re_eval = False
+
+            self.tasks = [self.env.task_idle]  
+            self.next_free_time = 0
+            self.next_free_position = self.position 
+            self.state = 0
+        else:
+            self.state = 1                          
+        
+        return True    
             
 
     def avoid_obstacles(self, agent, obstacles, movement, sceneData):
@@ -173,7 +219,7 @@ class UAV:
 #---------- Class Task ----------#                    
 
 class Task:
-    def __init__(self, task_id, position, task_type, task_reqs, task_window, sceneData, max_time_steps,  is_active=True, info = None ):
+    def __init__(self, task_id, position, task_type, task_reqs, task_window, sceneData, max_time_steps, relative_threat = None,  is_active=True, info = None ):
         
         self.id = task_id
         self.position = position
@@ -192,7 +238,7 @@ class Task:
         self.typeIdx     = sceneData.TaskIndex[self.type] #index of the type
         self.fit2Agent   = [cap[self.typeIdx] for cap in sceneData.UavCapTable.values()]
         
-        #Status: 0 - waiting Allocation / 1 - Allocated / 2 - Concluded
+        #Status: 0 - waiting Allocation / 1 - Allocated / 2 - Concluded / (-1) - Inactive
         self.status      = 0 
         self.task_window = task_window
         self.max_time_steps = max_time_steps
@@ -204,6 +250,8 @@ class Task:
         self.doneTime = -1
                             
         self.final_quality = -1
+
+        self.relative_threat = relative_threat
     
     def getRequirements (self, task_reqs, sceneData):
        
@@ -223,6 +271,7 @@ class Task:
     def removeAgentCap(self, agent):        
         
         if self.status != 2:
+            
             if agent.id in self.allocationDetails:
                 self.allocatedReqs -= agent.currentCap2Task
                 details = self.allocationDetails.pop(agent.id)            
@@ -240,7 +289,7 @@ class Task:
                     self.initTime = -1
                     self.doneTime = -1
             else:
-                print(f'Warning: Tried to desAllocate {agent.id} without allocation in task {self.id}')
+                print(f'Warning(TASK): Tried to desAllocate {agent.id} without allocation in task {self.id}')
         #else:
         #    print("Warning: Tried Desallocate Concluded Task")
 
@@ -271,13 +320,14 @@ class Task:
 
 #---------- Class Task ----------#     
 class Threat:
-    def __init__(self, id, position, max_speed, engage_range, attack, defence, target_agent=None):
+    def __init__(self, id, position, max_speed, engage_range, attack, defence, group_number=0, target_agent=None):
         self.id = id
         self.position = position
         self.max_speed = max_speed
         
         self.target_agent = None
         self.relative_task = None
+        self.relative_detect_task = None
         
         self.engage_range = engage_range
         self.attack = attack
@@ -285,6 +335,8 @@ class Threat:
         self.attackCap = 4
         
         self.status = 1
+        self.threat_group = group_number
+        
 
 
 #---------- Class Obstacle ----------#

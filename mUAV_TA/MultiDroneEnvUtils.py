@@ -10,15 +10,15 @@ class agentEnvOptions:
                  action_mode="TaskAssign",
                  simulator_module = "Internal", 
                  max_time_steps=150, 
-                 agents= {"F1" : 0, "F2" : 0, "R1" : 1},                 
-                 tasks= { "Att" : 0 , "Rec" : 1, "Hold" : 0},
+                 agents= {"F1" : 0, "F2" : 0, "R1" : 1, "R2" : 1},                 
+                 tasks= { "Att" : 0 , "Rec" : 2, "Hold" : 0},
                  multiple_tasks_per_agent = False,
                  multiple_agents_per_task = True,
                  random_init_pos=False,
                  num_obstacles=0,
                  hidden_obstacles = False,
                  fail_rate = 0.0,
-                 max_threats = 0,
+                 threats_list = [("T1", 4), ("T2" , 2)],
                  fixed_seed = -1,
                  info = "No Info"):
         
@@ -36,7 +36,7 @@ class agentEnvOptions:
         self.num_obstacles = num_obstacles
         self.hidden_obstacles = hidden_obstacles
         self.fail_rate = fail_rate
-        self.max_threats = max_threats
+        self.threats_list = threats_list
         self.fixed_seed = fixed_seed
         self.info = info
 

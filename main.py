@@ -29,11 +29,11 @@ def softmax_stable(x):
     return(np.exp(x - np.max(x)) / np.exp(x - np.max(x)).sum())
 
 algorithms = []
-#algorithms += ['Random']
-#algorithms += ['Random2']
-#algorithms += ["Greedy"]
-#algorithms += ["Swarm-GAP"]
-#algorithms += ["CBBA"]
+# algorithms += ['Random']
+# #algorithms += ['Random2']
+# #algorithms += ["Greedy"]
+algorithms += ["Swarm-GAP"]
+# algorithms += ["CBBA"]
 algorithms +=  ["TBTA"]
 #algorithms +=  ["TBTA2"]
 #algorithms +=  ["CTBTA"]
@@ -49,7 +49,6 @@ same_policy = False
 #     parallel_api_test(worldModel, num_cycles=1000)
 #     #parallel_seed_test(env, num_cycles=100, test_kept_state=True)
    
-
 scal_analysis = "None"
 cases = []
 
@@ -71,7 +70,7 @@ elif scal_analysis == "Agents":
         cases.append(case)
 else:
     cases =  [{'case' : 0, 'Hold': 4, 'Att': 4, 'Rec' : 16, 'F1':4, 'F2': 2, "R1" : 6 }]
-    cases =  [{'case' : 0, 'Hold': 4, 'Att': 0, 'Rec' : 16, 'F1':0, 'F2': 0, "R1" : 6 }]
+    cases =  [{'case' : 0, 'Hold': 0, 'Att': 6, 'Rec' : 20, 'F1':2, 'F2': 2, "R2" : 2, "R1" : 0 }]
 
 caseResults = []
 totalMetrics = []
@@ -82,11 +81,13 @@ time_reward = {}
 distance_reward = {}
 quality_reward = {}
 load_reward = {}
+losses = {}
+kills = {}
 
 process_time = {}
 process_times = {}
 
-episodes = 1
+episodes = 10
 
 fail_rate = 0.0
 
@@ -108,11 +109,11 @@ for c_idx,case in enumerate(cases):
     for algorithm in algorithms:
         
         config = utils.agentEnvOptions(     
-            render_speed = 1,
+            render_speed = -1,
             simulation_frame_rate = 0.01 * resolution_increase, #Std 0.02
             max_time_steps = 150 * resolution_increase,
             action_mode= "TaskAssign",
-            agents= {"F1" : case['F1'], "F2" : case['F2'], "R1" : case['R1']},                 
+            agents= {"F1" : case['F1'], "F2" : case['F2'], "R1" : case['R1'], "R2" : case['R2']},                 
             tasks= { "Att" : case['Att'], "Rec" : case['Rec'],  "Hold" : case['Hold']},
             random_init_pos = False,
             num_obstacles = 0,
@@ -120,7 +121,7 @@ for c_idx,case in enumerate(cases):
             multiple_tasks_per_agent = False,
             multiple_agents_per_task = True,
             fail_rate = fail_rate,
-            max_threats = 0,
+            threats_list = [],#[("T1", 4), ("T2" , 2)],
             fixed_seed = -1,
             info = algorithm  )                
 
@@ -136,13 +137,16 @@ for c_idx,case in enumerate(cases):
         distance_reward[algorithm] = []
         quality_reward[algorithm] = [] 
         load_reward[algorithm] = [] 
+        losses[algorithm] = [] 
+        kills[algorithm] = [] 
         
         process_time[algorithm] = []  
         process_times[algorithm]  = []  
             
         for episode in range(episodes):
            
-            episode_seed = episode#1622124873183273465
+            episode_seed = episode#1622124873183273465            
+
             #print("Start_Episode", episode )
             rndGen = random.Random(episode_seed)
             
@@ -161,17 +165,28 @@ for c_idx,case in enumerate(cases):
                                                                                     
             if algorithm == "Swarm-GAP":
                 policy = SwarmGap(worldModel.agents_obj, worldModel.tasks, exchange_interval = 1)
+                worldModel.multiple_tasks_per_agent = True                
+                worldModel.multiple_agents_per_task = True
             
             if algorithm == "CBBA":
                 policy = CBBA(worldModel.agents_obj, worldModel.tasks, worldModel.max_coord, seed = rndGen.randint(0, MAX_INT))
+                worldModel.multiple_tasks_per_agent = True                
+                worldModel.multiple_agents_per_task = True
+
             
             if algorithm == "TBTA" or algorithm == "TBTA2":
                 # load policy as in your original code
+                worldModel.multiple_tasks_per_agent = False                
+                worldModel.multiple_agents_per_task = True
                 
                 if algorithm == "TBTA":
+                    # load_policy_name = 'policy_CustomNetMultiHead_Eval_TBTA_4R120RT_02.pth'
                     load_policy_name = 'policy_CustomNetMultiHead_Eval_TBTA_OCT01.pth'
-                    load_policy_path = os.path.join("dqn_Custom", load_policy_name)                    
-                    policy = _get_model(model="CustomNetMultiHead", env=worldModel, seed = episode_seed)           
+                    load_policy_name2 = 'policy_CustomNetMultiHead_Eval_TBTA_OCT01F.pth'
+                    load_policy_path = os.path.join("dqn_Custom", load_policy_name)    
+                    load_policy_path2 = os.path.join("dqn_Custom", load_policy_name2)                
+                    policy = _get_model(model="CustomNetMultiHead", env=worldModel, seed = episode_seed)   
+                    policyF = _get_model(model="CustomNetMultiHead", env=worldModel, seed = episode_seed)         
                     
 
                 if algorithm == "TBTA2": 
@@ -213,15 +228,15 @@ for c_idx,case in enumerate(cases):
                             #print("New TAsks Alloc")                        
                         if algorithm == "Random":
                                                                                     
-                            un_taks_obj = [task for task in worldModel.tasks if (task.status == 0 and task.type != "Hold")]
+                            un_taks_obj = [task for task in worldModel.tasks if (task.status != 2 and task.type != "Hold")]
                             #print(" Len:" , len([(task.id, task.type) for task in un_taks_obj]))
 
                             if un_taks_obj != []: 
-                                
-                                
+                                                                
                                 start_time = time.time()
                                
-                                task = rndGen.choice(un_taks_obj)                                
+                                task = rndGen.choice(un_taks_obj)      
+                                
                                 agent =  worldModel.agent_by_name[worldModel.current_agent]#rndGen.choice(worldModel.get_live_agents())                                                                
                                 
                                 if agent.tasks == [worldModel.task_idle]:
@@ -282,10 +297,26 @@ for c_idx,case in enumerate(cases):
                     
                     if worldModel.time_steps % policy.exchange_interval == 0:  
                         
-                        un_taks_obj = [worldModel.tasks[i] for i in worldModel.unallocated_tasks()]                   
+                        #un_taks_obj = [worldModel.tasks[i] for i in worldModel.unallocated_tasks()]    
+                        un_taks_obj = [task for task in worldModel.tasks 
+                                       if task.id != 0 and
+                                       task.allocatedReqs[task.typeIdx] < task.currentReqs[task.typeIdx] and 
+                                       task.status != 2]               
+
+                        #print([t.allocatedReqs for t in worldModel.tasks])
+ 
+                        actions = {}
                         if un_taks_obj != []:
                             start_time = time.time()
-                            actions = policy.process_token(worldModel.agents_obj, un_taks_obj)    
+                            
+                            result_actions = policy.process_token(worldModel.agents_obj, un_taks_obj) 
+                            if result_actions is not None:                            
+                                for action in result_actions:
+                                    actions[action[0]] = [worldModel.last_tasks_info.index(act) for act in action[1]]
+                                
+
+
+
                             end_time = time.time()
                             episode_process_time.append(end_time - start_time)
                 
@@ -304,15 +335,26 @@ for c_idx,case in enumerate(cases):
                 elif algorithm == "CBBA":
                     if worldModel.time_steps % 1 == 0 :
                         
-                        un_taks_obj = [worldModel.tasks[i] for i in worldModel.unallocated_tasks()] 
-                        
-                        if un_taks_obj != []:
-                            start_time = time.time()   
-                            actions = policy.allocate_tasks( worldModel.get_live_agents(), un_taks_obj )                                                            
-                            #print(actions)
-                            end_time = time.time()
-                            episode_process_time.append(end_time - start_time)
+                        #un_taks_obj = [worldModel.tasks[i] for i in worldModel.unallocated_tasks()] 
+                        un_taks_obj = [task for task in worldModel.tasks 
+                                       if task.id != 0 and
+                                       task.allocatedReqs[task.typeIdx] < task.currentReqs[task.typeIdx] and
+                                       task.status != 2]            
+                        actions = {}
+                        if len(worldModel.get_live_agents()) > 0:
                             
+                            #print(worldModel.get_live_agents())
+                            if un_taks_obj != []:
+                                start_time = time.time()   
+                                result_actions = policy.allocate_tasks( worldModel.get_live_agents(), un_taks_obj )                                                            
+                                #print(result_actions)
+                                if result_actions is not None:                            
+                                    for action in result_actions:
+                                        actions[action[0]] = [worldModel.last_tasks_info.index(act) for act in action[1]]
+                                end_time = time.time()
+                                episode_process_time.append(end_time - start_time)
+                                # print(actions)
+                                
                 elif algorithm == "TBTA" or algorithm == "TBTA2":
                     
                     #un_taks_obj = [worldModel.tasks[i] for i in worldModel.unallocated_tasks()] 
@@ -384,7 +426,7 @@ for c_idx,case in enumerate(cases):
                         #actions = policy.allocate_tasks(live_agents , un_taks_obj, Qs=Qs ) 
                         actions = {best_uav : best_task_id}
                         print(actions)
-                        #print(actions)
+                        print(actions)
 
                 #if actions != {} and actions != None:
                 #       print(actions)
@@ -401,7 +443,8 @@ for c_idx,case in enumerate(cases):
                 if all(done.values()) or all(truncations.values()):            
                     metrics = info['metrics']
                     metrics['S_Reward'] = episode_reward
-                    metrics["Algorithm"] = algorithm                
+                    metrics["Algorithm"] = algorithm 
+                    metrics['seed']= episode_seed
                     totalMetrics.append(metrics)
 
                     #worldModel.exporter.export_to_acmi("sim1.acmi")
@@ -412,7 +455,10 @@ for c_idx,case in enumerate(cases):
             time_reward[algorithm].append(totalMetrics[-1]['F_time'])
             distance_reward[algorithm].append(totalMetrics[-1]['F_distance'])
             quality_reward[algorithm].append(totalMetrics[-1]['F_quality'])
-#            load_reward[algorithm].append(totalMetrics[-1]['F_load'])
+            losses[algorithm].append(totalMetrics[-1]['Losses'])
+            kills[algorithm].append(totalMetrics[-1]['Kills'])
+
+#           load_reward[algorithm].append(totalMetrics[-1]['F_load'])
                  
             process_time[algorithm].append(np.mean(episode_process_time))         
             process_times[algorithm].append(len(episode_process_time))          
@@ -422,8 +468,8 @@ for c_idx,case in enumerate(cases):
 
 
     for alg in algorithms:
-        print(f'Case {case["case"]} -> Rew({alg}): {np.mean(total_reward[alg])}')
-        print(f'Case {case["case"]} -> Rew({alg}): Max: {max(total_reward[alg])}, Min: {min(total_reward[alg])}')
+        print(f'Case {case["case"]} -> {alg}-> S_REW: {np.mean(total_reward[alg]):.2f} ( {min(total_reward[alg]):.2f} / {max(total_reward[alg]):.2f})')         
+        print(f'Case {case["case"]} -> {alg}-> R_REW: {np.mean(total_F_reward[alg]):.2f} ( {min(total_F_reward[alg]):.2f} / {max(total_F_reward[alg]):.2f})') 
         #plt.hist(total_reward[alg], bins=100)
         #plt.show()
         caseResults.append({'case' : n_agents ,'algorithm' : alg, 'mean_S_reward' : total_reward[alg], 
@@ -434,6 +480,8 @@ for c_idx,case in enumerate(cases):
                             'distance_reward' : distance_reward[alg],
                             'quality_reward' : quality_reward[alg],
                             'load_reward' : load_reward[alg],
+                            'losses' : losses[alg],
+                            'kills'  : kills[alg],
                             'n_Tasks' : n_tasks,'n_Agents' : n_agents, 
                             'caseData' : case})
 
@@ -455,7 +503,7 @@ import seaborn as sns
 import matplotlib as mpl
 
 fail_rate = 0.0
-metricsDf = pd.read_csv('Resultados_UCF_1_ep2_fail0.0_scal_None.csv')
+metricsDf = pd.read_csv('Resultados_UCF_1_ep50_fail0.0_scal_None.csv')
 
 #worldModel.plot_metrics(metricsDf, len(worldModel.agents), worldModel.n_tasks)
 import seaborn as sns
@@ -474,12 +522,12 @@ df = metricsDf#.drop(['F_load', 'S_Reward'], axis=1)#[metricsDf['Algorithm'] != 
 # df['F_load'] = df['F_load'] * 200
 
 df = df[df.Algorithm != 'Greedy']
-#print(metricsDf.mean())
+
 grouped = df.groupby('Algorithm', sort=False)
 means = grouped.mean()
 std_devs = grouped.std()
 
-means_rnd = means.loc['Random']    
+means_rnd = means.loc['Random']   
 std_devs = std_devs / means_rnd
 means = means / means_rnd 
 std_devs
@@ -503,6 +551,7 @@ max_val = 0
 for i, (algo, data) in enumerate(grouped):
     index = np.arange(num_metrics) * group_spacing + i * bar_width       
     ax.bar(index, means.loc[algo], bar_width, alpha=0.95, label=algo, yerr=std_devs.loc[algo], capsize=6, color=palette[i], linewidth=0.0)
+    # ax.bar(index, means.loc[algo], bar_width, alpha=0.95, label=algo, capsize=6, color=palette[i], linewidth=0.0)
     if  max(means.loc[algo]) > max_val:
          max_val = max(means.loc[algo])
 
