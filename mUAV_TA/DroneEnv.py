@@ -662,11 +662,11 @@ class MultiUAVEnv(ParallelEnv):
                                                                                                      
                                 agentCap = agent.currentCap2Task[task.typeIdx] 
                                 missingCapBefore = task.currentReqs[task.typeIdx] - (task.allocatedReqs[task.typeIdx] - agentCap)  
-                                missingCapBefore = missingCapBefore if missingCapBefore > 0 else 0                                
+                                missingCapBefore = max(missingCapBefore, 0 )
                                 
-                                addedCap =  agentCap if missingCapBefore > 0 else missingCapBefore
-
-                                if addedCap == 0:
+                                addedCap =  missingCapBefore -  np.maximum(missingCapBefore - agentCap, 0) #AddedCap
+                               
+                                if addedCap <= 0:
                                     S_quality_reward -= 1.5
 
                                 
@@ -835,9 +835,9 @@ class MultiUAVEnv(ParallelEnv):
                                             
                                             #Reward if just concluded the task
                                             if task.status != 2:                                            
-                                                quality_reward += task.orgReqs[task.typeIdx] * 2
+                                                quality_reward += task.orgReqs[task.typeIdx] * 2 
                                                 
-                                                self.F_Reward += task.orgReqs[task.typeIdx]
+                                                self.F_Reward += task.orgReqs[task.typeIdx] 
                                                 
                                                 task.status = 2   
                                                 #print(f'Concluded Task {task.id} | {task.type} -> Agent: {agent.type}')                                             
@@ -897,7 +897,7 @@ class MultiUAVEnv(ParallelEnv):
                                           1.0 * S_quality_reward +   #Rand +6                                                                                    
                                           0.0 * self.n_tasks * time_reward +      #Rand -9
                                           0.0 * alloc_reward  +
-                                          0.0 * time_penaulty + 
+                                          0.2 * time_penaulty + 
                                           0.0 * self.step_reward for agent in self.agents_obj} #Rand -28 
                                                                                       
             #self._cumulative_rewards["agent0"] += self.rewards["agent0"]
@@ -985,7 +985,7 @@ class MultiUAVEnv(ParallelEnv):
         
         #self.F_Reward = reward_weigths[0] * F_distance/0.06 + reward_weigths[1] * F_quality/0.9 + reward_weigths[2] * F_Time / 1.4
 
-        self.F_Reward = self.F_Reward * self.max_time_steps / 10
+        self.F_Reward = self.F_Reward * self.max_time_steps 
 
         Losses = len([agent for agent in self.agents_obj if agent.state == -1])
         Kills = len([threat for threat in self.threats if threat.status == 2])

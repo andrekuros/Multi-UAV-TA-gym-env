@@ -7,7 +7,7 @@ import torch.nn.functional as F
 from mUAV_TA.MultiDroneEnvData import SceneData
 
 
-class CustomNetMultiHead(Net):
+class CriticNetMultiHead(Net):
     def __init__(
         self,
         state_shape_agent: int,
@@ -15,7 +15,7 @@ class CustomNetMultiHead(Net):
         action_shape: int,
         hidden_sizes: List[int],
         device: str,
-        nhead: int = 4,
+        nhead: int = 8,
         num_layers: int = 1,
     ):
         super().__init__(            
@@ -45,17 +45,15 @@ class CustomNetMultiHead(Net):
             nn.ReLU(),
             nn.Linear(64, 128),
             nn.ReLU(),
-            nn.Linear(128, 256),
+            nn.Linear(128, 128),
             nn.ReLU(),
-            nn.Linear(256, 256),
-            nn.ReLU(),
-            nn.Linear(256, 128)
+            nn.Linear(128, 64)
         ).to(device)
 
         #self.dropout = nn.Dropout(0.1) # 0.5 is the dropout probability
 
                        
-        self.embedding_size = 128 #sum of drone and task encoder        
+        self.embedding_size = 64 #sum of drone and task encoder        
         
         self.own_attention = nn.MultiheadAttention(embed_dim=self.embedding_size, num_heads=self.nhead, batch_first=True).to(device)        
         
@@ -64,7 +62,7 @@ class CustomNetMultiHead(Net):
        
         self.decoder_attention = nn.MultiheadAttention(embed_dim=self.embedding_size, num_heads=nhead, batch_first=True).to(device)    
      
-        self.output = nn.Linear(128, 1).to(device) 
+        self.output = nn.Linear(64, 1).to(device) 
 
         if self.random_weights:
             self.weigths_reset()      
@@ -139,18 +137,14 @@ class CustomNetMultiHead(Net):
                     is_alloc_task = 1 if task['id'] == alloc_task[i] else 0
                                     
                     if task['id'] != 0:
-                        if True: #task['id'] != alloc_task[i]:
+                        if task['id'] != alloc_task[i]:
                             #print(task['current_reqs'],task['alloc_reqs'], agent_caps[i])
                             #reqs_result = task['current_reqs']  - (task['alloc_reqs'] + agent_caps[i])
                             
                             missingCap = np.maximum( task['current_reqs'] - (task['alloc_reqs'] ), 0)                                                            
                                 
                             reqs_result = missingCap -  np.maximum(missingCap - agent_caps[i], 0) #AddedCap
-
-                            # reqs_result = agent_caps[i] 
-
-
-                           
+                            
                         else:
                             #reqs_result = task['current_reqs']  - task['alloc_reqs'] 
                             reqs_result =  np.full(agent_caps[i].size, 0.05)
@@ -204,12 +198,15 @@ class CustomNetMultiHead(Net):
         attention_output2 = attention_output2 + attention_output1        
         # attention_output2 = self.norm2(attention_output2)                                                                    
 
-        output = self.output(attention_output2)     
-        
-        softmax_output = F.softmax(output, dim=1) 
-        softmax_output = torch.squeeze(softmax_output, -1).to(self.device)                    
+        #output = self.output(attention_output2)    
 
-        return softmax_output, state   
+        state_value = self.output(attention_output2).squeeze(-1)
+        return state_value, state 
+        
+        # softmax_output = F.softmax(output, dim=1) 
+        # softmax_output = torch.squeeze(softmax_output, -1).to(self.device)                    
+
+        # return softmax_output, state   
 
     
     def _one_hot(self, idx, num_classes):

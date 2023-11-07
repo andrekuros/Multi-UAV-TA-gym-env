@@ -32,7 +32,7 @@ algorithms = []
 # algorithms += ['Random']
 # #algorithms += ['Random2']
 # #algorithms += ["Greedy"]
-algorithms += ["Swarm-GAP"]
+# algorithms += ["Swarm-GAP"]
 # algorithms += ["CBBA"]
 algorithms +=  ["TBTA"]
 #algorithms +=  ["TBTA2"]
@@ -69,8 +69,8 @@ elif scal_analysis == "Agents":
         case['Rec'] = 24
         cases.append(case)
 else:
-    cases =  [{'case' : 0, 'Hold': 4, 'Att': 4, 'Rec' : 16, 'F1':4, 'F2': 2, "R1" : 6 }]
-    cases =  [{'case' : 0, 'Hold': 0, 'Att': 6, 'Rec' : 20, 'F1':2, 'F2': 2, "R2" : 2, "R1" : 0 }]
+    cases =  [{'case' : 0, 'Hold': 4, 'Att': 4, 'Rec' : 16, 'F1':1, 'F2': 0, "R1" : 6 }]
+    cases =  [{'case' : 0, 'Hold': 0, 'Att': 0, 'Rec' : 20, 'F1':0, 'F2': 0, "R1" : 4, "R2" : 4 }]
 
 caseResults = []
 totalMetrics = []
@@ -87,7 +87,7 @@ kills = {}
 process_time = {}
 process_times = {}
 
-episodes = 10
+episodes = 1
 
 fail_rate = 0.0
 
@@ -109,7 +109,7 @@ for c_idx,case in enumerate(cases):
     for algorithm in algorithms:
         
         config = utils.agentEnvOptions(     
-            render_speed = -1,
+            render_speed = 1,
             simulation_frame_rate = 0.01 * resolution_increase, #Std 0.02
             max_time_steps = 150 * resolution_increase,
             action_mode= "TaskAssign",
@@ -182,11 +182,15 @@ for c_idx,case in enumerate(cases):
                 if algorithm == "TBTA":
                     # load_policy_name = 'policy_CustomNetMultiHead_Eval_TBTA_4R120RT_02.pth'
                     load_policy_name = 'policy_CustomNetMultiHead_Eval_TBTA_OCT01.pth'
-                    load_policy_name2 = 'policy_CustomNetMultiHead_Eval_TBTA_OCT01F.pth'
-                    load_policy_path = os.path.join("dqn_Custom", load_policy_name)    
-                    load_policy_path2 = os.path.join("dqn_Custom", load_policy_name2)                
+                    load_policy_path = os.path.join("dqn_Custom", load_policy_name) 
+                    # load_policy_name = 'PPO_CustomNetMultiHead_Eval_TBTA_OCT01.pth'
+                    # load_policy_path = os.path.join("ppo_Custom", load_policy_name) 
+                    
+                    # load_policy_name2 = 'policy_CustomNetMultiHead_Eval_TBTA_OCT01F.pth'
+                       
+                    # load_policy_path2 = os.path.join("dqn_Custom", load_policy_name2)                
                     policy = _get_model(model="CustomNetMultiHead", env=worldModel, seed = episode_seed)   
-                    policyF = _get_model(model="CustomNetMultiHead", env=worldModel, seed = episode_seed)         
+                    # policyF = _get_model(model="CustomNetMultiHead", env=worldModel, seed = episode_seed)         
                     
 
                 if algorithm == "TBTA2": 
