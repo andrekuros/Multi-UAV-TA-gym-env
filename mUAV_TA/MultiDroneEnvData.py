@@ -6,6 +6,9 @@ class SceneData:
         
         # Tamanho da tela        
         self.GameArea = [1200,700] #each pixel represent 0.5nm
+        # Define side panel dimensions
+        self.side_panel_width = 250
+        
         self.ContactLine = 550
         self.Bases = [np.array([400,680])]
         

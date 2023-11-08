@@ -12,6 +12,10 @@ from mUAV_TA.DroneEnv import MAX_INT, MultiUAVEnv
 from mUAV_TA.DroneEnv import env
 from TaskAllocation.BehaviourBased.swarm_gap import SwarmGap
 from TaskAllocation.MarketBased.CBBA import CBBA
+from TaskAllocation.BehaviourBased.Greedy import GreedyAgent
+
+import subprocess
+
 
 import mUAV_TA.MultiDroneEnvUtils as utils
 
@@ -29,25 +33,22 @@ def softmax_stable(x):
     return(np.exp(x - np.max(x)) / np.exp(x - np.max(x)).sum())
 
 algorithms = []
-# algorithms += ['Random']
+algorithms += ['Random']
 # #algorithms += ['Random2']
-# #algorithms += ["Greedy"]
-# algorithms += ["Swarm-GAP"]
-# algorithms += ["CBBA"]
+algorithms += ["Greedy"]
+algorithms += ["Swarm-GAP"]
+algorithms += ["CBBA"]
 algorithms +=  ["TBTA"]
 #algorithms +=  ["TBTA2"]
 #algorithms +=  ["CTBTA"]
 
+episodes = 10
+fail_rate = 0.0
+render_speed = -1
+resolution_increase = 1
 print(algorithms)
+
 same_policy = False
-#config=None
-# if False:
-
-#     from pettingzoo.test import parallel_api_test
-#     from pettingzoo.test import parallel_seed_test
-
-#     parallel_api_test(worldModel, num_cycles=1000)
-#     #parallel_seed_test(env, num_cycles=100, test_kept_state=True)
    
 scal_analysis = "None"
 cases = []
@@ -59,8 +60,6 @@ if scal_analysis == "Tasks":
         case['Att'] = 2 + int(i / 5)
         case['Rec'] = i 
         cases.append(case)
-
-
 elif scal_analysis == "Agents": 
 
     for i in range(1, 13):
@@ -70,12 +69,11 @@ elif scal_analysis == "Agents":
         cases.append(case)
 else:
     cases =  [{'case' : 0, 'Hold': 4, 'Att': 4, 'Rec' : 16, 'F1':1, 'F2': 0, "R1" : 6 }]
-    cases =  [{'case' : 0, 'Hold': 0, 'Att': 0, 'Rec' : 20, 'F1':0, 'F2': 0, "R1" : 4, "R2" : 4 }]
+    cases =  [{'case' : 0, 'Hold': 0, 'Att': 10, 'Rec' : 0,  'F1':0, 'F2': 1, "R1" : 0, "R2" : 0 }]
 
 caseResults = []
 totalMetrics = []
 total_reward = {}
-
 total_F_reward = {}
 time_reward = {}
 distance_reward = {}
@@ -87,16 +85,20 @@ kills = {}
 process_time = {}
 process_times = {}
 
-episodes = 1
-
-fail_rate = 0.0
-
 expName = f'UCF_1_ep{episodes}_fail{fail_rate}_scal_{scal_analysis}' 
 
 caseResults = []
 #time.sleep(1)
-resolution_increase = 1
 
+
+# Path to the PyQt script
+pyqt_script_path = "PyQtServer.py"
+
+print("Next")
+
+# Run the PyQt script
+if render_speed != -1:
+    subprocess.Popen(["python", pyqt_script_path])
 
 for c_idx,case in enumerate(cases):
     
@@ -109,7 +111,7 @@ for c_idx,case in enumerate(cases):
     for algorithm in algorithms:
         
         config = utils.agentEnvOptions(     
-            render_speed = 1,
+            render_speed = render_speed,
             simulation_frame_rate = 0.01 * resolution_increase, #Std 0.02
             max_time_steps = 150 * resolution_increase,
             action_mode= "TaskAssign",
@@ -162,6 +164,11 @@ for c_idx,case in enumerate(cases):
                             
             if algorithm == "Random":                            
                 single_random_alloc = True
+
+            if algorithm == "Greedy":                            
+                policy = GreedyAgent()
+                worldModel.multiple_tasks_per_agent = True                
+                worldModel.multiple_agents_per_task = True
                                                                                     
             if algorithm == "Swarm-GAP":
                 policy = SwarmGap(worldModel.agents_obj, worldModel.tasks, exchange_interval = 1)
@@ -181,7 +188,7 @@ for c_idx,case in enumerate(cases):
                 
                 if algorithm == "TBTA":
                     # load_policy_name = 'policy_CustomNetMultiHead_Eval_TBTA_4R120RT_02.pth'
-                    load_policy_name = 'policy_CustomNetMultiHead_Eval_TBTA_OCT01.pth'
+                    load_policy_name = 'policy_CustomNetMultiHead_TBTA_NOV06_Emb128.pth'
                     load_policy_path = os.path.join("dqn_Custom", load_policy_name) 
                     # load_policy_name = 'PPO_CustomNetMultiHead_Eval_TBTA_OCT01.pth'
                     # load_policy_path = os.path.join("ppo_Custom", load_policy_name) 
@@ -233,7 +240,7 @@ for c_idx,case in enumerate(cases):
                         if algorithm == "Random":
                                                                                     
                             un_taks_obj = [task for task in worldModel.tasks if (task.status != 2 and task.type != "Hold")]
-                            #print(" Len:" , len([(task.id, task.type) for task in un_taks_obj]))
+                            # print(" Len:" , len([(task.id, task.type) for task in un_taks_obj]))
 
                             if un_taks_obj != []: 
                                                                 
@@ -328,14 +335,18 @@ for c_idx,case in enumerate(cases):
                                                                                                             
                     if worldModel.time_steps % 1 == 0 :
                          
-                        un_taks_obj = [worldModel.tasks[i] for i in worldModel.unallocated_tasks()]                                                             
+                        actions = {}
+                        un_taks_obj = [task for task in worldModel.tasks 
+                                       if task.id != 0 and
+                                           task.allocatedReqs[task.typeIdx] < task.currentReqs[task.typeIdx] and 
+                                           task.status != 2]                                                    
                         
                         if un_taks_obj != []:
+                                                        
+                            act = policy.allocate_tasks(worldModel.agents_obj, un_taks_obj )                                                        
+                            actions[act[0][0]] = [worldModel.last_tasks_info.index(act[0][1])]
                             
-                            agents = [worldModel.agents_obj[worldModel.agent_name_mapping[worldModel.agent_selection]]]
-                            actions = policy.allocate_tasks(agents, un_taks_obj )
-                        
-                        
+               
                 elif algorithm == "CBBA":
                     if worldModel.time_steps % 1 == 0 :
                         
@@ -443,7 +454,7 @@ for c_idx,case in enumerate(cases):
 
                 if worldModel.render_enabled:
                     worldModel.render()
-                            
+                    
                 if all(done.values()) or all(truncations.values()):            
                     metrics = info['metrics']
                     metrics['S_Reward'] = episode_reward

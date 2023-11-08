@@ -111,13 +111,10 @@ class CBBA():
         return score 
 
 
-
     def calculate_task_score(self, agent, task, temp_position, temp_time):
         total_distance = np.linalg.norm(temp_position - task.position)
         quality = agent.currentCap2Task[task.typeIdx]
-        time = temp_time + total_distance / agent.max_speed
-        
-        return 160.0 * quality
+        time = temp_time + total_distance / agent.max_speed                
     
         if time < self.current_makespan:
             return (-2.5 * total_distance / self.max_dist + 160.0 * quality + 2.0 * (self.current_makespan - time))

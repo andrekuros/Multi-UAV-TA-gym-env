@@ -22,22 +22,22 @@ class UAV:
         self.fail_event = -1        
         
         self.type = uavType
-        self.typeIdx = env.sceneData.UavIndex[self.type]        
+        self.typeIdx = env.sceneData.UavIndex[self.type]   
         
-        self.initialCap2Task = env.sceneData.UavCapTable[self.type] 
-        self.currentCap2Task = env.sceneData.UavCapTable[self.type] 
-        self.expectedCap2Task = env.sceneData.UavCapTable[self.type]
+        self.initialCap2Task = env.sceneData.UavCapTable[self.type].copy() 
+        self.currentCap2Task = env.sceneData.UavCapTable[self.type].copy() 
+        self.expectedCap2Task = env.sceneData.UavCapTable[self.type].copy()
         #self.timeAtTask = 0
 
         self.attackCap = 0
 
         if uavType == "F1" or uavType == "F2" :
-            self.attackCap = 4
+            self.attackCap = 10
 
         self.max_speed = env.sceneData.maxSpeeds[self.type]
-        self.relay_area = env.sceneData.relayArea[self.type]             
-        self.fail_multiplier = env.sceneData.failTable[self.type] 
-        self.engage_range = env.sceneData.engage_range[self.type] 
+        self.relay_area = env.sceneData.relayArea[self.type]
+        self.fail_multiplier = env.sceneData.failTable[self.type]
+        self.engage_range = env.sceneData.engage_range[self.type]
             
         self.tasks = [env.task_idle]
         self.tasks_done = {}
@@ -236,7 +236,7 @@ class Task:
         self.currentReqs   = self.orgReqs.copy()
                 
         self.typeIdx     = sceneData.TaskIndex[self.type] #index of the type
-        self.fit2Agent   = [cap[self.typeIdx] for cap in sceneData.UavCapTable.values()]
+        self.fit2Agent   = [cap[self.typeIdx].copy() for cap in sceneData.UavCapTable.values()]
         
         #Status: 0 - waiting Allocation / 1 - Allocated / 2 - Concluded / (-1) - Inactive
         self.status      = 0 
@@ -299,7 +299,7 @@ class Task:
         if self.status != 2:
             time_end_task = time_at_task + self.task_duration
 
-            self.allocationDetails[agent.id] = (agent.currentCap2Task, time_at_task)
+            self.allocationDetails[agent.id] = (agent.currentCap2Task.copy(), time_at_task)
 
             self.allocatedReqs += agent.currentCap2Task
             

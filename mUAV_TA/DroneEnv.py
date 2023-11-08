@@ -12,6 +12,8 @@ import random
 import copy
 import sys
 import math
+import socket
+import json
 
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -89,6 +91,9 @@ class MultiUAVEnv(ParallelEnv):
         self.sceneData = SceneData()
         self.area_width = self.sceneData.GameArea[0]
         self.area_height = self.sceneData.GameArea[1]
+        
+        self.side_panel_width = 300
+
         self.max_coord = max(self.area_height, self.area_width)
         self.bases = self.sceneData.Bases
         
@@ -101,7 +106,9 @@ class MultiUAVEnv(ParallelEnv):
 
         self.render_speed = self.config.render_speed        
         self.render_enabled = self.config.render_speed != -1 #Render is activated if speed != -1
-        self.render_mode = self.config.render_mode        
+        self.render_mode = self.config.render_mode   
+ 
+        self.debuger_data = self.render_enabled
         
         self.action_mode = self.config.action_mode
         self.reached_tasks = set()
@@ -185,8 +192,10 @@ class MultiUAVEnv(ParallelEnv):
         self.previous_agents_positions = None
                         
         # Inicializar o Pygame
-        self.screen = None      
+        self.screen = None 
+        self.debug_panel = None     
         self.recrdr = None
+        self. scale_factor = 1.0
         
         if self.render_enabled:
             import pygame
@@ -194,6 +203,19 @@ class MultiUAVEnv(ParallelEnv):
             self.clock = pygame.time.Clock()
             # Configurar o MovieWriter
             #self.recrdr = pgr("Test_Tessi.gif") # init recorder object
+        if self.debuger_data:
+            # Set up a socket connection
+            self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.host = 'localhost'
+            self.port = 65432
+
+            try:
+                 self.client_socket.connect(( self.host,  self.port))
+            except  self.client_socket.error as e:
+                print(str(e))
+                sys.exit()
+        
+        self.simulation_running = True
               
         self._observation_space = Dict({
             "agent_position": Box(low=0, high=1, shape=(2,), dtype=np.float32),
@@ -219,10 +241,12 @@ class MultiUAVEnv(ParallelEnv):
             for agent in self.possible_agents
         }
         
+        
         self.observations = { agent: { } for agent in self.possible_agents  }    
 
     def get_task_info(self, agent: UAV):
-                
+                       
+        
         task_values = [ {
                 
                 "id": task.id,
@@ -237,8 +261,10 @@ class MultiUAVEnv(ParallelEnv):
             ]          
        
         #print([f'Init: {task["init_time"]} / End: {task["end_time"]} / {task["alloc_reqs"]}' for task in task_values if task["id"] != 0])
+        
         mask = [True for _ in task_values]
         mask.extend([False] * (self.max_tasks - len(task_values)))
+        
 
         # Pad the task_values array to match the maximum number of tasks
         task_values.extend([{"status": -1} for _ in range(self.max_tasks - len(task_values))])
@@ -277,8 +303,7 @@ class MultiUAVEnv(ParallelEnv):
     def _generate_observations(self):
                         
         #agents_info = self.get_agents_info()        
-        tasks_info, mask = self.get_task_info(self.agents_obj[0])        
-                                                    
+        tasks_info, mask = self.get_task_info(self.agents_obj[0])                
         self.observations = {
             agent.name : {
                 #Add Own Data for relative features    
@@ -294,12 +319,12 @@ class MultiUAVEnv(ParallelEnv):
 
                 #Complete data for tasks and agents
                 "tasks_info": tasks_info,
-                "mask": mask#,   
+                "mask": mask if agent.state !=2 else [True if task["status"] != -1 and task['id'] == agent.tasks[0].id else False for task in tasks_info]
                 #"agents_info": agents_info,              
                 
             }
             for agent in self.agents_obj
-        }
+        }    
 
         self.last_tasks_info = [task for task in self.tasks if task.status != 2]            
 
@@ -387,7 +412,7 @@ class MultiUAVEnv(ParallelEnv):
 
         # Initialize agents_obj with None placeholders        
         self.agents_obj: List[Optional[UAV]] = [None] * self.n_agents
-       
+        
         for agent_type, n_agents in self.agents_config.items():
             for i in range(n_agents):
                 agent_id = agents_list.pop(0) #Agent_id is the position in the agents_obj
@@ -398,6 +423,7 @@ class MultiUAVEnv(ParallelEnv):
                 self.agents_obj[agent_id] = agent 
                 agent.max_speed = agent.max_speed / self.simulation_frame_rate * 0.02            
                 self.agent_by_name[agent.name] = agent #Agent.name is a nique name with type letter and order inside type
+        
                                
         #-------------------  Define Fail Condition  -------------------#
         for agent in self.agents_obj:
@@ -671,7 +697,7 @@ class MultiUAVEnv(ParallelEnv):
 
                                 
                                 S_quality_reward += addedCap
-                                #print(f'ACAP:{agentCap},Missing: {missingCapBefore} Rwd {S_quality_reward} / {addedCap}' )
+                                # print(f'ACAP:{agentCap},Missing: {missingCapBefore} Rwd {S_quality_reward} / {addedCap}' )
                                 task.status = 1                                
 
                                 #task.addAgentCap(agent)
@@ -837,7 +863,7 @@ class MultiUAVEnv(ParallelEnv):
                                             if task.status != 2:                                            
                                                 quality_reward += task.orgReqs[task.typeIdx] * 2 
                                                 
-                                                self.F_Reward += task.orgReqs[task.typeIdx] 
+                                                self.F_Reward += task.orgReqs[task.typeIdx] * self.max_time_steps #* (1 - self.time_steps / (2 * self.max_time_steps))
                                                 
                                                 task.status = 2   
                                                 #print(f'Concluded Task {task.id} | {task.type} -> Agent: {agent.type}')                                             
@@ -873,7 +899,7 @@ class MultiUAVEnv(ParallelEnv):
          
             self.all_agent_positions = np.vstack([agent.position for agent in self.agents_obj])
                                        
-            self.agent_directions = [ direction for direction in (self.all_agent_positions - self.previous_agents_positions)]
+            self.agent_directions = [ direction for direction in (self.all_agent_positions - self.previous_agents_positions)]            
                                                             
             dists = np.linalg.norm(self.all_agent_positions - self.previous_agents_positions, axis=1)           
             
@@ -892,12 +918,12 @@ class MultiUAVEnv(ParallelEnv):
                                                                                                                                                                                                        
             # rewards for all agents are placed in the rewards dictionary to be returned
             self.rewards = {agent.name :  0.0 * action_reward  +   #Rand +50
-                                          0.0 * distance_reward +  #Rand -4
+                                          1.0 * distance_reward +  #Rand -4
                                           1.0 * quality_reward +   #Rand +6
                                           1.0 * S_quality_reward +   #Rand +6                                                                                    
                                           0.0 * self.n_tasks * time_reward +      #Rand -9
                                           0.0 * alloc_reward  +
-                                          0.2 * time_penaulty + 
+                                          0.0 * time_penaulty + 
                                           0.0 * self.step_reward for agent in self.agents_obj} #Rand -28 
                                                                                       
             #self._cumulative_rewards["agent0"] += self.rewards["agent0"]
@@ -920,7 +946,7 @@ class MultiUAVEnv(ParallelEnv):
             self.infos['selected'] = self.agent_selection
             self.infos['events'] = done_events            
 
-            self._generate_observations()                                    
+            self._generate_observations()                                               
 
             if done:
                 metrics =  self.calculate_metrics() 
@@ -985,7 +1011,7 @@ class MultiUAVEnv(ParallelEnv):
         
         #self.F_Reward = reward_weigths[0] * F_distance/0.06 + reward_weigths[1] * F_quality/0.9 + reward_weigths[2] * F_Time / 1.4
 
-        self.F_Reward = self.F_Reward * self.max_time_steps 
+        self.F_Reward = self.F_Reward 
 
         Losses = len([agent for agent in self.agents_obj if agent.state == -1])
         Kills = len([threat for threat in self.threats if threat.status == 2])
@@ -1383,20 +1409,20 @@ class MultiUAVEnv(ParallelEnv):
 
 #####--------------- Rendering in PyGame -------------------###################
 
-    def draw_rotated_triangle(self, surface, x, y, size, angle, agent_type, state):
+    def draw_rotated_triangle(self, surface, x, y, size, angle, agent, state, font):
         
         mod_size = size / 2
         color = (0, 0, 255) if state >= 1 else (100, 100, 100)
                 
-        if agent_type == "R1" or agent_type == "R2":
+        if agent.type == "R1" or agent.type == "R2":
             mod_size = size / 1.5
             color = (0, 200, 200) if state >= 1 else color 
         
-        if agent_type == "C1":
+        if agent.type == "C1":
             mod_size = size / 1.5
             color = (230, 230, 230) if state >= 1 else color 
 
-        if agent_type == "T1":
+        if agent.type == "T1":
             mod_size = size / 1.0
             color = (250, 0, 0) if state >= 1 else color 
                             
@@ -1410,7 +1436,12 @@ class MultiUAVEnv(ParallelEnv):
         points = [(x + dx1, y + dy1), (x + dx2, y + dy2), (x + dx3, y + dy3)]
 
 
-        pygame.draw.polygon(surface, color, points )        
+        pygame.draw.polygon(surface, color, points )                
+        if agent.type == "F1" or agent.type == "F2":
+                    
+            task_text = font.render(str(agent.attackCap), True, (200, 200, 200))  # Renderizar o texto (preto)                    
+            text_rect = task_text.get_rect(center=(points[0][0] + 5, points[0][1]))  # Centralizar o texto no círculo
+            surface.blit(task_text, text_rect)
         
         if state == -1:
             line_width = 3
@@ -1418,7 +1449,7 @@ class MultiUAVEnv(ParallelEnv):
             pygame.draw.line(surface, (230, 0, 0), (x - 10, y + 10), (x + 10, y - 10), line_width)
         
         if state == 2:
-            self.draw_rotated_triangle( surface, x, y, size*0.8, angle, agent_type, 0)
+            self.draw_rotated_triangle( surface, x, y, size*0.8, angle, agent, 0, font)
 
 
     def draw_rotated_x(self,surface, x, y, size, angle, agent_type):
@@ -1434,21 +1465,46 @@ class MultiUAVEnv(ParallelEnv):
         pygame.draw.line(surface, (0, 0, 255), (x - dx1, y - dy1), (x + dx1, y + dy1), 2)
         pygame.draw.line(surface, (0, 0, 255), (x - dx2, y - dy2), (x + dx2, y + dy2), 2)
     
+    def serialize(self, obj):
+        """JSON serializer for objects not serializable by default json code"""
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        raise TypeError("Type not serializable")
+
 
     def render(self, show_lines = True):
                
         if self.screen is None:
             
             pygame.init()
-            self.screen = pygame.display.set_mode((self.area_width, self.area_height))
+            self.screen = pygame.display.set_mode((self.area_width , self.area_height), pygame.RESIZABLE)
             pygame.display.set_caption('Multi agent Task Allocation')
-        
+
+        virtual_screen = pygame.Surface((self.area_width, self.area_height))
+               
         # Desenhar fundo
         agents_surface = pygame.Surface((self.area_width, self.area_height))        
         
         comm_surface = pygame.Surface((self.area_width, self.area_height))
         comm_surface.fill((0, 0, 0))
         comm_surface.set_alpha(100)
+
+        # if self.debug_panel is not None:
+            # Gather data for all tasks
+        # Gather data for all tasks
+        tasks_data = [{
+            'id': str(task.id),
+            'currentReqs': task.currentReqs.tolist(),
+            'allocatedAgents': [alloc[0] for alloc in task.allocationDetails.items()]  # Adjust as per your data structure
+        } for task in self.tasks]
+
+        # print(tasks_data)
+        data_to_send = json.dumps(tasks_data, default=self.serialize)
+        self.client_socket.sendall(data_to_send.encode('utf-8'))
+
+        # pos = pygame.mouse.get_pos()
+        # data = json.dumps({'x': pos[0], 'y': pos[1]})
+        # self.client_socket.sendall(data.encode('utf-8'))
         
         pygame.draw.line(agents_surface, (0, 0, 90), (0, self.sceneData.ContactLine),(self.area_width, self.sceneData.ContactLine) , 3)
 
@@ -1475,11 +1531,11 @@ class MultiUAVEnv(ParallelEnv):
         
         # Draw Tasks
         for task in self.tasks:
-            
-        
+                    
             if task.type == "Rec":
                 color = (0, 255, 0) if task.status == 2 else (40, 80, 40)           
                 pygame.draw.circle(agents_surface, color, (int(task.position[0]), int(task.position[1])), 8)
+
             elif task.type == "Hold":
                 color = (80, 0, 80)           
                 pygame.draw.circle(agents_surface, color, (int(task.position[0]), int(task.position[1])), 10)               
@@ -1503,7 +1559,7 @@ class MultiUAVEnv(ParallelEnv):
                         
         # Draw agents
         for i,agent in enumerate(self.agents_obj):
-                        
+                                   
             pygame.draw.circle(comm_surface, (40, 40, 40), (int(agent.position[0]), int(agent.position[1])), agent.relay_area)
             
             if show_lines:
@@ -1515,23 +1571,20 @@ class MultiUAVEnv(ParallelEnv):
                         pygame.draw.line(agents_surface, (0, 210, 210), agent.position, agent.tasks[0].position, 1)
             
                 # Desenhar linha entre o alvo atual e o próximo (mais clara)
-                for i,task in enumerate(agent.tasks[1:-2]):                                                       
-                    pygame.draw.line(agents_surface, (80, 80, 80), agent.tasks[i].position, agent.tasks[i+1].position, 1)
+                for j,task in enumerate(agent.tasks[1:-2]):                                                       
+                    pygame.draw.line(agents_surface, (80, 80, 80), agent.tasks[j].position, agent.tasks[j+1].position, 1)
             
             #pygame.draw.circle(self.screen, (0, 0, 255), (int(agent.position[0]), int(agent.position[1])), 7)
             #self.draw_rotated_x(self.screen, int(agent.position[0]), int(agent.position[1]), 10, self.agent_directions[i])
+         
             if agent.state != 0:
-                self.draw_rotated_triangle(agents_surface, int(agent.position[0]), int(agent.position[1]), 20, np.degrees(np.arctan2(self.agent_directions[i][1],self.agent_directions[i][0])) , agent.type, agent.state)            
-                
-                if agent.type == "F1" or agent.type == "F2":
-                    task_text = font.render(str(agent.attackCap), True, (200, 200, 200))  # Renderizar o texto (preto)                    
-                    text_rect = task_text.get_rect(center=(int(agent.position[0]), int(agent.position[1])))  # Centralizar o texto no círculo
-                    agents_surface.blit(task_text, text_rect)
-                
-
+                self.draw_rotated_triangle(agents_surface, int(agent.position[0]), int(agent.position[1]), 20, np.degrees(np.arctan2(self.agent_directions[i][1],self.agent_directions[i][0])) , agent, agent.state, font)                           
             else:
-                self.draw_rotated_triangle(agents_surface, int(agent.position[0]), int(agent.position[1]), 20, -90 , agent.type, agent.state)            
-                                        
+                self.draw_rotated_triangle(agents_surface, int(agent.position[0]), int(agent.position[1]), 20, -90 , agent, agent.state, font)            
+
+            id_text = font.render(str(agent.id), True, (200, 200, 200))  # Renderizar o texto (preto)                    
+            text_rect = id_text.get_rect(center=(int(agent.position[0]), int(agent.position[1])))  # Centralizar o texto no círculo
+            agents_surface.blit(id_text, text_rect)                            
                
         # Desenhar obstáculos
         for obstacle in self.obstacles:
@@ -1565,7 +1618,7 @@ class MultiUAVEnv(ParallelEnv):
                                        int(threat.position[1]), 
                                        10, 
                                        np.degrees(np.arctan2(direction[1],direction[0])), 
-                                       "T1", 1) 
+                                       agent, 1, font) 
             #Attack Missiles
             text_att = font.render(str(threat.attackCap), True, (200, 200, 200))  # Renderizar o texto (preto)
             text_rect = text_att.get_rect(center=(int(threat.position[0]), int(threat.position[1]))) # Centralizar o texto no círculo
@@ -1573,23 +1626,28 @@ class MultiUAVEnv(ParallelEnv):
 
 
         
-        self.screen.blit(agents_surface, (0,0))
-        self.screen.blit(comm_surface, (0,0))
+        virtual_screen.blit(agents_surface, (0,0))
+        virtual_screen.blit(comm_surface, (0,0))
         
         texto = font.render(str(self.time_steps), True, (200,200,200))
-        self.screen.blit(texto, (self.sceneData.GameArea[0] - 35, self.sceneData.GameArea[1] - 20))
+        virtual_screen.blit(texto, (self.sceneData.GameArea[0] - 35, self.sceneData.GameArea[1] - 20))
         
         info = font2.render(self.info, True, (250,250,250))
-        self.screen.blit(info, (20, 20))
+        virtual_screen.blit(info, (20, 20))
         
-        pygame.display.flip()
+        scaled_surface = pygame.transform.smoothscale(virtual_screen, (int((self.area_width) * self.scale_factor), int(self.area_height * self.scale_factor)))
+        self.screen.blit(scaled_surface, (0, 0))  # Blit at the top-left corner
+
+        pygame.display.flip()  # Update the screen
+        
         
         # Salvar a imagem atual do jogo
-        if self.recrdr != None:
-            self.recrdr.click(self.screen) # save frame as png to _temp_/ folder
+        if self.recrdr is not None:
+            self.recrdr.click(virtual_screen) # save frame as png to _temp_/ folder
         
         # Limitar a taxa de quadros
         self.clock.tick(self.render_speed * 10)
+
         
         # Verificar se a janela está fechada
         for event in pygame.event.get():
@@ -1627,5 +1685,63 @@ class MultiUAVEnv(ParallelEnv):
             rect = pygame.Rect(center[0] - radius, center[1] - radius, radius * 2, radius * 2)
             pygame.draw.arc(surface, color, rect, start_angle, stop_angle, width)
 
+    def draw_side_panel(self ,screen, tasks, side_panel_rect):
+        # Fill the side panel background
+        side_panel_color = (230, 230, 230)  # Light gray color
+        pygame.draw.rect(screen, side_panel_color, side_panel_rect)
+        
+        # Define starting Y position for text
+        start_y = 10  # Padding from top of the panel
+        for task in tasks:
+            # Render task information here
+            # You would access the task's requirements and create a text surface
+            font = pygame.font.SysFont(None, 24)
+            task_text = f"Task {task.id}: Requirement {task.currentReqs}"
+            text_surface = font.render(task_text, True, (0, 0, 0))
+            screen.blit(text_surface, (side_panel_rect.x + 10, start_y))
+            start_y += 30  # Move down for the next task
 
 
+
+    def draw_buttons(self ,screen, play_button_rect, pause_button_rect, simulation_running):
+        # Choose colors based on simulation state
+        play_button_color = (0, 200, 0) if not simulation_running else (0, 100, 0)
+        pause_button_color = (200, 0, 0) if simulation_running else (100, 0, 0)
+
+        # Draw play and pause buttons
+        pygame.draw.rect(screen, play_button_color, play_button_rect)
+        pygame.draw.rect(screen, pause_button_color, pause_button_rect)
+    
+    def renderDebugScreen(self, show_lines = True):
+               
+        if self.debug_panel is None:
+                       
+            # Create the side panel window
+            self.debug_panel = pygame.display.set_mode((300, 1000), flags=pygame.HWSURFACE | pygame.DOUBLEBUF | pygame.RESIZABLE)
+            pygame.display.set_caption('Side Panel Window')
+
+        play_button_rect = pygame.Rect(self.area_width + 50, 10, 80, 30)
+        pause_button_rect = pygame.Rect(self.area_width + 50, 50, 80, 30)
+
+        for event in pygame.event.get():
+        # ... existing event handling ...
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if play_button_rect.collidepoint(event.pos):
+                    self.simulation_running = True
+                elif pause_button_rect.collidepoint(event.pos):
+                    self.simulation_running = False                       
+
+              
+        #Draw Debug Panel
+        self.draw_side_panel(self.debug_panel, self.tasks, pygame.Rect(300, 0, 300, self.area_height))
+        self.debug_panel.fill((0, 0, 100))
+
+        pygame.display.flip()  # Update the screen
+                       
+        
+        # Verificar se a janela está fechada
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return False
+        
+        return True
