@@ -43,7 +43,7 @@ class SwarmGap:
             
             distances = np.linalg.norm(np.array([task.position for task in tasks]) - drone.next_free_position, axis=1)       
             
-            Qs = np.array([self.drones[drone_id].fit2Task[task.typeIdx] for task in tasks])
+            Qs = np.array([self.drones[drone_id].currentCap2Task[task.typeIdx] for task in tasks])
         
             max_dist = np.max(distances)       
             max_Q = np.max(Qs)
@@ -70,8 +70,8 @@ class SwarmGap:
                 
                 sorted_list = sorted(enumerate(tendencies), key=lambda x: x[1] ,reverse=True)  
                 sorted_values = [value for index, value in sorted_list]
-                sorted_indices = [index for index, value in sorted_list]                
-                
+                sorted_indices = [index for index, value in sorted_list]                                                
+
                 for i,t in enumerate(sorted_values):        
                     #chosen_index = np.random.choice(np.arange(len(capability)), p=tendencies)
                     randN = self.rndGen.uniform(0,1)
@@ -81,6 +81,7 @@ class SwarmGap:
                     #else:
                     #   print("rejected", t, " vs ", randN)
                 
+
                 #Rest only one drone
                 if len(self.drones_out) == len(self.drones) - 1:
                     chosen_index = np.argmin(tendencies)
@@ -88,19 +89,20 @@ class SwarmGap:
                 
                 if chosen_index >= 0:
                     taskSelected = tasks[chosen_index]        
-                    action = {}
-                    action["agent" + str(drone_id)] = taskSelected.task_id
+                    action = []                    
+                    action.append((drone.name, [taskSelected]))
                     #self.unallocated_tasks.remove(taskSelected)
                   
         #"Send" token to Next in order        
         self.token_exchange_list = np.delete(self.token_exchange_list,0)
         
+
         if len(self.token_exchange_list) == 0:
             
             availables = []
             for drone in self.drones:
                 if drone.has_capability and drone.state != -1:
-                    availables.append(drone.drone_id)
+                    availables.append(drone.id)
             
             random.shuffle(availables)
             #self.token_exchange_list = np.random.permutation(np.arange(0, self.n_agents))

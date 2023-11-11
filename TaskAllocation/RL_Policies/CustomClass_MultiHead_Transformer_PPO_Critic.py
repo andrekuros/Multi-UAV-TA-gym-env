@@ -7,7 +7,7 @@ import torch.nn.functional as F
 from mUAV_TA.MultiDroneEnvData import SceneData
 
 
-class CustomNetMultiHead(Net):
+class CriticNetMultiHead(Net):
     def __init__(
         self,
         state_shape_agent: int,
@@ -33,7 +33,7 @@ class CustomNetMultiHead(Net):
         self.embedding_size = 128 #sum of drone and task encoder  
 
         self.max_tasks = 31
-        self.task_size = 2 + 6 + 2#int(state_shape_task / self.max_tasks)
+        self.task_size = 2 + 6 #int(state_shape_task / self.max_tasks)
 
         self.max_agents = 20
         self.agent_size = 5 
@@ -129,25 +129,26 @@ class CustomNetMultiHead(Net):
         agent_caps      = obs["agent_caps"]
         alloc_task      = obs["alloc_task"]
                 
-        task_values = [] 
-                               
+        task_values = []       
+               
         if self.obs_mode == "Pre_Process":
         
             for i,batch in enumerate(obs["tasks_info"]):
                                                         
                 batch_tasks = []                
-                
+
                 for task in batch:
+                                                                       
+                    distance = self.euclidean_distance(agent_position[i], task["position"])  # Compute the distance
+                    
+                    # Calculate the heading (angle) from A to B
+                    theta = np.arctan2(task["position"][1] - agent_position[i][1], task["position"][0] - agent_position[i][0])                    
+                    sin_theta = np.sin(theta)
+                    cos_theta = np.cos(theta)
+
+                    is_alloc_task = 1 if task['id'] == alloc_task[i] else 0
                                     
-                    if task['status'] != -1 and task['id'] != 0:
-
-                        # Calculate the heading (angle) from A to B
-                        distance = self.euclidean_distance(agent_position[i], task["position"])  # Compute the distance
-                        theta = np.arctan2(task["position"][1] - agent_position[i][1], task["position"][0] - agent_position[i][0])                    
-                        sin_theta = np.sin(theta)
-                        cos_theta = np.cos(theta)
-
-                        is_alloc_task = 1 if task['id'] == alloc_task[i] else 0
+                    if task['id'] != 0:
                         if task['id'] != alloc_task[i]:
                             #print(task['current_reqs'],task['alloc_reqs'], agent_caps[i])
                             #reqs_result = task['current_reqs']  - (task['alloc_reqs'] + agent_caps[i])
@@ -174,7 +175,6 @@ class CustomNetMultiHead(Net):
                         theta = 0.0
                         sin_theta = 0.0
                         cos_theta = 0.0
-                        is_alloc_task = 0
                                         
                     batch_tasks.append([
                         # agent_type[i] / 4, #1

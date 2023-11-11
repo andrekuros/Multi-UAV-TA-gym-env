@@ -16,7 +16,7 @@ from .Custom_Classes_simplified import CustomNetSimple
 
 from .CustomClasses_Transformer_Reduced import CustomNetReduced
 from .CustomClass_MultiHead_Transformer import CustomNetMultiHead
-from mUAV_TA.DroneEnv import MultiDroneEnv
+from mUAV_TA.DroneEnv import MultiUAVEnv
 
 # "CustomNet" or "CustomNetSimple" or "CustomNetReduced" or "CustomNetMultiHead"
 def _get_model(model="CustomNetMultiHead", env = None, seed = 0):
@@ -40,7 +40,7 @@ def _get_model(model="CustomNetMultiHead", env = None, seed = 0):
 
     #state_shape_task = env.observation_space["tasks_info"].shape[0]
 
-    state_shape_task = 30 * 3 #env.observation_space["tasks_info"].shape[0]
+    state_shape_task = 30 * 12 #env.observation_space["tasks_info"].shape[0]
                   
     action_shape = env.action_space[agent_name].shape[0]
     #action_shape = env.action_space[agent_name].n
@@ -78,7 +78,7 @@ def _get_model(model="CustomNetMultiHead", env = None, seed = 0):
     agent_learn = DQNPolicy(
             model=net,
             optim=optim,
-            target_update_freq=100                        
+            target_update_freq=1500                        
         )  
   
     return agent_learn
