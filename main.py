@@ -33,11 +33,11 @@ def softmax_stable(x):
     return(np.exp(x - np.max(x)) / np.exp(x - np.max(x)).sum())
 
 algorithms = []
-algorithms += ['Random']
-# #algorithms += ['Random2']
-algorithms += ["Greedy"]
-algorithms += ["Swarm-GAP"]
-algorithms += ["CBBA"]
+# algorithms += ['Random']
+# # # #algorithms += ['Random2']
+# algorithms += ["Greedy"]
+# algorithms += ["Swarm-GAP"]
+# algorithms += ["CBBA"]
 algorithms +=  ["TBTA"]
 #algorithms +=  ["TBTA2"]
 #algorithms +=  ["CTBTA"]
