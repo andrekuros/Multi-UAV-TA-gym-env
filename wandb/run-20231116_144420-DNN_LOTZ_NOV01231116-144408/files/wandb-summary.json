@@ -1,0 +1,1 @@
+{"test/env_step": 984000, "test/reward": 4.5, "test/length": 24.0, "test/reward_std": 4.5, "test/length_std": 0.0, "_timestamp": 1700164980.872251, "_runtime": 1119.9396240711212, "_step": 2367, "train/episode": 27, "train/reward": 3.425925925925926, "train/length": 24.0, "train/env_step": 985200, "update/agent0/loss": 10.732823091745377, "update/gradient_step": 16415}

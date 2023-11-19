@@ -1,0 +1,101 @@
+Best Saved
+VICTORY!!!, LOTZ : 9, Optimum Reward : 9
+VICTORY!!!, LOTZ : 9, Optimum Reward : 9
+VICTORY!!!, LOTZ : 9, Optimum Reward : 9
+VICTORY!!!, LOTZ : 9, Optimum Reward : 9
+VICTORY!!!, LOTZ : 9, Optimum Reward : 9
+VICTORY!!!, LOTZ : 9, Optimum Reward : 9
+VICTORY!!!, LOTZ : 9, Optimum Reward : 9
+Epoch #1:  10%|#         | 1200/12000 [00:02<00:22, 479.99it/s, agent0/loss=2.203, env_step=600, gradient_step=10, len=11, n/ep=50, n/st=600, rew=3.15]
+VICTORY!!!, LOTZ : 9, Optimum Reward : 9
+VICTORY!!!, LOTZ : 9, Optimum Reward : 9
+VICTORY!!!, LOTZ : 9, Optimum Reward : 9
+VICTORY!!!, LOTZ : 9, Optimum Reward : 9
+VICTORY!!!, LOTZ : 9, Optimum Reward : 9
+VICTORY!!!, LOTZ : 9, Optimum Reward : 9
+VICTORY!!!, LOTZ : 9, Optimum Reward : 9
+VICTORY!!!, LOTZ : 9, Optimum Reward : 9
+
+Epoch #1:  20%|##        | 2400/12000 [00:03<00:13, 687.38it/s, agent0/loss=2.405, env_step=2400, gradient_step=40, len=11, n/ep=50, n/st=600, rew=2.67]
+VICTORY!!!, LOTZ : 9, Optimum Reward : 9
+VICTORY!!!, LOTZ : 9, Optimum Reward : 9
+VICTORY!!!, LOTZ : 9, Optimum Reward : 9
+VICTORY!!!, LOTZ : 9, Optimum Reward : 9
+
+Epoch #1:  35%|###5      | 4200/12000 [00:05<00:09, 789.11it/s, agent0/loss=2.423, env_step=4200, gradient_step=70, len=11, n/ep=51, n/st=600, rew=2.37]
+VICTORY!!!, LOTZ : 9, Optimum Reward : 9
+VICTORY!!!, LOTZ : 9, Optimum Reward : 9
+
+Epoch #1:  50%|#####     | 6000/12000 [00:08<00:07, 829.81it/s, agent0/loss=2.280, env_step=6000, gradient_step=100, len=11, n/ep=50, n/st=600, rew=3.04]
+VICTORY!!!, LOTZ : 9, Optimum Reward : 9
+VICTORY!!!, LOTZ : 9, Optimum Reward : 9
+VICTORY!!!, LOTZ : 9, Optimum Reward : 9
+VICTORY!!!, LOTZ : 9, Optimum Reward : 9
+VICTORY!!!, LOTZ : 9, Optimum Reward : 9
+VICTORY!!!, LOTZ : 9, Optimum Reward : 9
+
+Epoch #1:  65%|######5   | 7800/12000 [00:10<00:04, 859.16it/s, agent0/loss=2.213, env_step=7800, gradient_step=130, len=11, n/ep=51, n/st=600, rew=3.30]
+VICTORY!!!, LOTZ : 9, Optimum Reward : 9
+VICTORY!!!, LOTZ : 9, Optimum Reward : 9
+VICTORY!!!, LOTZ : 9, Optimum Reward : 9
+VICTORY!!!, LOTZ : 9, Optimum Reward : 9
+VICTORY!!!, LOTZ : 9, Optimum Reward : 9
+
+Epoch #1:  80%|########  | 9600/12000 [00:12<00:02, 851.11it/s, agent0/loss=1.988, env_step=9600, gradient_step=160, len=11, n/ep=50, n/st=600, rew=3.04]
+VICTORY!!!, LOTZ : 9, Optimum Reward : 9
+VICTORY!!!, LOTZ : 9, Optimum Reward : 9
+VICTORY!!!, LOTZ : 9, Optimum Reward : 9
+VICTORY!!!, LOTZ : 9, Optimum Reward : 9
+VICTORY!!!, LOTZ : 9, Optimum Reward : 9
+VICTORY!!!, LOTZ : 9, Optimum Reward : 9
+VICTORY!!!, LOTZ : 9, Optimum Reward : 9
+
+Epoch #1:  95%|#########5| 11400/12000 [00:14<00:00, 856.19it/s, agent0/loss=2.210, env_step=11400, gradient_step=190, len=11, n/ep=51, n/st=600, rew=3.14]
+VICTORY!!!, LOTZ : 9, Optimum Reward : 9
+VICTORY!!!, LOTZ : 9, Optimum Reward : 9
+Epoch #1: test_reward: 0.000000 ± 0.000000, best_reward: 0.000000 ± 0.000000 in #0
+VICTORY!!!, LOTZ : 9, Optimum Reward : 9
+VICTORY!!!, LOTZ : 9, Optimum Reward : 9
+Epoch #1: 12001it [00:14, 801.63it/s, agent0/loss=2.225, env_step=12000, gradient_step=200, len=11, n/ep=51, n/st=600, rew=3.18]
+Epoch #2:  10%|#         | 1200/12000 [00:01<00:12, 854.18it/s, agent0/loss=2.191, env_step=12600, gradient_step=210, len=12, n/ep=50, n/st=600, rew=3.05]
+VICTORY!!!, LOTZ : 9, Optimum Reward : 9
+VICTORY!!!, LOTZ : 9, Optimum Reward : 9
+VICTORY!!!, LOTZ : 9, Optimum Reward : 9
+VICTORY!!!, LOTZ : 9, Optimum Reward : 9
+VICTORY!!!, LOTZ : 9, Optimum Reward : 9
+VICTORY!!!, LOTZ : 9, Optimum Reward : 9
+
+Epoch #2:  20%|##        | 2400/12000 [00:02<00:11, 872.59it/s, agent0/loss=2.304, env_step=14400, gradient_step=240, len=11, n/ep=50, n/st=600, rew=2.61]
+VICTORY!!!, LOTZ : 9, Optimum Reward : 9
+VICTORY!!!, LOTZ : 9, Optimum Reward : 9
+VICTORY!!!, LOTZ : 9, Optimum Reward : 9
+VICTORY!!!, LOTZ : 9, Optimum Reward : 9
+VICTORY!!!, LOTZ : 9, Optimum Reward : 9
+VICTORY!!!, LOTZ : 9, Optimum Reward : 9
+VICTORY!!!, LOTZ : 9, Optimum Reward : 9
+VICTORY!!!, LOTZ : 9, Optimum Reward : 9
+VICTORY!!!, LOTZ : 9, Optimum Reward : 9
+VICTORY!!!, LOTZ : 9, Optimum Reward : 9
+VICTORY!!!, LOTZ : 9, Optimum Reward : 9
+VICTORY!!!, LOTZ : 9, Optimum Reward : 9
+
+Epoch #2:  35%|###5      | 4200/12000 [00:05<00:09, 822.82it/s, agent0/loss=2.287, env_step=16200, gradient_step=270, len=11, n/ep=51, n/st=600, rew=3.28]
+VICTORY!!!, LOTZ : 9, Optimum Reward : 9
+VICTORY!!!, LOTZ : 9, Optimum Reward : 9
+VICTORY!!!, LOTZ : 9, Optimum Reward : 9
+VICTORY!!!, LOTZ : 9, Optimum Reward : 9
+VICTORY!!!, LOTZ : 9, Optimum Reward : 9
+VICTORY!!!, LOTZ : 9, Optimum Reward : 9
+VICTORY!!!, LOTZ : 9, Optimum Reward : 9
+
+Epoch #2:  50%|#####     | 6000/12000 [00:07<00:07, 829.97it/s, agent0/loss=2.322, env_step=18000, gradient_step=300, len=11, n/ep=52, n/st=600, rew=3.34]
+VICTORY!!!, LOTZ : 9, Optimum Reward : 9
+VICTORY!!!, LOTZ : 9, Optimum Reward : 9
+VICTORY!!!, LOTZ : 9, Optimum Reward : 9
+VICTORY!!!, LOTZ : 9, Optimum Reward : 9
+VICTORY!!!, LOTZ : 9, Optimum Reward : 9
+
+Epoch #2:  65%|######5   | 7800/12000 [00:09<00:04, 859.01it/s, agent0/loss=2.355, env_step=19800, gradient_step=330, len=11, n/ep=50, n/st=600, rew=2.70]
+VICTORY!!!, LOTZ : 9, Optimum Reward : 9
+VICTORY!!!, LOTZ : 9, Optimum Reward : 9
+

@@ -1,0 +1,846 @@
+
+Best Saved
+
+
+
+
+
+Epoch #1: 4800it [00:09, 498.22it/s, env_step=4800, gradient_step=33, len=0, n/ep=0, n/st=1600, pursuer_0/loss=0.144, pursuer_1/loss=0.148, pursuer_2/loss=0.176, pursuer_3/loss=0.214, pursuer_4/loss=0.168, rew=0.00]
+Best Saved
+Epoch #1: test_reward: -12.056560 ± 4.007173, best_reward: -12.056560 ± 4.007173 in #1
+
+
+
+
+Epoch #2: 4800it [00:08, 590.02it/s, env_step=9600, gradient_step=66, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.151, pursuer_1/loss=0.140, pursuer_2/loss=0.158, pursuer_3/loss=0.203, pursuer_4/loss=0.201, rew=-11.08]
+Best Saved
+Epoch #2: test_reward: -9.921820 ± 4.533283, best_reward: -9.921820 ± 4.533283 in #2
+
+
+
+
+Epoch #3: 4800it [00:07, 639.96it/s, env_step=14400, gradient_step=99, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.147, pursuer_1/loss=0.140, pursuer_2/loss=0.141, pursuer_3/loss=0.192, pursuer_4/loss=0.189, rew=-11.08]
+Epoch #3: test_reward: -10.429040 ± 3.640878, best_reward: -9.921820 ± 4.533283 in #2
+
+
+
+
+Epoch #4: 4800it [00:07, 629.27it/s, env_step=19200, gradient_step=132, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.140, pursuer_1/loss=0.126, pursuer_2/loss=0.126, pursuer_3/loss=0.167, pursuer_4/loss=0.170, rew=-10.85]
+Epoch #4: test_reward: -14.410940 ± 0.113190, best_reward: -9.921820 ± 4.533283 in #2
+
+
+
+
+Epoch #5: 4800it [00:07, 622.47it/s, env_step=24000, gradient_step=165, len=750, n/ep=10, n/st=1600, pursuer_0/loss=0.128, pursuer_1/loss=0.122, pursuer_2/loss=0.119, pursuer_3/loss=0.155, pursuer_4/loss=0.139, rew=-12.46]
+Best Saved
+Epoch #5: test_reward: -4.023740 ± 4.052746, best_reward: -4.023740 ± 4.052746 in #5
+
+
+
+
+Epoch #6: 4800it [00:08, 597.47it/s, env_step=28800, gradient_step=198, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.113, pursuer_1/loss=0.105, pursuer_2/loss=0.119, pursuer_3/loss=0.138, pursuer_4/loss=0.128, rew=-12.46]
+Epoch #6: test_reward: -5.676020 ± 4.251232, best_reward: -4.023740 ± 4.052746 in #5
+
+
+
+
+Epoch #7: 4800it [00:07, 604.56it/s, env_step=33600, gradient_step=231, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.109, pursuer_1/loss=0.104, pursuer_2/loss=0.121, pursuer_3/loss=0.133, pursuer_4/loss=0.129, rew=-11.39]
+Epoch #7: test_reward: -12.186560 ± 3.197679, best_reward: -4.023740 ± 4.052746 in #5
+
+
+
+
+Epoch #8: 4800it [00:07, 600.40it/s, env_step=38400, gradient_step=264, len=750, n/ep=10, n/st=1600, pursuer_0/loss=0.106, pursuer_1/loss=0.099, pursuer_2/loss=0.119, pursuer_3/loss=0.118, pursuer_4/loss=0.127, rew=-12.25]
+Epoch #8: test_reward: -10.011820 ± 3.877122, best_reward: -4.023740 ± 4.052746 in #5
+
+
+
+
+Epoch #9: 4800it [00:08, 537.78it/s, env_step=43200, gradient_step=297, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.103, pursuer_1/loss=0.102, pursuer_2/loss=0.125, pursuer_3/loss=0.118, pursuer_4/loss=0.122, rew=-12.25]
+Epoch #9: test_reward: -6.979060 ± 3.397826, best_reward: -4.023740 ± 4.052746 in #5
+
+
+
+
+Epoch #10: 4800it [00:07, 603.89it/s, env_step=48000, gradient_step=330, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.104, pursuer_1/loss=0.100, pursuer_2/loss=0.116, pursuer_3/loss=0.114, pursuer_4/loss=0.122, rew=-11.39]
+Epoch #10: test_reward: -4.989180 ± 4.355741, best_reward: -4.023740 ± 4.052746 in #5
+
+
+
+
+Epoch #11: 4800it [00:08, 587.31it/s, env_step=52800, gradient_step=363, len=750, n/ep=10, n/st=1600, pursuer_0/loss=0.102, pursuer_1/loss=0.109, pursuer_2/loss=0.119, pursuer_3/loss=0.117, pursuer_4/loss=0.133, rew=-10.80]
+Best Saved
+Epoch #11: test_reward: -3.178480 ± 3.391331, best_reward: -3.178480 ± 3.391331 in #11
+
+
+
+
+Epoch #12: 4800it [00:07, 609.03it/s, env_step=57600, gradient_step=396, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.109, pursuer_1/loss=0.108, pursuer_2/loss=0.112, pursuer_3/loss=0.109, pursuer_4/loss=0.126, rew=-10.80]
+Epoch #12: test_reward: -5.142240 ± 3.157505, best_reward: -3.178480 ± 3.391331 in #11
+
+
+
+
+Epoch #13: 4800it [00:07, 623.06it/s, env_step=62400, gradient_step=429, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.102, pursuer_1/loss=0.114, pursuer_2/loss=0.117, pursuer_3/loss=0.116, pursuer_4/loss=0.131, rew=-12.23]
+Epoch #13: test_reward: -6.890260 ± 3.401752, best_reward: -3.178480 ± 3.391331 in #11
+
+
+
+
+Epoch #14: 4800it [00:07, 626.28it/s, env_step=67200, gradient_step=462, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.110, pursuer_1/loss=0.111, pursuer_2/loss=0.111, pursuer_3/loss=0.117, pursuer_4/loss=0.122, rew=-12.23]
+Epoch #14: test_reward: -4.001020 ± 3.933584, best_reward: -3.178480 ± 3.391331 in #11
+
+
+
+
+Epoch #15: 4800it [00:07, 603.46it/s, env_step=72000, gradient_step=495, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.111, pursuer_1/loss=0.115, pursuer_2/loss=0.121, pursuer_3/loss=0.124, pursuer_4/loss=0.123, rew=-12.56]
+Epoch #15: test_reward: -7.970000 ± 3.383092, best_reward: -3.178480 ± 3.391331 in #11
+
+
+
+
+Epoch #16: 4800it [00:06, 687.81it/s, env_step=76800, gradient_step=528, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.111, pursuer_1/loss=0.117, pursuer_2/loss=0.123, pursuer_3/loss=0.126, pursuer_4/loss=0.115, rew=-10.88]
+Epoch #16: test_reward: -4.638560 ± 5.723194, best_reward: -3.178480 ± 3.391331 in #11
+
+
+
+
+Epoch #17: 4800it [00:08, 598.56it/s, env_step=81600, gradient_step=561, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.103, pursuer_1/loss=0.124, pursuer_2/loss=0.120, pursuer_3/loss=0.135, pursuer_4/loss=0.112, rew=-10.88]
+Epoch #17: test_reward: -10.372000 ± 3.923386, best_reward: -3.178480 ± 3.391331 in #11
+
+
+
+
+Epoch #18: 4800it [00:08, 582.77it/s, env_step=86400, gradient_step=594, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.105, pursuer_1/loss=0.117, pursuer_2/loss=0.113, pursuer_3/loss=0.130, pursuer_4/loss=0.117, rew=-11.99]
+Epoch #18: test_reward: -7.613400 ± 2.689714, best_reward: -3.178480 ± 3.391331 in #11
+
+
+
+
+Epoch #19: 4800it [00:07, 637.27it/s, env_step=91200, gradient_step=627, len=750, n/ep=10, n/st=1600, pursuer_0/loss=0.103, pursuer_1/loss=0.112, pursuer_2/loss=0.110, pursuer_3/loss=0.129, pursuer_4/loss=0.113, rew=-10.60]
+Epoch #19: test_reward: -4.536800 ± 3.832401, best_reward: -3.178480 ± 3.391331 in #11
+
+
+
+Epoch #20: 4800it [00:07, 635.50it/s, env_step=96000, gradient_step=660, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.114, pursuer_1/loss=0.102, pursuer_2/loss=0.115, pursuer_3/loss=0.124, pursuer_4/loss=0.111, rew=-10.60]
+Epoch #20: test_reward: -7.717440 ± 3.080763, best_reward: -3.178480 ± 3.391331 in #11
+
+
+
+Epoch #21: 4800it [00:07, 648.04it/s, env_step=100800, gradient_step=693, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.107, pursuer_1/loss=0.104, pursuer_2/loss=0.117, pursuer_3/loss=0.122, pursuer_4/loss=0.109, rew=-11.24]
+Epoch #21: test_reward: -7.185820 ± 3.860372, best_reward: -3.178480 ± 3.391331 in #11
+
+
+
+
+Epoch #22: 4800it [00:08, 589.04it/s, env_step=105600, gradient_step=726, len=750, n/ep=10, n/st=1600, pursuer_0/loss=0.105, pursuer_1/loss=0.102, pursuer_2/loss=0.121, pursuer_3/loss=0.121, pursuer_4/loss=0.116, rew=-11.57]
+Epoch #22: test_reward: -3.841200 ± 4.620774, best_reward: -3.178480 ± 3.391331 in #11
+
+
+
+
+Epoch #23: 4800it [00:07, 604.25it/s, env_step=110400, gradient_step=759, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.098, pursuer_1/loss=0.100, pursuer_2/loss=0.118, pursuer_3/loss=0.112, pursuer_4/loss=0.123, rew=-11.57]
+Epoch #23: test_reward: -3.718940 ± 4.656614, best_reward: -3.178480 ± 3.391331 in #11
+
+
+
+
+Epoch #24: 4800it [00:07, 652.00it/s, env_step=115200, gradient_step=792, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.100, pursuer_1/loss=0.097, pursuer_2/loss=0.108, pursuer_3/loss=0.118, pursuer_4/loss=0.135, rew=-9.44]
+Epoch #24: test_reward: -3.213780 ± 3.012405, best_reward: -3.178480 ± 3.391331 in #11
+
+
+
+Epoch #25: 4800it [00:07, 617.48it/s, env_step=120000, gradient_step=825, len=750, n/ep=10, n/st=1600, pursuer_0/loss=0.105, pursuer_1/loss=0.102, pursuer_2/loss=0.112, pursuer_3/loss=0.119, pursuer_4/loss=0.140, rew=-10.70]
+Epoch #25: test_reward: -4.144280 ± 4.568996, best_reward: -3.178480 ± 3.391331 in #11
+
+
+
+
+Epoch #26: 4800it [00:07, 680.33it/s, env_step=124800, gradient_step=858, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.103, pursuer_1/loss=0.112, pursuer_2/loss=0.110, pursuer_3/loss=0.126, pursuer_4/loss=0.132, rew=-10.70]
+Epoch #26: test_reward: -4.762700 ± 6.562382, best_reward: -3.178480 ± 3.391331 in #11
+
+
+
+
+Epoch #27: 4800it [00:07, 624.70it/s, env_step=129600, gradient_step=891, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.105, pursuer_1/loss=0.119, pursuer_2/loss=0.111, pursuer_3/loss=0.117, pursuer_4/loss=0.118, rew=-10.41]
+Epoch #27: test_reward: -7.992620 ± 4.488737, best_reward: -3.178480 ± 3.391331 in #11
+
+
+
+
+Epoch #28: 4800it [00:08, 579.35it/s, env_step=134400, gradient_step=924, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.105, pursuer_1/loss=0.122, pursuer_2/loss=0.108, pursuer_3/loss=0.114, pursuer_4/loss=0.119, rew=-10.41]
+Epoch #28: test_reward: -5.748620 ± 4.579760, best_reward: -3.178480 ± 3.391331 in #11
+
+
+
+Epoch #29: 4800it [00:07, 634.90it/s, env_step=139200, gradient_step=957, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.109, pursuer_1/loss=0.123, pursuer_2/loss=0.116, pursuer_3/loss=0.125, pursuer_4/loss=0.129, rew=-11.37]
+Epoch #29: test_reward: -5.081440 ± 4.555244, best_reward: -3.178480 ± 3.391331 in #11
+
+
+
+
+Epoch #30: 4800it [00:07, 641.65it/s, env_step=144000, gradient_step=990, len=750, n/ep=10, n/st=1600, pursuer_0/loss=0.110, pursuer_1/loss=0.122, pursuer_2/loss=0.121, pursuer_3/loss=0.131, pursuer_4/loss=0.129, rew=-10.77]
+Best Saved
+Epoch #30: test_reward: -2.917420 ± 3.211046, best_reward: -2.917420 ± 3.211046 in #30
+
+
+
+
+Epoch #31: 4800it [00:07, 647.89it/s, env_step=148800, gradient_step=1023, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.106, pursuer_1/loss=0.116, pursuer_2/loss=0.119, pursuer_3/loss=0.127, pursuer_4/loss=0.126, rew=-10.77]
+Epoch #31: test_reward: -3.144280 ± 4.142131, best_reward: -2.917420 ± 3.211046 in #30
+
+
+
+Epoch #32: 4800it [00:07, 655.71it/s, env_step=153600, gradient_step=1056, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.105, pursuer_1/loss=0.105, pursuer_2/loss=0.121, pursuer_3/loss=0.115, pursuer_4/loss=0.121, rew=-11.00]
+Epoch #32: test_reward: -7.154840 ± 6.274956, best_reward: -2.917420 ± 3.211046 in #30
+
+
+
+Epoch #33: 4800it [00:07, 649.00it/s, env_step=158400, gradient_step=1089, len=750, n/ep=10, n/st=1600, pursuer_0/loss=0.110, pursuer_1/loss=0.112, pursuer_2/loss=0.118, pursuer_3/loss=0.112, pursuer_4/loss=0.129, rew=-10.24]
+Epoch #33: test_reward: -4.434920 ± 4.977841, best_reward: -2.917420 ± 3.211046 in #30
+
+
+
+Epoch #34: 4800it [00:07, 646.54it/s, env_step=163200, gradient_step=1122, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.115, pursuer_1/loss=0.110, pursuer_2/loss=0.122, pursuer_3/loss=0.122, pursuer_4/loss=0.126, rew=-10.24]
+Epoch #35:   0%|          | 0/3750 [00:00<?, ?it/s]
+Best Saved
+
+
+
+
+Epoch #35: 4800it [00:07, 654.60it/s, env_step=168000, gradient_step=1155, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.121, pursuer_1/loss=0.118, pursuer_2/loss=0.115, pursuer_3/loss=0.124, pursuer_4/loss=0.134, rew=-10.62]
+Epoch #36:   0%|          | 0/3750 [00:00<?, ?it/s]
+
+
+
+
+Epoch #36: 4800it [00:07, 609.29it/s, env_step=172800, gradient_step=1188, len=750, n/ep=10, n/st=1600, pursuer_0/loss=0.123, pursuer_1/loss=0.123, pursuer_2/loss=0.127, pursuer_3/loss=0.125, pursuer_4/loss=0.121, rew=-11.72]
+Epoch #37:   0%|          | 0/3750 [00:00<?, ?it/s]
+Best Saved
+
+
+
+
+Epoch #37: 4800it [00:07, 641.01it/s, env_step=177600, gradient_step=1221, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.119, pursuer_1/loss=0.129, pursuer_2/loss=0.136, pursuer_3/loss=0.125, pursuer_4/loss=0.132, rew=-11.72]
+Epoch #38:   0%|          | 0/3750 [00:00<?, ?it/s]
+
+
+
+
+Epoch #38: 4800it [00:07, 659.24it/s, env_step=182400, gradient_step=1254, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.116, pursuer_1/loss=0.130, pursuer_2/loss=0.131, pursuer_3/loss=0.128, pursuer_4/loss=0.133, rew=-9.02]
+Epoch #38: test_reward: -3.050460 ± 3.816519, best_reward: -1.688400 ± 3.924187 in #36
+
+
+
+Epoch #39: 4800it [00:07, 628.08it/s, env_step=187200, gradient_step=1287, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.114, pursuer_1/loss=0.119, pursuer_2/loss=0.127, pursuer_3/loss=0.122, pursuer_4/loss=0.145, rew=-9.02]
+Epoch #40:   0%|          | 0/3750 [00:00<?, ?it/s]
+
+
+
+
+Epoch #40: 4800it [00:07, 605.48it/s, env_step=192000, gradient_step=1320, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.119, pursuer_1/loss=0.118, pursuer_2/loss=0.116, pursuer_3/loss=0.119, pursuer_4/loss=0.149, rew=-9.16]
+Epoch #40: test_reward: -3.502420 ± 6.022808, best_reward: -1.688400 ± 3.924187 in #36
+
+
+
+
+Epoch #41: 4800it [00:07, 643.22it/s, env_step=196800, gradient_step=1353, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.121, pursuer_1/loss=0.135, pursuer_2/loss=0.121, pursuer_3/loss=0.121, pursuer_4/loss=0.145, rew=-10.08]
+Epoch #41: test_reward: -4.824140 ± 4.173851, best_reward: -1.688400 ± 3.924187 in #36
+
+
+
+Epoch #42: 4800it [00:07, 677.86it/s, env_step=201600, gradient_step=1386, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.128, pursuer_1/loss=0.143, pursuer_2/loss=0.127, pursuer_3/loss=0.132, pursuer_4/loss=0.143, rew=-10.08]
+Epoch #42: test_reward: -4.447560 ± 4.880475, best_reward: -1.688400 ± 3.924187 in #36
+
+
+
+
+Epoch #43: 4800it [00:08, 593.67it/s, env_step=206400, gradient_step=1419, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.127, pursuer_1/loss=0.151, pursuer_2/loss=0.137, pursuer_3/loss=0.135, pursuer_4/loss=0.139, rew=-10.14]
+Epoch #43: test_reward: -6.721480 ± 4.387980, best_reward: -1.688400 ± 3.924187 in #36
+
+
+
+
+Epoch #44: 4800it [00:07, 605.64it/s, env_step=211200, gradient_step=1452, len=750, n/ep=10, n/st=1600, pursuer_0/loss=0.129, pursuer_1/loss=0.142, pursuer_2/loss=0.151, pursuer_3/loss=0.136, pursuer_4/loss=0.138, rew=-11.04]
+Epoch #45:   0%|          | 0/3750 [00:00<?, ?it/s]
+
+
+
+
+Epoch #45: 4800it [00:07, 606.00it/s, env_step=216000, gradient_step=1485, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.129, pursuer_1/loss=0.137, pursuer_2/loss=0.145, pursuer_3/loss=0.137, pursuer_4/loss=0.140, rew=-11.04]
+Epoch #45: test_reward: -5.085280 ± 4.719324, best_reward: -1.688400 ± 3.924187 in #36
+
+
+
+
+Epoch #46: 4800it [00:07, 628.28it/s, env_step=220800, gradient_step=1518, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.125, pursuer_1/loss=0.132, pursuer_2/loss=0.145, pursuer_3/loss=0.127, pursuer_4/loss=0.147, rew=-9.17]
+Epoch #47:   0%|          | 0/3750 [00:00<?, ?it/s]
+
+
+
+
+Epoch #47: 4800it [00:07, 613.52it/s, env_step=225600, gradient_step=1551, len=750, n/ep=10, n/st=1600, pursuer_0/loss=0.121, pursuer_1/loss=0.138, pursuer_2/loss=0.138, pursuer_3/loss=0.122, pursuer_4/loss=0.153, rew=-9.90]
+Epoch #47: test_reward: -2.270360 ± 3.672051, best_reward: -1.688400 ± 3.924187 in #36
+
+
+
+
+Epoch #48: 4800it [00:07, 616.40it/s, env_step=230400, gradient_step=1584, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.111, pursuer_1/loss=0.133, pursuer_2/loss=0.141, pursuer_3/loss=0.128, pursuer_4/loss=0.162, rew=-9.90]
+Epoch #49:   0%|          | 0/3750 [00:00<?, ?it/s]
+
+
+
+
+Epoch #49: 4800it [00:07, 620.59it/s, env_step=235200, gradient_step=1617, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.118, pursuer_1/loss=0.138, pursuer_2/loss=0.132, pursuer_3/loss=0.135, pursuer_4/loss=0.162, rew=-9.65]
+Epoch #49: test_reward: -2.240060 ± 6.236777, best_reward: -1.688400 ± 3.924187 in #36
+
+
+
+
+Epoch #50: 4800it [00:07, 637.28it/s, env_step=240000, gradient_step=1650, len=750, n/ep=10, n/st=1600, pursuer_0/loss=0.128, pursuer_1/loss=0.142, pursuer_2/loss=0.131, pursuer_3/loss=0.142, pursuer_4/loss=0.148, rew=-7.69]
+Epoch #50: test_reward: -3.252040 ± 5.833168, best_reward: -1.688400 ± 3.924187 in #36
+
+
+
+
+Epoch #51: 4800it [00:07, 628.94it/s, env_step=244800, gradient_step=1683, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.132, pursuer_1/loss=0.147, pursuer_2/loss=0.136, pursuer_3/loss=0.135, pursuer_4/loss=0.138, rew=-7.69]
+Epoch #51: test_reward: -3.705780 ± 4.523827, best_reward: -1.688400 ± 3.924187 in #36
+
+
+
+
+Epoch #52: 4800it [00:07, 648.25it/s, env_step=249600, gradient_step=1716, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.126, pursuer_1/loss=0.142, pursuer_2/loss=0.135, pursuer_3/loss=0.131, pursuer_4/loss=0.134, rew=-8.84]
+Epoch #53:   0%|          | 0/3750 [00:00<?, ?it/s]
+
+
+
+
+Epoch #53: 4800it [00:07, 612.61it/s, env_step=254400, gradient_step=1749, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.133, pursuer_1/loss=0.137, pursuer_2/loss=0.132, pursuer_3/loss=0.122, pursuer_4/loss=0.156, rew=-8.84]
+Epoch #54:   0%|          | 0/3750 [00:00<?, ?it/s]
+
+
+
+
+Epoch #54: 4800it [00:07, 678.32it/s, env_step=259200, gradient_step=1782, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.146, pursuer_1/loss=0.133, pursuer_2/loss=0.127, pursuer_3/loss=0.127, pursuer_4/loss=0.159, rew=-7.49]
+Epoch #54: test_reward: -3.302960 ± 4.255790, best_reward: -1.688400 ± 3.924187 in #36
+
+
+
+
+Epoch #55: 4800it [00:07, 672.61it/s, env_step=264000, gradient_step=1815, len=750, n/ep=10, n/st=1600, pursuer_0/loss=0.155, pursuer_1/loss=0.137, pursuer_2/loss=0.133, pursuer_3/loss=0.133, pursuer_4/loss=0.160, rew=-8.50]
+Epoch #55: test_reward: -1.884460 ± 4.456771, best_reward: -1.688400 ± 3.924187 in #36
+
+
+
+
+Epoch #56: 4800it [00:07, 612.87it/s, env_step=268800, gradient_step=1848, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.149, pursuer_1/loss=0.136, pursuer_2/loss=0.139, pursuer_3/loss=0.136, pursuer_4/loss=0.160, rew=-8.50]
+Best Saved
+Epoch #56: test_reward: -1.098060 ± 4.170866, best_reward: -1.098060 ± 4.170866 in #56
+
+
+
+
+Epoch #57: 4800it [00:07, 633.33it/s, env_step=273600, gradient_step=1881, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.138, pursuer_1/loss=0.152, pursuer_2/loss=0.140, pursuer_3/loss=0.136, pursuer_4/loss=0.169, rew=-6.97]
+Best Saved
+Epoch #57: test_reward: -0.479260 ± 5.203125, best_reward: -0.479260 ± 5.203125 in #57
+
+
+
+
+Epoch #58: 4800it [00:07, 638.72it/s, env_step=278400, gradient_step=1914, len=750, n/ep=10, n/st=1600, pursuer_0/loss=0.140, pursuer_1/loss=0.150, pursuer_2/loss=0.148, pursuer_3/loss=0.134, pursuer_4/loss=0.169, rew=-10.41]
+Epoch #58: test_reward: -3.237540 ± 5.939948, best_reward: -0.479260 ± 5.203125 in #57
+
+
+
+
+Epoch #59: 4800it [00:07, 675.21it/s, env_step=283200, gradient_step=1947, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.138, pursuer_1/loss=0.147, pursuer_2/loss=0.151, pursuer_3/loss=0.144, pursuer_4/loss=0.159, rew=-10.41]
+Best Saved
+Epoch #59: test_reward: -0.311680 ± 3.697190, best_reward: -0.311680 ± 3.697190 in #59
+
+
+
+
+Epoch #60: 4800it [00:08, 581.31it/s, env_step=288000, gradient_step=1980, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.140, pursuer_1/loss=0.133, pursuer_2/loss=0.155, pursuer_3/loss=0.146, pursuer_4/loss=0.165, rew=-7.02]
+Epoch #60: test_reward: -2.115440 ± 4.025864, best_reward: -0.311680 ± 3.697190 in #59
+
+
+
+
+Epoch #61: 4800it [00:07, 617.27it/s, env_step=292800, gradient_step=2013, len=750, n/ep=10, n/st=1600, pursuer_0/loss=0.140, pursuer_1/loss=0.133, pursuer_2/loss=0.166, pursuer_3/loss=0.155, pursuer_4/loss=0.168, rew=-7.65]
+Epoch #61: test_reward: -4.054720 ± 4.631360, best_reward: -0.311680 ± 3.697190 in #59
+
+
+
+
+Epoch #62: 4800it [00:07, 602.89it/s, env_step=297600, gradient_step=2046, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.143, pursuer_1/loss=0.143, pursuer_2/loss=0.176, pursuer_3/loss=0.158, pursuer_4/loss=0.175, rew=-7.65]
+Epoch #62: test_reward: -1.698840 ± 3.995570, best_reward: -0.311680 ± 3.697190 in #59
+
+
+
+
+Epoch #63: 4800it [00:07, 605.84it/s, env_step=302400, gradient_step=2079, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.145, pursuer_1/loss=0.146, pursuer_2/loss=0.184, pursuer_3/loss=0.159, pursuer_4/loss=0.167, rew=-6.08]
+Epoch #63: test_reward: -3.936960 ± 4.123371, best_reward: -0.311680 ± 3.697190 in #59
+
+
+
+
+Epoch #64: 4800it [00:07, 641.16it/s, env_step=307200, gradient_step=2112, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.144, pursuer_1/loss=0.153, pursuer_2/loss=0.175, pursuer_3/loss=0.169, pursuer_4/loss=0.166, rew=-6.08]
+Epoch #64: test_reward: -0.667200 ± 4.734547, best_reward: -0.311680 ± 3.697190 in #59
+
+
+
+
+Epoch #65: 4800it [00:07, 629.08it/s, env_step=312000, gradient_step=2145, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.151, pursuer_1/loss=0.153, pursuer_2/loss=0.166, pursuer_3/loss=0.179, pursuer_4/loss=0.168, rew=-7.39]
+Epoch #65: test_reward: -2.339500 ± 6.465883, best_reward: -0.311680 ± 3.697190 in #59
+
+
+
+
+Epoch #66: 4800it [00:07, 601.01it/s, env_step=316800, gradient_step=2178, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.148, pursuer_1/loss=0.154, pursuer_2/loss=0.156, pursuer_3/loss=0.183, pursuer_4/loss=0.170, rew=-9.42]
+Epoch #66: test_reward: -0.400400 ± 5.009378, best_reward: -0.311680 ± 3.697190 in #59
+
+
+
+Epoch #67: 4800it [00:07, 648.77it/s, env_step=321600, gradient_step=2211, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.157, pursuer_1/loss=0.161, pursuer_2/loss=0.153, pursuer_3/loss=0.173, pursuer_4/loss=0.171, rew=-9.42]
+Epoch #68:   0%|          | 0/3750 [00:00<?, ?it/s]
+
+
+
+
+Epoch #68: 4800it [00:07, 627.98it/s, env_step=326400, gradient_step=2244, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.151, pursuer_1/loss=0.150, pursuer_2/loss=0.156, pursuer_3/loss=0.169, pursuer_4/loss=0.175, rew=-8.31]
+Epoch #68: test_reward: -3.755100 ± 5.123424, best_reward: -0.311680 ± 3.697190 in #59
+
+
+
+
+Epoch #69: 4800it [00:07, 635.38it/s, env_step=331200, gradient_step=2277, len=750, n/ep=10, n/st=1600, pursuer_0/loss=0.167, pursuer_1/loss=0.152, pursuer_2/loss=0.161, pursuer_3/loss=0.171, pursuer_4/loss=0.175, rew=-7.66]
+Epoch #70:   0%|          | 0/3750 [00:00<?, ?it/s]
+
+
+
+
+Epoch #70: 4800it [00:08, 584.39it/s, env_step=336000, gradient_step=2310, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.173, pursuer_1/loss=0.160, pursuer_2/loss=0.158, pursuer_3/loss=0.179, pursuer_4/loss=0.180, rew=-7.66]
+Epoch #70: test_reward: -1.507860 ± 4.654896, best_reward: -0.311680 ± 3.697190 in #59
+
+
+
+
+Epoch #71: 4800it [00:08, 589.68it/s, env_step=340800, gradient_step=2343, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.180, pursuer_1/loss=0.168, pursuer_2/loss=0.163, pursuer_3/loss=0.183, pursuer_4/loss=0.170, rew=-7.92]
+Epoch #71: test_reward: -2.306680 ± 3.584640, best_reward: -0.311680 ± 3.697190 in #59
+
+
+
+Epoch #72: 4800it [00:07, 623.72it/s, env_step=345600, gradient_step=2376, len=750, n/ep=10, n/st=1600, pursuer_0/loss=0.176, pursuer_1/loss=0.176, pursuer_2/loss=0.169, pursuer_3/loss=0.178, pursuer_4/loss=0.184, rew=-8.26]
+Epoch #72: test_reward: -4.058840 ± 3.660773, best_reward: -0.311680 ± 3.697190 in #59
+
+
+
+
+Epoch #73: 4800it [00:08, 583.42it/s, env_step=350400, gradient_step=2409, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.171, pursuer_1/loss=0.178, pursuer_2/loss=0.187, pursuer_3/loss=0.183, pursuer_4/loss=0.198, rew=-8.26]
+Epoch #74:   0%|          | 0/3750 [00:00<?, ?it/s]
+
+
+
+
+Epoch #74: 4800it [00:08, 594.74it/s, env_step=355200, gradient_step=2442, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.164, pursuer_1/loss=0.187, pursuer_2/loss=0.191, pursuer_3/loss=0.182, pursuer_4/loss=0.201, rew=-6.89]
+Epoch #74: test_reward: -0.604300 ± 4.412854, best_reward: -0.311680 ± 3.697190 in #59
+
+
+
+
+Epoch #75: 4800it [00:07, 648.88it/s, env_step=360000, gradient_step=2475, len=750, n/ep=10, n/st=1600, pursuer_0/loss=0.165, pursuer_1/loss=0.185, pursuer_2/loss=0.201, pursuer_3/loss=0.180, pursuer_4/loss=0.191, rew=-7.57]
+Epoch #75: test_reward: -1.685640 ± 5.126074, best_reward: -0.311680 ± 3.697190 in #59
+
+
+
+Epoch #76: 4800it [00:07, 649.57it/s, env_step=364800, gradient_step=2508, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.162, pursuer_1/loss=0.175, pursuer_2/loss=0.201, pursuer_3/loss=0.181, pursuer_4/loss=0.183, rew=-7.57]
+Epoch #77:   0%|          | 0/3750 [00:00<?, ?it/s]
+
+
+
+
+Epoch #77: 4800it [00:06, 698.67it/s, env_step=369600, gradient_step=2541, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.172, pursuer_1/loss=0.176, pursuer_2/loss=0.194, pursuer_3/loss=0.186, pursuer_4/loss=0.190, rew=-5.55]
+Epoch #78:   0%|          | 0/3750 [00:00<?, ?it/s]
+Best Saved
+
+
+
+
+Epoch #78: 4800it [00:07, 650.85it/s, env_step=374400, gradient_step=2574, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.180, pursuer_1/loss=0.180, pursuer_2/loss=0.186, pursuer_3/loss=0.201, pursuer_4/loss=0.200, rew=-5.55]
+Epoch #78: test_reward: -1.398260 ± 5.587076, best_reward: 1.845700 ± 5.210476 in #77
+
+
+
+Epoch #79: 4800it [00:07, 659.92it/s, env_step=379200, gradient_step=2607, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.195, pursuer_1/loss=0.175, pursuer_2/loss=0.196, pursuer_3/loss=0.202, pursuer_4/loss=0.199, rew=-7.07]
+Epoch #79: test_reward: -1.461840 ± 5.233225, best_reward: 1.845700 ± 5.210476 in #77
+
+
+
+
+Epoch #80: 4800it [00:07, 615.48it/s, env_step=384000, gradient_step=2640, len=750, n/ep=10, n/st=1600, pursuer_0/loss=0.202, pursuer_1/loss=0.177, pursuer_2/loss=0.194, pursuer_3/loss=0.197, pursuer_4/loss=0.202, rew=-7.23]
+Epoch #80: test_reward: 1.193200 ± 4.454079, best_reward: 1.845700 ± 5.210476 in #77
+
+
+
+Epoch #81: 4800it [00:07, 654.73it/s, env_step=388800, gradient_step=2673, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.210, pursuer_1/loss=0.193, pursuer_2/loss=0.204, pursuer_3/loss=0.188, pursuer_4/loss=0.210, rew=-7.23]
+Epoch #82:   0%|          | 0/3750 [00:00<?, ?it/s]
+
+
+
+
+Epoch #82: 4800it [00:07, 626.19it/s, env_step=393600, gradient_step=2706, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.201, pursuer_1/loss=0.216, pursuer_2/loss=0.197, pursuer_3/loss=0.197, pursuer_4/loss=0.218, rew=-7.38]
+Epoch #83:   0%|          | 0/3750 [00:00<?, ?it/s]
+
+
+
+
+Epoch #83: 4800it [00:07, 671.50it/s, env_step=398400, gradient_step=2739, len=750, n/ep=10, n/st=1600, pursuer_0/loss=0.187, pursuer_1/loss=0.217, pursuer_2/loss=0.202, pursuer_3/loss=0.198, pursuer_4/loss=0.238, rew=-4.87]
+Epoch #83: test_reward: -2.971620 ± 3.763393, best_reward: 1.845700 ± 5.210476 in #77
+
+
+
+Epoch #84: 4800it [00:07, 648.95it/s, env_step=403200, gradient_step=2772, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.183, pursuer_1/loss=0.205, pursuer_2/loss=0.211, pursuer_3/loss=0.207, pursuer_4/loss=0.230, rew=-4.87]
+Epoch #84: test_reward: -1.381740 ± 4.171224, best_reward: 1.845700 ± 5.210476 in #77
+
+
+
+
+Epoch #85: 4800it [00:07, 619.06it/s, env_step=408000, gradient_step=2805, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.195, pursuer_1/loss=0.199, pursuer_2/loss=0.201, pursuer_3/loss=0.206, pursuer_4/loss=0.236, rew=-6.89]
+Epoch #85: test_reward: -0.318000 ± 3.976333, best_reward: 1.845700 ± 5.210476 in #77
+
+
+
+
+Epoch #86: 4800it [00:07, 623.67it/s, env_step=412800, gradient_step=2838, len=750, n/ep=10, n/st=1600, pursuer_0/loss=0.209, pursuer_1/loss=0.204, pursuer_2/loss=0.212, pursuer_3/loss=0.228, pursuer_4/loss=0.236, rew=-4.91]
+Epoch #86: test_reward: -0.444040 ± 5.436032, best_reward: 1.845700 ± 5.210476 in #77
+
+
+
+
+Epoch #87: 4800it [00:07, 615.56it/s, env_step=417600, gradient_step=2871, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.211, pursuer_1/loss=0.210, pursuer_2/loss=0.207, pursuer_3/loss=0.226, pursuer_4/loss=0.235, rew=-4.91]
+Epoch #87: test_reward: -1.708460 ± 6.538936, best_reward: 1.845700 ± 5.210476 in #77
+
+
+
+Epoch #88: 4800it [00:07, 646.45it/s, env_step=422400, gradient_step=2904, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.205, pursuer_1/loss=0.212, pursuer_2/loss=0.217, pursuer_3/loss=0.236, pursuer_4/loss=0.237, rew=-4.94]
+Epoch #89:   0%|          | 0/3750 [00:00<?, ?it/s]
+Best Saved
+
+
+
+
+Epoch #89: 4800it [00:07, 623.21it/s, env_step=427200, gradient_step=2937, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.204, pursuer_1/loss=0.211, pursuer_2/loss=0.220, pursuer_3/loss=0.232, pursuer_4/loss=0.224, rew=-4.94]
+Epoch #90:   0%|          | 0/3750 [00:00<?, ?it/s]
+
+
+
+
+Epoch #90: 4800it [00:07, 622.60it/s, env_step=432000, gradient_step=2970, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.204, pursuer_1/loss=0.214, pursuer_2/loss=0.225, pursuer_3/loss=0.250, pursuer_4/loss=0.238, rew=-3.61]
+Best Saved
+Epoch #90: test_reward: 5.091360 ± 5.342213, best_reward: 5.091360 ± 5.342213 in #90
+
+
+
+
+Epoch #91: 4800it [00:08, 592.38it/s, env_step=436800, gradient_step=3003, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.196, pursuer_1/loss=0.208, pursuer_2/loss=0.231, pursuer_3/loss=0.242, pursuer_4/loss=0.238, rew=-5.05]
+Epoch #91: test_reward: 2.515340 ± 6.295825, best_reward: 5.091360 ± 5.342213 in #90
+
+
+
+
+Epoch #92: 4800it [00:08, 571.63it/s, env_step=441600, gradient_step=3036, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.200, pursuer_1/loss=0.218, pursuer_2/loss=0.221, pursuer_3/loss=0.253, pursuer_4/loss=0.245, rew=-5.05]
+Epoch #93:   0%|          | 0/3750 [00:00<?, ?it/s]
+
+
+
+
+Epoch #93: 4800it [00:08, 592.37it/s, env_step=446400, gradient_step=3069, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.206, pursuer_1/loss=0.224, pursuer_2/loss=0.224, pursuer_3/loss=0.240, pursuer_4/loss=0.246, rew=-4.26]
+Epoch #94:   0%|          | 0/3750 [00:00<?, ?it/s]
+
+
+
+
+Epoch #94: 4800it [00:07, 622.94it/s, env_step=451200, gradient_step=3102, len=750, n/ep=10, n/st=1600, pursuer_0/loss=0.216, pursuer_1/loss=0.234, pursuer_2/loss=0.221, pursuer_3/loss=0.252, pursuer_4/loss=0.256, rew=-2.30]
+Epoch #94: test_reward: -0.133700 ± 4.322841, best_reward: 5.091360 ± 5.342213 in #90
+
+
+
+
+Epoch #95: 4800it [00:07, 608.21it/s, env_step=456000, gradient_step=3135, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.227, pursuer_1/loss=0.227, pursuer_2/loss=0.234, pursuer_3/loss=0.244, pursuer_4/loss=0.267, rew=-2.30]
+Epoch #95: test_reward: -0.174100 ± 3.937988, best_reward: 5.091360 ± 5.342213 in #90
+
+
+
+
+Epoch #96: 4800it [00:08, 592.57it/s, env_step=460800, gradient_step=3168, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.230, pursuer_1/loss=0.224, pursuer_2/loss=0.242, pursuer_3/loss=0.247, pursuer_4/loss=0.272, rew=-3.97]
+Epoch #97:   0%|          | 0/3750 [00:00<?, ?it/s]
+
+
+
+
+Epoch #97: 4800it [00:07, 641.16it/s, env_step=465600, gradient_step=3201, len=750, n/ep=10, n/st=1600, pursuer_0/loss=0.235, pursuer_1/loss=0.245, pursuer_2/loss=0.243, pursuer_3/loss=0.246, pursuer_4/loss=0.270, rew=-3.68]
+Epoch #97: test_reward: 2.015320 ± 5.236882, best_reward: 5.091360 ± 5.342213 in #90
+
+
+
+
+Epoch #98: 4800it [00:07, 627.89it/s, env_step=470400, gradient_step=3234, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.239, pursuer_1/loss=0.258, pursuer_2/loss=0.257, pursuer_3/loss=0.247, pursuer_4/loss=0.270, rew=-3.68]
+Epoch #98: test_reward: 0.882200 ± 6.227408, best_reward: 5.091360 ± 5.342213 in #90
+
+
+
+Epoch #99: 4800it [00:07, 663.45it/s, env_step=475200, gradient_step=3267, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.235, pursuer_1/loss=0.257, pursuer_2/loss=0.256, pursuer_3/loss=0.247, pursuer_4/loss=0.274, rew=-3.11]
+Epoch #99: test_reward: 1.482440 ± 6.057821, best_reward: 5.091360 ± 5.342213 in #90
+
+
+
+
+Epoch #100: 4800it [00:07, 628.63it/s, env_step=480000, gradient_step=3300, len=750, n/ep=10, n/st=1600, pursuer_0/loss=0.240, pursuer_1/loss=0.250, pursuer_2/loss=0.252, pursuer_3/loss=0.250, pursuer_4/loss=0.277, rew=-3.25]
+Epoch #100: test_reward: -2.116920 ± 5.185577, best_reward: 5.091360 ± 5.342213 in #90
+Epoch #101:  43%|####2     | 1600/3750 [00:02<00:02, 928.31it/s, env_step=481600, gradient_step=3311, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.237, pursuer_1/loss=0.242, pursuer_2/loss=0.255, pursuer_3/loss=0.260, pursuer_4/loss=0.276, rew=-3.25]
+Epoch #101:  85%|########5 | 3200/3750 [00:04<00:00, 719.78it/s, env_step=483200, gradient_step=3322, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.229, pursuer_1/loss=0.240, pursuer_2/loss=0.253, pursuer_3/loss=0.259, pursuer_4/loss=0.281, rew=-3.25]
+Epoch #101: 4800it [00:07, 660.44it/s, env_step=484800, gradient_step=3333, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.227, pursuer_1/loss=0.245, pursuer_2/loss=0.256, pursuer_3/loss=0.263, pursuer_4/loss=0.279, rew=-3.25]
+Epoch #102:   0%|          | 0/3750 [00:00<?, ?it/s]00, gradient_step=3333, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.227, pursuer_1/loss=0.245, pursuer_2/loss=0.256, pursuer_3/loss=0.263, pursuer_4/loss=0.279, rew=-3.25]
+Epoch #102:   0%|          | 0/3750 [00:00<?, ?it/s]00, gradient_step=3333, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.227, pursuer_1/loss=0.245, pursuer_2/loss=0.256, pursuer_3/loss=0.263, pursuer_4/loss=0.279, rew=-3.25]
+Epoch #102:  43%|####2     | 1600/3750 [00:02<00:02, 988.72it/s, env_step=486400, gradient_step=3344, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.221, pursuer_1/loss=0.241, pursuer_2/loss=0.250, pursuer_3/loss=0.256, pursuer_4/loss=0.283, rew=-3.25]
+Epoch #102:  85%|########5 | 3200/3750 [00:04<00:00, 765.84it/s, env_step=488000, gradient_step=3355, len=750, n/ep=10, n/st=1600, pursuer_0/loss=0.226, pursuer_1/loss=0.243, pursuer_2/loss=0.253, pursuer_3/loss=0.266, pursuer_4/loss=0.292, rew=-3.64]
+Epoch #102: 4800it [00:06, 718.15it/s, env_step=488000, gradient_step=3355, len=750, n/ep=10, n/st=1600, pursuer_0/loss=0.226, pursuer_1/loss=0.243, pursuer_2/loss=0.253, pursuer_3/loss=0.266, pursuer_4/loss=0.292, rew=-3.64]
+Epoch #102: 4800it [00:07, 672.85it/s, env_step=489600, gradient_step=3366, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.230, pursuer_1/loss=0.250, pursuer_2/loss=0.256, pursuer_3/loss=0.272, pursuer_4/loss=0.294, rew=-3.64]
+Epoch #103:   0%|          | 0/3750 [00:00<?, ?it/s]00, gradient_step=3366, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.230, pursuer_1/loss=0.250, pursuer_2/loss=0.256, pursuer_3/loss=0.272, pursuer_4/loss=0.294, rew=-3.64]
+Epoch #103:   0%|          | 0/3750 [00:00<?, ?it/s]00, gradient_step=3366, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.230, pursuer_1/loss=0.250, pursuer_2/loss=0.256, pursuer_3/loss=0.272, pursuer_4/loss=0.294, rew=-3.64]
+Epoch #103:  43%|####2     | 1600/3750 [00:01<00:02, 991.94it/s]_step=3366, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.230, pursuer_1/loss=0.250, pursuer_2/loss=0.256, pursuer_3/loss=0.272, pursuer_4/loss=0.294, rew=-3.64]
+Epoch #103:  85%|########5 | 3200/3750 [00:04<00:00, 772.37it/s, env_step=491200, gradient_step=3377, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.228, pursuer_1/loss=0.249, pursuer_2/loss=0.263, pursuer_3/loss=0.271, pursuer_4/loss=0.294, rew=-3.64]
+Epoch #103:  85%|########5 | 3200/3750 [00:04<00:00, 772.37it/s, env_step=492800, gradient_step=3388, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.225, pursuer_1/loss=0.243, pursuer_2/loss=0.266, pursuer_3/loss=0.273, pursuer_4/loss=0.299, rew=-3.64]
+Epoch #103: 4800it [00:06, 689.12it/s, env_step=494400, gradient_step=3399, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.230, pursuer_1/loss=0.249, pursuer_2/loss=0.274, pursuer_3/loss=0.273, pursuer_4/loss=0.297, rew=-3.64]
+Epoch #103: 4800it [00:06, 689.12it/s, env_step=494400, gradient_step=3399, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.230, pursuer_1/loss=0.249, pursuer_2/loss=0.274, pursuer_3/loss=0.273, pursuer_4/loss=0.297, rew=-3.64]
+Epoch #104:   0%|          | 0/3750 [00:00<?, ?it/s]00, gradient_step=3399, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.230, pursuer_1/loss=0.249, pursuer_2/loss=0.274, pursuer_3/loss=0.273, pursuer_4/loss=0.297, rew=-3.64]
+Epoch #104:  43%|####2     | 1600/3750 [00:02<00:02, 913.78it/s, env_step=496000, gradient_step=3410, len=750, n/ep=10, n/st=1600, pursuer_0/loss=0.242, pursuer_1/loss=0.251, pursuer_2/loss=0.280, pursuer_3/loss=0.268, pursuer_4/loss=0.303, rew=-4.16]
+Epoch #104:  85%|########5 | 3200/3750 [00:04<00:00, 753.81it/s, env_step=497600, gradient_step=3421, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.246, pursuer_1/loss=0.259, pursuer_2/loss=0.280, pursuer_3/loss=0.265, pursuer_4/loss=0.301, rew=-4.16]
+Epoch #104: 4800it [00:07, 668.65it/s, env_step=499200, gradient_step=3432, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.249, pursuer_1/loss=0.256, pursuer_2/loss=0.278, pursuer_3/loss=0.266, pursuer_4/loss=0.305, rew=-4.16]
+Epoch #104: 4800it [00:07, 668.65it/s, env_step=499200, gradient_step=3432, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.249, pursuer_1/loss=0.256, pursuer_2/loss=0.278, pursuer_3/loss=0.266, pursuer_4/loss=0.305, rew=-4.16]
+Epoch #105:   0%|          | 0/3750 [00:00<?, ?it/s]00, gradient_step=3432, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.249, pursuer_1/loss=0.256, pursuer_2/loss=0.278, pursuer_3/loss=0.266, pursuer_4/loss=0.305, rew=-4.16]
+Epoch #105:  43%|####2     | 1600/3750 [00:02<00:02, 886.02it/s, env_step=500800, gradient_step=3443, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.248, pursuer_1/loss=0.259, pursuer_2/loss=0.283, pursuer_3/loss=0.266, pursuer_4/loss=0.293, rew=-4.16]
+Epoch #105:  85%|########5 | 3200/3750 [00:05<00:00, 727.78it/s, env_step=502400, gradient_step=3454, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.247, pursuer_1/loss=0.257, pursuer_2/loss=0.289, pursuer_3/loss=0.265, pursuer_4/loss=0.284, rew=-4.16]
+Epoch #105: 4800it [00:06, 697.30it/s, env_step=502400, gradient_step=3454, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.247, pursuer_1/loss=0.257, pursuer_2/loss=0.289, pursuer_3/loss=0.265, pursuer_4/loss=0.284, rew=-4.16]
+Epoch #105: 4800it [00:07, 647.73it/s, env_step=504000, gradient_step=3465, len=750, n/ep=10, n/st=1600, pursuer_0/loss=0.247, pursuer_1/loss=0.259, pursuer_2/loss=0.296, pursuer_3/loss=0.263, pursuer_4/loss=0.280, rew=-2.79]
+Epoch #106:   0%|          | 0/3750 [00:00<?, ?it/s]00, gradient_step=3465, len=750, n/ep=10, n/st=1600, pursuer_0/loss=0.247, pursuer_1/loss=0.259, pursuer_2/loss=0.296, pursuer_3/loss=0.263, pursuer_4/loss=0.280, rew=-2.79]
+Epoch #106:   0%|          | 0/3750 [00:00<?, ?it/s]00, gradient_step=3465, len=750, n/ep=10, n/st=1600, pursuer_0/loss=0.247, pursuer_1/loss=0.259, pursuer_2/loss=0.296, pursuer_3/loss=0.263, pursuer_4/loss=0.280, rew=-2.79]
+Epoch #106:  43%|####2     | 1600/3750 [00:02<00:02, 803.33it/s, env_step=505600, gradient_step=3476, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.245, pursuer_1/loss=0.260, pursuer_2/loss=0.293, pursuer_3/loss=0.259, pursuer_4/loss=0.277, rew=-2.79]
+Epoch #106:  85%|########5 | 3200/3750 [00:04<00:00, 696.78it/s, env_step=505600, gradient_step=3476, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.245, pursuer_1/loss=0.260, pursuer_2/loss=0.293, pursuer_3/loss=0.259, pursuer_4/loss=0.277, rew=-2.79]
+Epoch #106: 4800it [00:06, 689.53it/s, env_step=507200, gradient_step=3487, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.245, pursuer_1/loss=0.259, pursuer_2/loss=0.290, pursuer_3/loss=0.252, pursuer_4/loss=0.283, rew=-2.79]
+Epoch #106: 4800it [00:07, 631.71it/s, env_step=508800, gradient_step=3498, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.243, pursuer_1/loss=0.251, pursuer_2/loss=0.292, pursuer_3/loss=0.249, pursuer_4/loss=0.281, rew=-2.79]
+Epoch #107:   0%|          | 0/3750 [00:00<?, ?it/s]00, gradient_step=3498, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.243, pursuer_1/loss=0.251, pursuer_2/loss=0.292, pursuer_3/loss=0.249, pursuer_4/loss=0.281, rew=-2.79]
+Epoch #107:   0%|          | 0/3750 [00:00<?, ?it/s]00, gradient_step=3498, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.243, pursuer_1/loss=0.251, pursuer_2/loss=0.292, pursuer_3/loss=0.249, pursuer_4/loss=0.281, rew=-2.79]
+Epoch #107:  43%|####2     | 1600/3750 [00:02<00:02, 794.17it/s]_step=3498, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.243, pursuer_1/loss=0.251, pursuer_2/loss=0.292, pursuer_3/loss=0.249, pursuer_4/loss=0.281, rew=-2.79]
+Epoch #107:  43%|####2     | 1600/3750 [00:02<00:02, 794.17it/s, env_step=510400, gradient_step=3509, len=750, n/ep=10, n/st=1600, pursuer_0/loss=0.242, pursuer_1/loss=0.255, pursuer_2/loss=0.291, pursuer_3/loss=0.256, pursuer_4/loss=0.284, rew=-4.06]
+Epoch #107:  85%|########5 | 3200/3750 [00:05<00:00, 692.23it/s, env_step=512000, gradient_step=3520, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.245, pursuer_1/loss=0.252, pursuer_2/loss=0.287, pursuer_3/loss=0.268, pursuer_4/loss=0.292, rew=-4.06]
+Epoch #107: 4800it [00:07, 620.26it/s, env_step=513600, gradient_step=3531, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.242, pursuer_1/loss=0.257, pursuer_2/loss=0.291, pursuer_3/loss=0.273, pursuer_4/loss=0.291, rew=-4.06]
+Epoch #108:   0%|          | 0/3750 [00:00<?, ?it/s]00, gradient_step=3531, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.242, pursuer_1/loss=0.257, pursuer_2/loss=0.291, pursuer_3/loss=0.273, pursuer_4/loss=0.291, rew=-4.06]
+Epoch #108:   0%|          | 0/3750 [00:00<?, ?it/s]00, gradient_step=3531, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.242, pursuer_1/loss=0.257, pursuer_2/loss=0.291, pursuer_3/loss=0.273, pursuer_4/loss=0.291, rew=-4.06]
+Epoch #108:  43%|####2     | 1600/3750 [00:02<00:02, 864.87it/s, env_step=515200, gradient_step=3542, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.237, pursuer_1/loss=0.254, pursuer_2/loss=0.290, pursuer_3/loss=0.278, pursuer_4/loss=0.300, rew=-4.06]
+Epoch #108:  85%|########5 | 3200/3750 [00:05<00:00, 740.95it/s, env_step=516800, gradient_step=3553, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.238, pursuer_1/loss=0.257, pursuer_2/loss=0.290, pursuer_3/loss=0.276, pursuer_4/loss=0.307, rew=-4.06]
+Epoch #108: 4800it [00:06, 687.77it/s, env_step=516800, gradient_step=3553, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.238, pursuer_1/loss=0.257, pursuer_2/loss=0.290, pursuer_3/loss=0.276, pursuer_4/loss=0.307, rew=-4.06]
+Epoch #108: 4800it [00:07, 640.59it/s, env_step=518400, gradient_step=3564, len=750, n/ep=10, n/st=1600, pursuer_0/loss=0.240, pursuer_1/loss=0.255, pursuer_2/loss=0.279, pursuer_3/loss=0.277, pursuer_4/loss=0.306, rew=-3.63]
+Epoch #109:   0%|          | 0/3750 [00:00<?, ?it/s]00, gradient_step=3564, len=750, n/ep=10, n/st=1600, pursuer_0/loss=0.240, pursuer_1/loss=0.255, pursuer_2/loss=0.279, pursuer_3/loss=0.277, pursuer_4/loss=0.306, rew=-3.63]
+Epoch #109:   0%|          | 0/3750 [00:00<?, ?it/s]00, gradient_step=3564, len=750, n/ep=10, n/st=1600, pursuer_0/loss=0.240, pursuer_1/loss=0.255, pursuer_2/loss=0.279, pursuer_3/loss=0.277, pursuer_4/loss=0.306, rew=-3.63]
+Epoch #109:  43%|####2     | 1600/3750 [00:02<00:02, 858.40it/s, env_step=520000, gradient_step=3575, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.241, pursuer_1/loss=0.255, pursuer_2/loss=0.277, pursuer_3/loss=0.281, pursuer_4/loss=0.320, rew=-3.63]
+Epoch #109:  85%|########5 | 3200/3750 [00:04<00:00, 730.56it/s, env_step=520000, gradient_step=3575, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.241, pursuer_1/loss=0.255, pursuer_2/loss=0.277, pursuer_3/loss=0.281, pursuer_4/loss=0.320, rew=-3.63]
+Epoch #109: 4800it [00:06, 705.67it/s, env_step=521600, gradient_step=3586, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.250, pursuer_1/loss=0.267, pursuer_2/loss=0.290, pursuer_3/loss=0.284, pursuer_4/loss=0.317, rew=-3.63]
+Epoch #109: 4800it [00:07, 649.25it/s, env_step=523200, gradient_step=3597, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.246, pursuer_1/loss=0.273, pursuer_2/loss=0.284, pursuer_3/loss=0.293, pursuer_4/loss=0.318, rew=-3.63]
+Epoch #110:   0%|          | 0/3750 [00:00<?, ?it/s]00, gradient_step=3597, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.246, pursuer_1/loss=0.273, pursuer_2/loss=0.284, pursuer_3/loss=0.293, pursuer_4/loss=0.318, rew=-3.63]
+Epoch #110:   0%|          | 0/3750 [00:00<?, ?it/s]00, gradient_step=3597, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.246, pursuer_1/loss=0.273, pursuer_2/loss=0.284, pursuer_3/loss=0.293, pursuer_4/loss=0.318, rew=-3.63]
+Epoch #110:  43%|####2     | 1600/3750 [00:02<00:02, 819.61it/s, env_step=524800, gradient_step=3608, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.249, pursuer_1/loss=0.265, pursuer_2/loss=0.281, pursuer_3/loss=0.298, pursuer_4/loss=0.320, rew=-3.63]
+Epoch #110:  85%|########5 | 3200/3750 [00:05<00:00, 699.60it/s, env_step=526400, gradient_step=3619, len=750, n/ep=10, n/st=1600, pursuer_0/loss=0.248, pursuer_1/loss=0.268, pursuer_2/loss=0.283, pursuer_3/loss=0.290, pursuer_4/loss=0.313, rew=-1.70]
+Epoch #110: 4800it [00:07, 647.83it/s, env_step=526400, gradient_step=3619, len=750, n/ep=10, n/st=1600, pursuer_0/loss=0.248, pursuer_1/loss=0.268, pursuer_2/loss=0.283, pursuer_3/loss=0.290, pursuer_4/loss=0.313, rew=-1.70]
+Epoch #110: 4800it [00:07, 605.06it/s, env_step=528000, gradient_step=3630, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.252, pursuer_1/loss=0.269, pursuer_2/loss=0.281, pursuer_3/loss=0.290, pursuer_4/loss=0.306, rew=-1.70]
+Epoch #111:   0%|          | 0/3750 [00:00<?, ?it/s]00, gradient_step=3630, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.252, pursuer_1/loss=0.269, pursuer_2/loss=0.281, pursuer_3/loss=0.290, pursuer_4/loss=0.306, rew=-1.70]
+Epoch #111:   0%|          | 0/3750 [00:00<?, ?it/s]00, gradient_step=3630, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.252, pursuer_1/loss=0.269, pursuer_2/loss=0.281, pursuer_3/loss=0.290, pursuer_4/loss=0.306, rew=-1.70]
+Epoch #111:  43%|####2     | 1600/3750 [00:01<00:02, 851.23it/s]_step=3630, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.252, pursuer_1/loss=0.269, pursuer_2/loss=0.281, pursuer_3/loss=0.290, pursuer_4/loss=0.306, rew=-1.70]
+Epoch #111:  43%|####2     | 1600/3750 [00:02<00:02, 851.23it/s, env_step=529600, gradient_step=3641, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.259, pursuer_1/loss=0.279, pursuer_2/loss=0.280, pursuer_3/loss=0.286, pursuer_4/loss=0.311, rew=-1.70]
+Epoch #111:  85%|########5 | 3200/3750 [00:05<00:00, 669.61it/s, env_step=531200, gradient_step=3652, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.256, pursuer_1/loss=0.283, pursuer_2/loss=0.282, pursuer_3/loss=0.295, pursuer_4/loss=0.306, rew=-1.70]
+Epoch #111: 4800it [00:08, 596.76it/s, env_step=532800, gradient_step=3663, len=750, n/ep=10, n/st=1600, pursuer_0/loss=0.257, pursuer_1/loss=0.289, pursuer_2/loss=0.286, pursuer_3/loss=0.291, pursuer_4/loss=0.313, rew=-2.32]
+Epoch #112:   0%|          | 0/3750 [00:00<?, ?it/s]00, gradient_step=3663, len=750, n/ep=10, n/st=1600, pursuer_0/loss=0.257, pursuer_1/loss=0.289, pursuer_2/loss=0.286, pursuer_3/loss=0.291, pursuer_4/loss=0.313, rew=-2.32]
+Epoch #112:   0%|          | 0/3750 [00:00<?, ?it/s]00, gradient_step=3663, len=750, n/ep=10, n/st=1600, pursuer_0/loss=0.257, pursuer_1/loss=0.289, pursuer_2/loss=0.286, pursuer_3/loss=0.291, pursuer_4/loss=0.313, rew=-2.32]
+Epoch #112:  43%|####2     | 1600/3750 [00:02<00:02, 816.58it/s, env_step=534400, gradient_step=3674, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.253, pursuer_1/loss=0.294, pursuer_2/loss=0.287, pursuer_3/loss=0.296, pursuer_4/loss=0.301, rew=-2.32]
+Epoch #112:  85%|########5 | 3200/3750 [00:04<00:00, 671.17it/s, env_step=534400, gradient_step=3674, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.253, pursuer_1/loss=0.294, pursuer_2/loss=0.287, pursuer_3/loss=0.296, pursuer_4/loss=0.301, rew=-2.32]
+Epoch #112:  85%|########5 | 3200/3750 [00:05<00:00, 671.17it/s, env_step=536000, gradient_step=3685, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.254, pursuer_1/loss=0.291, pursuer_2/loss=0.286, pursuer_3/loss=0.300, pursuer_4/loss=0.297, rew=-2.32]
+Epoch #112: 4800it [00:07, 608.61it/s, env_step=537600, gradient_step=3696, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.263, pursuer_1/loss=0.297, pursuer_2/loss=0.286, pursuer_3/loss=0.296, pursuer_4/loss=0.303, rew=-2.32]
+Epoch #113:   0%|          | 0/3750 [00:00<?, ?it/s]00, gradient_step=3696, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.263, pursuer_1/loss=0.297, pursuer_2/loss=0.286, pursuer_3/loss=0.296, pursuer_4/loss=0.303, rew=-2.32]
+Epoch #113:   0%|          | 0/3750 [00:00<?, ?it/s]00, gradient_step=3696, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.263, pursuer_1/loss=0.297, pursuer_2/loss=0.286, pursuer_3/loss=0.296, pursuer_4/loss=0.303, rew=-2.32]
+Epoch #113:  43%|####2     | 1600/3750 [00:02<00:02, 921.70it/s, env_step=539200, gradient_step=3707, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.262, pursuer_1/loss=0.293, pursuer_2/loss=0.283, pursuer_3/loss=0.289, pursuer_4/loss=0.311, rew=-2.32]
+Epoch #113:  85%|########5 | 3200/3750 [00:04<00:00, 753.51it/s, env_step=539200, gradient_step=3707, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.262, pursuer_1/loss=0.293, pursuer_2/loss=0.283, pursuer_3/loss=0.289, pursuer_4/loss=0.311, rew=-2.32]
+Epoch #113:  85%|########5 | 3200/3750 [00:04<00:00, 753.51it/s, env_step=540800, gradient_step=3718, len=750, n/ep=10, n/st=1600, pursuer_0/loss=0.256, pursuer_1/loss=0.302, pursuer_2/loss=0.289, pursuer_3/loss=0.289, pursuer_4/loss=0.319, rew=-3.63]
+Epoch #113: 4800it [00:07, 656.82it/s, env_step=542400, gradient_step=3729, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.260, pursuer_1/loss=0.306, pursuer_2/loss=0.286, pursuer_3/loss=0.287, pursuer_4/loss=0.329, rew=-3.63]
+Epoch #114:   0%|          | 0/3750 [00:00<?, ?it/s]00, gradient_step=3729, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.260, pursuer_1/loss=0.306, pursuer_2/loss=0.286, pursuer_3/loss=0.287, pursuer_4/loss=0.329, rew=-3.63]
+Epoch #114:   0%|          | 0/3750 [00:00<?, ?it/s]00, gradient_step=3729, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.260, pursuer_1/loss=0.306, pursuer_2/loss=0.286, pursuer_3/loss=0.287, pursuer_4/loss=0.329, rew=-3.63]
+Epoch #114:  43%|####2     | 1600/3750 [00:01<00:02, 801.98it/s]_step=3729, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.260, pursuer_1/loss=0.306, pursuer_2/loss=0.286, pursuer_3/loss=0.287, pursuer_4/loss=0.329, rew=-3.63]
+Epoch #114:  85%|########5 | 3200/3750 [00:04<00:00, 680.23it/s, env_step=544000, gradient_step=3740, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.259, pursuer_1/loss=0.302, pursuer_2/loss=0.294, pursuer_3/loss=0.282, pursuer_4/loss=0.327, rew=-3.63]
+Epoch #114:  85%|########5 | 3200/3750 [00:05<00:00, 680.23it/s, env_step=545600, gradient_step=3751, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.265, pursuer_1/loss=0.307, pursuer_2/loss=0.297, pursuer_3/loss=0.281, pursuer_4/loss=0.327, rew=-3.63]
+Epoch #114: 4800it [00:07, 606.61it/s, env_step=547200, gradient_step=3762, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.268, pursuer_1/loss=0.307, pursuer_2/loss=0.297, pursuer_3/loss=0.277, pursuer_4/loss=0.328, rew=-3.63]
+Epoch #115:   0%|          | 0/3750 [00:00<?, ?it/s]00, gradient_step=3762, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.268, pursuer_1/loss=0.307, pursuer_2/loss=0.297, pursuer_3/loss=0.277, pursuer_4/loss=0.328, rew=-3.63]
+Epoch #115:   0%|          | 0/3750 [00:00<?, ?it/s]00, gradient_step=3762, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.268, pursuer_1/loss=0.307, pursuer_2/loss=0.297, pursuer_3/loss=0.277, pursuer_4/loss=0.328, rew=-3.63]
+Epoch #115:  43%|####2     | 1600/3750 [00:02<00:02, 799.36it/s, env_step=548800, gradient_step=3773, len=750, n/ep=10, n/st=1600, pursuer_0/loss=0.273, pursuer_1/loss=0.302, pursuer_2/loss=0.292, pursuer_3/loss=0.284, pursuer_4/loss=0.333, rew=-1.63]
+Epoch #115:  85%|########5 | 3200/3750 [00:04<00:00, 712.94it/s, env_step=548800, gradient_step=3773, len=750, n/ep=10, n/st=1600, pursuer_0/loss=0.273, pursuer_1/loss=0.302, pursuer_2/loss=0.292, pursuer_3/loss=0.284, pursuer_4/loss=0.333, rew=-1.63]
+Epoch #115:  85%|########5 | 3200/3750 [00:05<00:00, 712.94it/s, env_step=550400, gradient_step=3784, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.268, pursuer_1/loss=0.301, pursuer_2/loss=0.292, pursuer_3/loss=0.289, pursuer_4/loss=0.335, rew=-1.63]
+Epoch #115: 4800it [00:08, 589.87it/s, env_step=552000, gradient_step=3795, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.269, pursuer_1/loss=0.297, pursuer_2/loss=0.291, pursuer_3/loss=0.295, pursuer_4/loss=0.337, rew=-1.63]
+Epoch #116:   0%|          | 0/3750 [00:00<?, ?it/s]00, gradient_step=3795, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.269, pursuer_1/loss=0.297, pursuer_2/loss=0.291, pursuer_3/loss=0.295, pursuer_4/loss=0.337, rew=-1.63]
+Epoch #116:   0%|          | 0/3750 [00:00<?, ?it/s]00, gradient_step=3795, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.269, pursuer_1/loss=0.297, pursuer_2/loss=0.291, pursuer_3/loss=0.295, pursuer_4/loss=0.337, rew=-1.63]
+Epoch #116:  43%|####2     | 1600/3750 [00:01<00:02, 811.37it/s]_step=3795, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.269, pursuer_1/loss=0.297, pursuer_2/loss=0.291, pursuer_3/loss=0.295, pursuer_4/loss=0.337, rew=-1.63]
+Epoch #116:  43%|####2     | 1600/3750 [00:02<00:02, 811.37it/s, env_step=553600, gradient_step=3806, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.273, pursuer_1/loss=0.314, pursuer_2/loss=0.288, pursuer_3/loss=0.291, pursuer_4/loss=0.329, rew=-1.63]
+Epoch #116:  85%|########5 | 3200/3750 [00:05<00:00, 691.36it/s, env_step=555200, gradient_step=3817, len=750, n/ep=10, n/st=1600, pursuer_0/loss=0.272, pursuer_1/loss=0.305, pursuer_2/loss=0.281, pursuer_3/loss=0.292, pursuer_4/loss=0.327, rew=-1.56]
+Epoch #116: 4800it [00:07, 608.97it/s, env_step=556800, gradient_step=3828, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.268, pursuer_1/loss=0.311, pursuer_2/loss=0.280, pursuer_3/loss=0.295, pursuer_4/loss=0.319, rew=-1.56]
+Epoch #117:   0%|          | 0/3750 [00:00<?, ?it/s]00, gradient_step=3828, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.268, pursuer_1/loss=0.311, pursuer_2/loss=0.280, pursuer_3/loss=0.295, pursuer_4/loss=0.319, rew=-1.56]
+Epoch #117:   0%|          | 0/3750 [00:00<?, ?it/s]00, gradient_step=3828, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.268, pursuer_1/loss=0.311, pursuer_2/loss=0.280, pursuer_3/loss=0.295, pursuer_4/loss=0.319, rew=-1.56]
+Epoch #117:  43%|####2     | 1600/3750 [00:02<00:02, 855.68it/s, env_step=558400, gradient_step=3839, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.270, pursuer_1/loss=0.303, pursuer_2/loss=0.279, pursuer_3/loss=0.296, pursuer_4/loss=0.315, rew=-1.56]
+Epoch #117:  85%|########5 | 3200/3750 [00:04<00:00, 709.98it/s, env_step=558400, gradient_step=3839, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.270, pursuer_1/loss=0.303, pursuer_2/loss=0.279, pursuer_3/loss=0.296, pursuer_4/loss=0.315, rew=-1.56]
+Epoch #117: 4800it [00:06, 679.66it/s, env_step=560000, gradient_step=3850, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.270, pursuer_1/loss=0.293, pursuer_2/loss=0.269, pursuer_3/loss=0.290, pursuer_4/loss=0.320, rew=-1.56]
+Epoch #117: 4800it [00:07, 636.81it/s, env_step=561600, gradient_step=3861, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.266, pursuer_1/loss=0.295, pursuer_2/loss=0.277, pursuer_3/loss=0.299, pursuer_4/loss=0.320, rew=-1.56]
+Epoch #118:   0%|          | 0/3750 [00:00<?, ?it/s]00, gradient_step=3861, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.266, pursuer_1/loss=0.295, pursuer_2/loss=0.277, pursuer_3/loss=0.299, pursuer_4/loss=0.320, rew=-1.56]
+Epoch #118:   0%|          | 0/3750 [00:00<?, ?it/s]00, gradient_step=3861, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.266, pursuer_1/loss=0.295, pursuer_2/loss=0.277, pursuer_3/loss=0.299, pursuer_4/loss=0.320, rew=-1.56]
+Best Saved
+Epoch #118:  43%|####2     | 1600/3750 [00:02<00:02, 834.60it/s, env_step=563200, gradient_step=3872, len=745, n/ep=10, n/st=1600, pursuer_0/loss=0.267, pursuer_1/loss=0.298, pursuer_2/loss=0.283, pursuer_3/loss=0.295, pursuer_4/loss=0.319, rew=-0.79]
+Epoch #118:  85%|########5 | 3200/3750 [00:04<00:00, 682.24it/s, env_step=563200, gradient_step=3872, len=745, n/ep=10, n/st=1600, pursuer_0/loss=0.267, pursuer_1/loss=0.298, pursuer_2/loss=0.283, pursuer_3/loss=0.295, pursuer_4/loss=0.319, rew=-0.79]
+Epoch #118:  85%|########5 | 3200/3750 [00:05<00:00, 682.24it/s, env_step=564800, gradient_step=3883, len=745, n/ep=0, n/st=1600, pursuer_0/loss=0.278, pursuer_1/loss=0.302, pursuer_2/loss=0.287, pursuer_3/loss=0.294, pursuer_4/loss=0.328, rew=-0.79]
+Epoch #118: 4800it [00:08, 594.95it/s, env_step=566400, gradient_step=3894, len=745, n/ep=0, n/st=1600, pursuer_0/loss=0.279, pursuer_1/loss=0.302, pursuer_2/loss=0.296, pursuer_3/loss=0.297, pursuer_4/loss=0.326, rew=-0.79]
+Epoch #119:   0%|          | 0/3750 [00:00<?, ?it/s]00, gradient_step=3894, len=745, n/ep=0, n/st=1600, pursuer_0/loss=0.279, pursuer_1/loss=0.302, pursuer_2/loss=0.296, pursuer_3/loss=0.297, pursuer_4/loss=0.326, rew=-0.79]
+Epoch #119:   0%|          | 0/3750 [00:00<?, ?it/s]00, gradient_step=3894, len=745, n/ep=0, n/st=1600, pursuer_0/loss=0.279, pursuer_1/loss=0.302, pursuer_2/loss=0.296, pursuer_3/loss=0.297, pursuer_4/loss=0.326, rew=-0.79]
+Epoch #119:  43%|####2     | 1600/3750 [00:01<00:02, 808.18it/s]_step=3894, len=745, n/ep=0, n/st=1600, pursuer_0/loss=0.279, pursuer_1/loss=0.302, pursuer_2/loss=0.296, pursuer_3/loss=0.297, pursuer_4/loss=0.326, rew=-0.79]
+Epoch #119:  85%|########5 | 3200/3750 [00:04<00:00, 690.72it/s, env_step=568000, gradient_step=3905, len=525, n/ep=1, n/st=1600, pursuer_0/loss=0.273, pursuer_1/loss=0.301, pursuer_2/loss=0.303, pursuer_3/loss=0.303, pursuer_4/loss=0.323, rew=7.84]
+Epoch #119:  85%|########5 | 3200/3750 [00:05<00:00, 690.72it/s, env_step=569600, gradient_step=3916, len=750, n/ep=1, n/st=1600, pursuer_0/loss=0.282, pursuer_1/loss=0.297, pursuer_2/loss=0.305, pursuer_3/loss=0.305, pursuer_4/loss=0.332, rew=0.49]
+Epoch #119: 4800it [00:07, 619.54it/s, env_step=571200, gradient_step=3927, len=750, n/ep=8, n/st=1600, pursuer_0/loss=0.282, pursuer_1/loss=0.289, pursuer_2/loss=0.310, pursuer_3/loss=0.314, pursuer_4/loss=0.333, rew=-2.53]
+Epoch #120:   0%|          | 0/3750 [00:00<?, ?it/s]00, gradient_step=3927, len=750, n/ep=8, n/st=1600, pursuer_0/loss=0.282, pursuer_1/loss=0.289, pursuer_2/loss=0.310, pursuer_3/loss=0.314, pursuer_4/loss=0.333, rew=-2.53]
+Epoch #120:   0%|          | 0/3750 [00:00<?, ?it/s]00, gradient_step=3927, len=750, n/ep=8, n/st=1600, pursuer_0/loss=0.282, pursuer_1/loss=0.289, pursuer_2/loss=0.310, pursuer_3/loss=0.314, pursuer_4/loss=0.333, rew=-2.53]
+Epoch #120:  43%|####2     | 1600/3750 [00:02<00:02, 815.52it/s, env_step=572800, gradient_step=3938, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.282, pursuer_1/loss=0.292, pursuer_2/loss=0.310, pursuer_3/loss=0.323, pursuer_4/loss=0.343, rew=-2.53]
+Epoch #120:  85%|########5 | 3200/3750 [00:04<00:00, 695.26it/s, env_step=572800, gradient_step=3938, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.282, pursuer_1/loss=0.292, pursuer_2/loss=0.310, pursuer_3/loss=0.323, pursuer_4/loss=0.343, rew=-2.53]
+Epoch #120: 4800it [00:06, 672.73it/s, env_step=574400, gradient_step=3949, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.284, pursuer_1/loss=0.290, pursuer_2/loss=0.319, pursuer_3/loss=0.329, pursuer_4/loss=0.359, rew=-2.53]
+Epoch #120: 4800it [00:07, 618.36it/s, env_step=576000, gradient_step=3960, len=750, n/ep=1, n/st=1600, pursuer_0/loss=0.288, pursuer_1/loss=0.290, pursuer_2/loss=0.320, pursuer_3/loss=0.337, pursuer_4/loss=0.365, rew=-0.62]
+Epoch #121:   0%|          | 0/3750 [00:00<?, ?it/s]00, gradient_step=3960, len=750, n/ep=1, n/st=1600, pursuer_0/loss=0.288, pursuer_1/loss=0.290, pursuer_2/loss=0.320, pursuer_3/loss=0.337, pursuer_4/loss=0.365, rew=-0.62]
+Epoch #121:   0%|          | 0/3750 [00:00<?, ?it/s]00, gradient_step=3960, len=750, n/ep=1, n/st=1600, pursuer_0/loss=0.288, pursuer_1/loss=0.290, pursuer_2/loss=0.320, pursuer_3/loss=0.337, pursuer_4/loss=0.365, rew=-0.62]
+Epoch #121:  43%|####2     | 1600/3750 [00:01<00:02, 864.76it/s]_step=3960, len=750, n/ep=1, n/st=1600, pursuer_0/loss=0.288, pursuer_1/loss=0.290, pursuer_2/loss=0.320, pursuer_3/loss=0.337, pursuer_4/loss=0.365, rew=-0.62]
+Epoch #121:  85%|########5 | 3200/3750 [00:04<00:00, 727.21it/s, env_step=577600, gradient_step=3971, len=736, n/ep=9, n/st=1600, pursuer_0/loss=0.289, pursuer_1/loss=0.290, pursuer_2/loss=0.316, pursuer_3/loss=0.331, pursuer_4/loss=0.364, rew=-2.04]
+Epoch #121:  85%|########5 | 3200/3750 [00:05<00:00, 727.21it/s, env_step=579200, gradient_step=3982, len=736, n/ep=0, n/st=1600, pursuer_0/loss=0.287, pursuer_1/loss=0.290, pursuer_2/loss=0.313, pursuer_3/loss=0.332, pursuer_4/loss=0.366, rew=-2.04]
+Epoch #121: 4800it [00:07, 634.52it/s, env_step=580800, gradient_step=3993, len=736, n/ep=0, n/st=1600, pursuer_0/loss=0.281, pursuer_1/loss=0.290, pursuer_2/loss=0.318, pursuer_3/loss=0.333, pursuer_4/loss=0.355, rew=-2.04]
+Epoch #122:   0%|          | 0/3750 [00:00<?, ?it/s]00, gradient_step=3993, len=736, n/ep=0, n/st=1600, pursuer_0/loss=0.281, pursuer_1/loss=0.290, pursuer_2/loss=0.318, pursuer_3/loss=0.333, pursuer_4/loss=0.355, rew=-2.04]
+Epoch #122:   0%|          | 0/3750 [00:00<?, ?it/s]00, gradient_step=3993, len=736, n/ep=0, n/st=1600, pursuer_0/loss=0.281, pursuer_1/loss=0.290, pursuer_2/loss=0.318, pursuer_3/loss=0.333, pursuer_4/loss=0.355, rew=-2.04]
+Epoch #122:  43%|####2     | 1600/3750 [00:02<00:02, 783.25it/s]_step=3993, len=736, n/ep=0, n/st=1600, pursuer_0/loss=0.281, pursuer_1/loss=0.290, pursuer_2/loss=0.318, pursuer_3/loss=0.333, pursuer_4/loss=0.355, rew=-2.04]
+Epoch #122:  43%|####2     | 1600/3750 [00:02<00:02, 783.25it/s, env_step=582400, gradient_step=4004, len=736, n/ep=0, n/st=1600, pursuer_0/loss=0.283, pursuer_1/loss=0.288, pursuer_2/loss=0.321, pursuer_3/loss=0.329, pursuer_4/loss=0.366, rew=-2.04]
+Epoch #122:  85%|########5 | 3200/3750 [00:05<00:00, 629.90it/s, env_step=584000, gradient_step=4015, len=750, n/ep=2, n/st=1600, pursuer_0/loss=0.283, pursuer_1/loss=0.297, pursuer_2/loss=0.324, pursuer_3/loss=0.330, pursuer_4/loss=0.365, rew=-1.22]
+Epoch #122: 4800it [00:07, 625.63it/s, env_step=584000, gradient_step=4015, len=750, n/ep=2, n/st=1600, pursuer_0/loss=0.283, pursuer_1/loss=0.297, pursuer_2/loss=0.324, pursuer_3/loss=0.330, pursuer_4/loss=0.365, rew=-1.22]
+Epoch #122: 4800it [00:08, 573.73it/s, env_step=585600, gradient_step=4026, len=750, n/ep=8, n/st=1600, pursuer_0/loss=0.294, pursuer_1/loss=0.304, pursuer_2/loss=0.323, pursuer_3/loss=0.321, pursuer_4/loss=0.368, rew=-1.06]
+Epoch #123:   0%|          | 0/3750 [00:00<?, ?it/s]00, gradient_step=4026, len=750, n/ep=8, n/st=1600, pursuer_0/loss=0.294, pursuer_1/loss=0.304, pursuer_2/loss=0.323, pursuer_3/loss=0.321, pursuer_4/loss=0.368, rew=-1.06]
+Epoch #123:   0%|          | 0/3750 [00:00<?, ?it/s]00, gradient_step=4026, len=750, n/ep=8, n/st=1600, pursuer_0/loss=0.294, pursuer_1/loss=0.304, pursuer_2/loss=0.323, pursuer_3/loss=0.321, pursuer_4/loss=0.368, rew=-1.06]
+Epoch #123:  43%|####2     | 1600/3750 [00:02<00:02, 843.50it/s, env_step=587200, gradient_step=4037, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.294, pursuer_1/loss=0.316, pursuer_2/loss=0.327, pursuer_3/loss=0.317, pursuer_4/loss=0.369, rew=-1.06]
+Epoch #123:  85%|########5 | 3200/3750 [00:04<00:00, 705.09it/s, env_step=587200, gradient_step=4037, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.294, pursuer_1/loss=0.316, pursuer_2/loss=0.327, pursuer_3/loss=0.317, pursuer_4/loss=0.369, rew=-1.06]
+Epoch #123:  85%|########5 | 3200/3750 [00:05<00:00, 705.09it/s, env_step=588800, gradient_step=4048, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.291, pursuer_1/loss=0.320, pursuer_2/loss=0.332, pursuer_3/loss=0.309, pursuer_4/loss=0.358, rew=-1.06]
+Epoch #123: 4800it [00:07, 621.87it/s, env_step=590400, gradient_step=4059, len=750, n/ep=1, n/st=1600, pursuer_0/loss=0.296, pursuer_1/loss=0.328, pursuer_2/loss=0.325, pursuer_3/loss=0.303, pursuer_4/loss=0.353, rew=-3.46]
+Epoch #124:   0%|          | 0/3750 [00:00<?, ?it/s]00, gradient_step=4059, len=750, n/ep=1, n/st=1600, pursuer_0/loss=0.296, pursuer_1/loss=0.328, pursuer_2/loss=0.325, pursuer_3/loss=0.303, pursuer_4/loss=0.353, rew=-3.46]
+Epoch #124:   0%|          | 0/3750 [00:00<?, ?it/s]00, gradient_step=4059, len=750, n/ep=1, n/st=1600, pursuer_0/loss=0.296, pursuer_1/loss=0.328, pursuer_2/loss=0.325, pursuer_3/loss=0.303, pursuer_4/loss=0.353, rew=-3.46]
+Best Saved
+Epoch #124:  43%|####2     | 1600/3750 [00:02<00:02, 833.48it/s, env_step=592000, gradient_step=4070, len=750, n/ep=1, n/st=1600, pursuer_0/loss=0.300, pursuer_1/loss=0.324, pursuer_2/loss=0.328, pursuer_3/loss=0.306, pursuer_4/loss=0.350, rew=-1.42]
+Epoch #124:  85%|########5 | 3200/3750 [00:05<00:00, 686.67it/s, env_step=593600, gradient_step=4081, len=750, n/ep=8, n/st=1600, pursuer_0/loss=0.304, pursuer_1/loss=0.328, pursuer_2/loss=0.329, pursuer_3/loss=0.310, pursuer_4/loss=0.347, rew=1.93]
+Epoch #124: 4800it [00:07, 632.31it/s, env_step=593600, gradient_step=4081, len=750, n/ep=8, n/st=1600, pursuer_0/loss=0.304, pursuer_1/loss=0.328, pursuer_2/loss=0.329, pursuer_3/loss=0.310, pursuer_4/loss=0.347, rew=1.93]
+Epoch #124: 4800it [00:08, 590.32it/s, env_step=595200, gradient_step=4092, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.313, pursuer_1/loss=0.332, pursuer_2/loss=0.331, pursuer_3/loss=0.309, pursuer_4/loss=0.365, rew=1.93]
+Epoch #125:   0%|          | 0/3750 [00:00<?, ?it/s]00, gradient_step=4092, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.313, pursuer_1/loss=0.332, pursuer_2/loss=0.331, pursuer_3/loss=0.309, pursuer_4/loss=0.365, rew=1.93]
+Epoch #125:   0%|          | 0/3750 [00:00<?, ?it/s]00, gradient_step=4092, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.313, pursuer_1/loss=0.332, pursuer_2/loss=0.331, pursuer_3/loss=0.309, pursuer_4/loss=0.365, rew=1.93]
+Epoch #125:  43%|####2     | 1600/3750 [00:02<00:02, 890.73it/s, env_step=596800, gradient_step=4103, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.316, pursuer_1/loss=0.336, pursuer_2/loss=0.327, pursuer_3/loss=0.323, pursuer_4/loss=0.359, rew=1.93]
+Epoch #125:  85%|########5 | 3200/3750 [00:04<00:00, 730.23it/s, env_step=596800, gradient_step=4103, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.316, pursuer_1/loss=0.336, pursuer_2/loss=0.327, pursuer_3/loss=0.323, pursuer_4/loss=0.359, rew=1.93]
+Epoch #125:  85%|########5 | 3200/3750 [00:05<00:00, 730.23it/s, env_step=598400, gradient_step=4114, len=750, n/ep=1, n/st=1600, pursuer_0/loss=0.322, pursuer_1/loss=0.333, pursuer_2/loss=0.327, pursuer_3/loss=0.322, pursuer_4/loss=0.348, rew=-3.60]
+Epoch #125: 4800it [00:07, 637.86it/s, env_step=600000, gradient_step=4125, len=750, n/ep=9, n/st=1600, pursuer_0/loss=0.320, pursuer_1/loss=0.329, pursuer_2/loss=0.330, pursuer_3/loss=0.332, pursuer_4/loss=0.348, rew=-1.18]
+Epoch #125: 4800it [00:07, 637.86it/s, env_step=600000, gradient_step=4125, len=750, n/ep=9, n/st=1600, pursuer_0/loss=0.320, pursuer_1/loss=0.329, pursuer_2/loss=0.330, pursuer_3/loss=0.332, pursuer_4/loss=0.348, rew=-1.18]
+Epoch #126:   0%|          | 0/3750 [00:00<?, ?it/s]00, gradient_step=4125, len=750, n/ep=9, n/st=1600, pursuer_0/loss=0.320, pursuer_1/loss=0.329, pursuer_2/loss=0.330, pursuer_3/loss=0.332, pursuer_4/loss=0.348, rew=-1.18]
+Epoch #126:  43%|####2     | 1600/3750 [00:02<00:02, 758.27it/s, env_step=601600, gradient_step=4136, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.324, pursuer_1/loss=0.325, pursuer_2/loss=0.335, pursuer_3/loss=0.326, pursuer_4/loss=0.350, rew=-1.18]
+Epoch #126:  85%|########5 | 3200/3750 [00:05<00:00, 682.24it/s, env_step=603200, gradient_step=4147, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.331, pursuer_1/loss=0.318, pursuer_2/loss=0.339, pursuer_3/loss=0.341, pursuer_4/loss=0.351, rew=-1.18]
+Epoch #126: 4800it [00:07, 675.29it/s, env_step=603200, gradient_step=4147, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.331, pursuer_1/loss=0.318, pursuer_2/loss=0.339, pursuer_3/loss=0.341, pursuer_4/loss=0.351, rew=-1.18]
+Epoch #126: 4800it [00:07, 617.18it/s, env_step=604800, gradient_step=4158, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.327, pursuer_1/loss=0.319, pursuer_2/loss=0.341, pursuer_3/loss=0.343, pursuer_4/loss=0.354, rew=-1.18]
+Epoch #126: 4800it [00:07, 617.18it/s, env_step=604800, gradient_step=4158, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.327, pursuer_1/loss=0.319, pursuer_2/loss=0.341, pursuer_3/loss=0.343, pursuer_4/loss=0.354, rew=-1.18]
+Epoch #127:   0%|          | 0/3750 [00:00<?, ?it/s]00, gradient_step=4158, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.327, pursuer_1/loss=0.319, pursuer_2/loss=0.341, pursuer_3/loss=0.343, pursuer_4/loss=0.354, rew=-1.18]
+Epoch #127:  43%|####2     | 1600/3750 [00:02<00:02, 829.11it/s, env_step=606400, gradient_step=4169, len=750, n/ep=2, n/st=1600, pursuer_0/loss=0.320, pursuer_1/loss=0.315, pursuer_2/loss=0.344, pursuer_3/loss=0.352, pursuer_4/loss=0.361, rew=1.62]
+Epoch #127:  85%|########5 | 3200/3750 [00:05<00:00, 724.19it/s, env_step=608000, gradient_step=4180, len=750, n/ep=8, n/st=1600, pursuer_0/loss=0.319, pursuer_1/loss=0.316, pursuer_2/loss=0.344, pursuer_3/loss=0.346, pursuer_4/loss=0.378, rew=-1.00]
+Epoch #127: 4800it [00:06, 675.22it/s, env_step=608000, gradient_step=4180, len=750, n/ep=8, n/st=1600, pursuer_0/loss=0.319, pursuer_1/loss=0.316, pursuer_2/loss=0.344, pursuer_3/loss=0.346, pursuer_4/loss=0.378, rew=-1.00]
+Epoch #127: 4800it [00:07, 629.70it/s, env_step=609600, gradient_step=4191, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.319, pursuer_1/loss=0.319, pursuer_2/loss=0.336, pursuer_3/loss=0.341, pursuer_4/loss=0.359, rew=-1.00]
+Epoch #127: 4800it [00:07, 629.70it/s, env_step=609600, gradient_step=4191, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.319, pursuer_1/loss=0.319, pursuer_2/loss=0.336, pursuer_3/loss=0.341, pursuer_4/loss=0.359, rew=-1.00]
+Epoch #128:   0%|          | 0/3750 [00:00<?, ?it/s]00, gradient_step=4191, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.319, pursuer_1/loss=0.319, pursuer_2/loss=0.336, pursuer_3/loss=0.341, pursuer_4/loss=0.359, rew=-1.00]
+Epoch #128:  43%|####2     | 1600/3750 [00:02<00:02, 862.59it/s, env_step=611200, gradient_step=4202, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.313, pursuer_1/loss=0.326, pursuer_2/loss=0.340, pursuer_3/loss=0.330, pursuer_4/loss=0.355, rew=-1.00]
+Epoch #128:  85%|########5 | 3200/3750 [00:04<00:00, 741.33it/s, env_step=612800, gradient_step=4213, len=750, n/ep=1, n/st=1600, pursuer_0/loss=0.317, pursuer_1/loss=0.324, pursuer_2/loss=0.339, pursuer_3/loss=0.325, pursuer_4/loss=0.363, rew=-2.40]
+Epoch #128: 4800it [00:06, 700.57it/s, env_step=612800, gradient_step=4213, len=750, n/ep=1, n/st=1600, pursuer_0/loss=0.317, pursuer_1/loss=0.324, pursuer_2/loss=0.339, pursuer_3/loss=0.325, pursuer_4/loss=0.363, rew=-2.40]
+Epoch #128: 4800it [00:07, 645.49it/s, env_step=614400, gradient_step=4224, len=670, n/ep=1, n/st=1600, pursuer_0/loss=0.314, pursuer_1/loss=0.328, pursuer_2/loss=0.338, pursuer_3/loss=0.322, pursuer_4/loss=0.367, rew=6.93]
+Epoch #128: 4800it [00:07, 645.49it/s, env_step=614400, gradient_step=4224, len=670, n/ep=1, n/st=1600, pursuer_0/loss=0.314, pursuer_1/loss=0.328, pursuer_2/loss=0.338, pursuer_3/loss=0.322, pursuer_4/loss=0.367, rew=6.93]
+Epoch #129:   0%|          | 0/3750 [00:00<?, ?it/s]00, gradient_step=4224, len=670, n/ep=1, n/st=1600, pursuer_0/loss=0.314, pursuer_1/loss=0.328, pursuer_2/loss=0.338, pursuer_3/loss=0.322, pursuer_4/loss=0.367, rew=6.93]
+Epoch #129:  43%|####2     | 1600/3750 [00:02<00:02, 746.38it/s, env_step=616000, gradient_step=4235, len=750, n/ep=8, n/st=1600, pursuer_0/loss=0.309, pursuer_1/loss=0.331, pursuer_2/loss=0.344, pursuer_3/loss=0.334, pursuer_4/loss=0.369, rew=-1.56]
+Epoch #129:  85%|########5 | 3200/3750 [00:05<00:00, 668.92it/s, env_step=617600, gradient_step=4246, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.306, pursuer_1/loss=0.330, pursuer_2/loss=0.338, pursuer_3/loss=0.333, pursuer_4/loss=0.374, rew=-1.56]
+Epoch #129: 4800it [00:07, 661.69it/s, env_step=617600, gradient_step=4246, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.306, pursuer_1/loss=0.330, pursuer_2/loss=0.338, pursuer_3/loss=0.333, pursuer_4/loss=0.374, rew=-1.56]
+Epoch #129: 4800it [00:07, 605.55it/s, env_step=619200, gradient_step=4257, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.310, pursuer_1/loss=0.336, pursuer_2/loss=0.338, pursuer_3/loss=0.336, pursuer_4/loss=0.382, rew=-1.56]
+Epoch #129: 4800it [00:07, 605.55it/s, env_step=619200, gradient_step=4257, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.310, pursuer_1/loss=0.336, pursuer_2/loss=0.338, pursuer_3/loss=0.336, pursuer_4/loss=0.382, rew=-1.56]
+Epoch #130:   0%|          | 0/3750 [00:00<?, ?it/s]00, gradient_step=4257, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.310, pursuer_1/loss=0.336, pursuer_2/loss=0.338, pursuer_3/loss=0.336, pursuer_4/loss=0.382, rew=-1.56]
+Epoch #130:  43%|####2     | 1600/3750 [00:02<00:02, 906.52it/s, env_step=620800, gradient_step=4268, len=750, n/ep=2, n/st=1600, pursuer_0/loss=0.318, pursuer_1/loss=0.335, pursuer_2/loss=0.340, pursuer_3/loss=0.324, pursuer_4/loss=0.377, rew=-1.54]
+Epoch #130:  85%|########5 | 3200/3750 [00:05<00:00, 654.47it/s, env_step=622400, gradient_step=4279, len=750, n/ep=1, n/st=1600, pursuer_0/loss=0.310, pursuer_1/loss=0.334, pursuer_2/loss=0.350, pursuer_3/loss=0.327, pursuer_4/loss=0.364, rew=1.42]
+Epoch #130: 4800it [00:07, 635.84it/s, env_step=622400, gradient_step=4279, len=750, n/ep=1, n/st=1600, pursuer_0/loss=0.310, pursuer_1/loss=0.334, pursuer_2/loss=0.350, pursuer_3/loss=0.327, pursuer_4/loss=0.364, rew=1.42]
+Epoch #130: 4800it [00:07, 600.46it/s, env_step=624000, gradient_step=4290, len=750, n/ep=7, n/st=1600, pursuer_0/loss=0.314, pursuer_1/loss=0.336, pursuer_2/loss=0.351, pursuer_3/loss=0.326, pursuer_4/loss=0.371, rew=0.81]
+Epoch #131:   0%|          | 0/3750 [00:00<?, ?it/s]00, gradient_step=4290, len=750, n/ep=7, n/st=1600, pursuer_0/loss=0.314, pursuer_1/loss=0.336, pursuer_2/loss=0.351, pursuer_3/loss=0.326, pursuer_4/loss=0.371, rew=0.81]
+Epoch #131:   0%|          | 0/3750 [00:00<?, ?it/s]00, gradient_step=4290, len=750, n/ep=7, n/st=1600, pursuer_0/loss=0.314, pursuer_1/loss=0.336, pursuer_2/loss=0.351, pursuer_3/loss=0.326, pursuer_4/loss=0.371, rew=0.81]
+Epoch #131:  43%|####2     | 1600/3750 [00:02<00:02, 829.33it/s, env_step=625600, gradient_step=4301, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.318, pursuer_1/loss=0.342, pursuer_2/loss=0.349, pursuer_3/loss=0.329, pursuer_4/loss=0.381, rew=0.81]
+Epoch #131:  85%|########5 | 3200/3750 [00:04<00:00, 730.66it/s, env_step=625600, gradient_step=4301, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.318, pursuer_1/loss=0.342, pursuer_2/loss=0.349, pursuer_3/loss=0.329, pursuer_4/loss=0.381, rew=0.81]
+Epoch #131: 4800it [00:06, 686.53it/s, env_step=627200, gradient_step=4312, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.317, pursuer_1/loss=0.339, pursuer_2/loss=0.357, pursuer_3/loss=0.336, pursuer_4/loss=0.388, rew=0.81]
+Epoch #131: 4800it [00:07, 634.08it/s, env_step=628800, gradient_step=4323, len=750, n/ep=2, n/st=1600, pursuer_0/loss=0.311, pursuer_1/loss=0.334, pursuer_2/loss=0.363, pursuer_3/loss=0.335, pursuer_4/loss=0.385, rew=-0.46]
+Epoch #132:   0%|          | 0/3750 [00:00<?, ?it/s]00, gradient_step=4323, len=750, n/ep=2, n/st=1600, pursuer_0/loss=0.311, pursuer_1/loss=0.334, pursuer_2/loss=0.363, pursuer_3/loss=0.335, pursuer_4/loss=0.385, rew=-0.46]
+Epoch #132:   0%|          | 0/3750 [00:00<?, ?it/s]00, gradient_step=4323, len=750, n/ep=2, n/st=1600, pursuer_0/loss=0.311, pursuer_1/loss=0.334, pursuer_2/loss=0.363, pursuer_3/loss=0.335, pursuer_4/loss=0.385, rew=-0.46]
+Epoch #132:  43%|####2     | 1600/3750 [00:02<00:02, 836.29it/s, env_step=630400, gradient_step=4334, len=750, n/ep=8, n/st=1600, pursuer_0/loss=0.314, pursuer_1/loss=0.338, pursuer_2/loss=0.356, pursuer_3/loss=0.328, pursuer_4/loss=0.385, rew=-0.12]
+Epoch #132:  85%|########5 | 3200/3750 [00:05<00:00, 713.24it/s, env_step=632000, gradient_step=4345, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.310, pursuer_1/loss=0.338, pursuer_2/loss=0.358, pursuer_3/loss=0.328, pursuer_4/loss=0.385, rew=-0.12]
+Epoch #132: 4800it [00:06, 676.48it/s, env_step=632000, gradient_step=4345, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.310, pursuer_1/loss=0.338, pursuer_2/loss=0.358, pursuer_3/loss=0.328, pursuer_4/loss=0.385, rew=-0.12]
+Epoch #132: 4800it [00:07, 619.53it/s, env_step=633600, gradient_step=4356, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.318, pursuer_1/loss=0.326, pursuer_2/loss=0.363, pursuer_3/loss=0.336, pursuer_4/loss=0.376, rew=-0.12]
+Epoch #132: 4800it [00:07, 619.53it/s, env_step=633600, gradient_step=4356, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.318, pursuer_1/loss=0.326, pursuer_2/loss=0.363, pursuer_3/loss=0.336, pursuer_4/loss=0.376, rew=-0.12]
+Epoch #133:   0%|          | 0/3750 [00:00<?, ?it/s]00, gradient_step=4356, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.318, pursuer_1/loss=0.326, pursuer_2/loss=0.363, pursuer_3/loss=0.336, pursuer_4/loss=0.376, rew=-0.12]
+Epoch #133:  43%|####2     | 1600/3750 [00:02<00:02, 808.70it/s, env_step=635200, gradient_step=4367, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.314, pursuer_1/loss=0.330, pursuer_2/loss=0.361, pursuer_3/loss=0.341, pursuer_4/loss=0.376, rew=-0.12]
+Epoch #133:  85%|########5 | 3200/3750 [00:05<00:00, 677.60it/s, env_step=636800, gradient_step=4378, len=750, n/ep=2, n/st=1600, pursuer_0/loss=0.320, pursuer_1/loss=0.339, pursuer_2/loss=0.355, pursuer_3/loss=0.353, pursuer_4/loss=0.385, rew=-0.41]
+Epoch #133: 4800it [00:07, 608.19it/s, env_step=638400, gradient_step=4389, len=750, n/ep=8, n/st=1600, pursuer_0/loss=0.322, pursuer_1/loss=0.339, pursuer_2/loss=0.356, pursuer_3/loss=0.361, pursuer_4/loss=0.393, rew=1.12]
+Epoch #134:  43%|####2     | 1600/3750 [00:01<00:02, 877.13it/s]_step=4389, len=750, n/ep=8, n/st=1600, pursuer_0/loss=0.322, pursuer_1/loss=0.339, pursuer_2/loss=0.356, pursuer_3/loss=0.361, pursuer_4/loss=0.393, rew=1.12]
+Epoch #134:  43%|####2     | 1600/3750 [00:01<00:02, 877.13it/s]_step=4389, len=750, n/ep=8, n/st=1600, pursuer_0/loss=0.322, pursuer_1/loss=0.339, pursuer_2/loss=0.356, pursuer_3/loss=0.361, pursuer_4/loss=0.393, rew=1.12]
+Epoch #134:  43%|####2     | 1600/3750 [00:02<00:02, 877.13it/s, env_step=640000, gradient_step=4400, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.324, pursuer_1/loss=0.339, pursuer_2/loss=0.356, pursuer_3/loss=0.364, pursuer_4/loss=0.395, rew=1.12]
+Epoch #134:  85%|########5 | 3200/3750 [00:05<00:00, 703.06it/s, env_step=641600, gradient_step=4411, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.317, pursuer_1/loss=0.344, pursuer_2/loss=0.357, pursuer_3/loss=0.361, pursuer_4/loss=0.389, rew=1.12]
+Epoch #134: 4800it [00:07, 626.69it/s, env_step=643200, gradient_step=4422, len=750, n/ep=2, n/st=1600, pursuer_0/loss=0.334, pursuer_1/loss=0.349, pursuer_2/loss=0.358, pursuer_3/loss=0.364, pursuer_4/loss=0.398, rew=-0.49]
+Epoch #135:   0%|          | 0/3750 [00:00<?, ?it/s]00, gradient_step=4422, len=750, n/ep=2, n/st=1600, pursuer_0/loss=0.334, pursuer_1/loss=0.349, pursuer_2/loss=0.358, pursuer_3/loss=0.364, pursuer_4/loss=0.398, rew=-0.49]
+Epoch #135:   0%|          | 0/3750 [00:00<?, ?it/s]00, gradient_step=4422, len=750, n/ep=2, n/st=1600, pursuer_0/loss=0.334, pursuer_1/loss=0.349, pursuer_2/loss=0.358, pursuer_3/loss=0.364, pursuer_4/loss=0.398, rew=-0.49]
+Epoch #135:  43%|####2     | 1600/3750 [00:01<00:02, 865.64it/s]_step=4422, len=750, n/ep=2, n/st=1600, pursuer_0/loss=0.334, pursuer_1/loss=0.349, pursuer_2/loss=0.358, pursuer_3/loss=0.364, pursuer_4/loss=0.398, rew=-0.49]
+Epoch #135:  43%|####2     | 1600/3750 [00:02<00:02, 865.64it/s, env_step=644800, gradient_step=4433, len=750, n/ep=1, n/st=1600, pursuer_0/loss=0.335, pursuer_1/loss=0.345, pursuer_2/loss=0.355, pursuer_3/loss=0.369, pursuer_4/loss=0.392, rew=1.49]
+Epoch #135:  85%|########5 | 3200/3750 [00:05<00:00, 691.44it/s, env_step=646400, gradient_step=4444, len=750, n/ep=7, n/st=1600, pursuer_0/loss=0.345, pursuer_1/loss=0.350, pursuer_2/loss=0.354, pursuer_3/loss=0.369, pursuer_4/loss=0.396, rew=1.08]
+Epoch #135: 4800it [00:07, 623.85it/s, env_step=648000, gradient_step=4455, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.340, pursuer_1/loss=0.361, pursuer_2/loss=0.350, pursuer_3/loss=0.371, pursuer_4/loss=0.393, rew=1.08]
+Epoch #136:   0%|          | 0/3750 [00:00<?, ?it/s]00, gradient_step=4455, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.340, pursuer_1/loss=0.361, pursuer_2/loss=0.350, pursuer_3/loss=0.371, pursuer_4/loss=0.393, rew=1.08]
+Epoch #136:   0%|          | 0/3750 [00:00<?, ?it/s]00, gradient_step=4455, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.340, pursuer_1/loss=0.361, pursuer_2/loss=0.350, pursuer_3/loss=0.371, pursuer_4/loss=0.393, rew=1.08]
+Epoch #136:  43%|####2     | 1600/3750 [00:02<00:02, 828.81it/s, env_step=649600, gradient_step=4466, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.344, pursuer_1/loss=0.362, pursuer_2/loss=0.344, pursuer_3/loss=0.373, pursuer_4/loss=0.402, rew=1.08]
+Epoch #136:  85%|########5 | 3200/3750 [00:04<00:00, 680.97it/s, env_step=649600, gradient_step=4466, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.344, pursuer_1/loss=0.362, pursuer_2/loss=0.344, pursuer_3/loss=0.373, pursuer_4/loss=0.402, rew=1.08]
+Epoch #136: 4800it [00:07, 650.05it/s, env_step=651200, gradient_step=4477, len=750, n/ep=2, n/st=1600, pursuer_0/loss=0.346, pursuer_1/loss=0.365, pursuer_2/loss=0.353, pursuer_3/loss=0.367, pursuer_4/loss=0.389, rew=0.43]
+Epoch #136: 4800it [00:07, 603.45it/s, env_step=652800, gradient_step=4488, len=750, n/ep=8, n/st=1600, pursuer_0/loss=0.345, pursuer_1/loss=0.359, pursuer_2/loss=0.358, pursuer_3/loss=0.374, pursuer_4/loss=0.390, rew=-1.06]
+Epoch #137:  43%|####2     | 1600/3750 [00:01<00:02, 917.02it/s]_step=4488, len=750, n/ep=8, n/st=1600, pursuer_0/loss=0.345, pursuer_1/loss=0.359, pursuer_2/loss=0.358, pursuer_3/loss=0.374, pursuer_4/loss=0.390, rew=-1.06]
+Epoch #137:  43%|####2     | 1600/3750 [00:01<00:02, 917.02it/s]_step=4488, len=750, n/ep=8, n/st=1600, pursuer_0/loss=0.345, pursuer_1/loss=0.359, pursuer_2/loss=0.358, pursuer_3/loss=0.374, pursuer_4/loss=0.390, rew=-1.06]
+Epoch #137:  43%|####2     | 1600/3750 [00:02<00:02, 917.02it/s, env_step=654400, gradient_step=4499, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.347, pursuer_1/loss=0.345, pursuer_2/loss=0.358, pursuer_3/loss=0.375, pursuer_4/loss=0.385, rew=-1.06]
+Epoch #137:  85%|########5 | 3200/3750 [00:04<00:00, 751.44it/s, env_step=656000, gradient_step=4510, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.357, pursuer_1/loss=0.341, pursuer_2/loss=0.357, pursuer_3/loss=0.383, pursuer_4/loss=0.401, rew=-1.06]
+Epoch #137: 4800it [00:07, 648.04it/s, env_step=657600, gradient_step=4521, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.347, pursuer_1/loss=0.343, pursuer_2/loss=0.352, pursuer_3/loss=0.382, pursuer_4/loss=0.408, rew=-1.06]
+Epoch #138:  43%|####2     | 1600/3750 [00:01<00:02, 862.65it/s]_step=4521, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.347, pursuer_1/loss=0.343, pursuer_2/loss=0.352, pursuer_3/loss=0.382, pursuer_4/loss=0.408, rew=-1.06]
+Epoch #138:  43%|####2     | 1600/3750 [00:01<00:02, 862.65it/s]_step=4521, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.347, pursuer_1/loss=0.343, pursuer_2/loss=0.352, pursuer_3/loss=0.382, pursuer_4/loss=0.408, rew=-1.06]
+Epoch #138:  43%|####2     | 1600/3750 [00:02<00:02, 862.65it/s, env_step=659200, gradient_step=4532, len=750, n/ep=2, n/st=1600, pursuer_0/loss=0.348, pursuer_1/loss=0.347, pursuer_2/loss=0.354, pursuer_3/loss=0.388, pursuer_4/loss=0.418, rew=4.42]
+Epoch #138:  85%|########5 | 3200/3750 [00:05<00:00, 667.58it/s, env_step=660800, gradient_step=4543, len=750, n/ep=8, n/st=1600, pursuer_0/loss=0.342, pursuer_1/loss=0.347, pursuer_2/loss=0.365, pursuer_3/loss=0.390, pursuer_4/loss=0.430, rew=0.60]
+Epoch #138: 4800it [00:07, 637.54it/s, env_step=660800, gradient_step=4543, len=750, n/ep=8, n/st=1600, pursuer_0/loss=0.342, pursuer_1/loss=0.347, pursuer_2/loss=0.365, pursuer_3/loss=0.390, pursuer_4/loss=0.430, rew=0.60]
+Epoch #138: 4800it [00:08, 596.91it/s, env_step=662400, gradient_step=4554, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.360, pursuer_1/loss=0.338, pursuer_2/loss=0.373, pursuer_3/loss=0.397, pursuer_4/loss=0.425, rew=0.60]
+Epoch #139:   0%|          | 0/3750 [00:00<?, ?it/s]00, gradient_step=4554, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.360, pursuer_1/loss=0.338, pursuer_2/loss=0.373, pursuer_3/loss=0.397, pursuer_4/loss=0.425, rew=0.60]
+Epoch #139:   0%|          | 0/3750 [00:00<?, ?it/s]00, gradient_step=4554, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.360, pursuer_1/loss=0.338, pursuer_2/loss=0.373, pursuer_3/loss=0.397, pursuer_4/loss=0.425, rew=0.60]
+Epoch #139:  43%|####2     | 1600/3750 [00:02<00:02, 775.13it/s, env_step=664000, gradient_step=4565, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.363, pursuer_1/loss=0.344, pursuer_2/loss=0.373, pursuer_3/loss=0.396, pursuer_4/loss=0.428, rew=0.60]
+Epoch #139:  85%|########5 | 3200/3750 [00:04<00:00, 699.43it/s, env_step=664000, gradient_step=4565, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.363, pursuer_1/loss=0.344, pursuer_2/loss=0.373, pursuer_3/loss=0.396, pursuer_4/loss=0.428, rew=0.60]
+Epoch #139:  85%|########5 | 3200/3750 [00:05<00:00, 699.43it/s, env_step=665600, gradient_step=4576, len=750, n/ep=2, n/st=1600, pursuer_0/loss=0.358, pursuer_1/loss=0.344, pursuer_2/loss=0.372, pursuer_3/loss=0.401, pursuer_4/loss=0.435, rew=-0.09]
+Epoch #139: 4800it [00:07, 611.71it/s, env_step=667200, gradient_step=4587, len=750, n/ep=1, n/st=1600, pursuer_0/loss=0.356, pursuer_1/loss=0.349, pursuer_2/loss=0.375, pursuer_3/loss=0.389, pursuer_4/loss=0.439, rew=1.67]
+Epoch #140:   0%|          | 0/3750 [00:00<?, ?it/s]00, gradient_step=4587, len=750, n/ep=1, n/st=1600, pursuer_0/loss=0.356, pursuer_1/loss=0.349, pursuer_2/loss=0.375, pursuer_3/loss=0.389, pursuer_4/loss=0.439, rew=1.67]
+Epoch #140:  43%|####2     | 1600/3750 [00:02<00:02, 791.74it/s]_step=4587, len=750, n/ep=1, n/st=1600, pursuer_0/loss=0.356, pursuer_1/loss=0.349, pursuer_2/loss=0.375, pursuer_3/loss=0.389, pursuer_4/loss=0.439, rew=1.67]
+Epoch #140:  43%|####2     | 1600/3750 [00:02<00:02, 791.74it/s]_step=4587, len=750, n/ep=1, n/st=1600, pursuer_0/loss=0.356, pursuer_1/loss=0.349, pursuer_2/loss=0.375, pursuer_3/loss=0.389, pursuer_4/loss=0.439, rew=1.67]
+Epoch #140:  43%|####2     | 1600/3750 [00:02<00:02, 791.74it/s, env_step=668800, gradient_step=4598, len=750, n/ep=7, n/st=1600, pursuer_0/loss=0.354, pursuer_1/loss=0.362, pursuer_2/loss=0.377, pursuer_3/loss=0.394, pursuer_4/loss=0.441, rew=-0.66]
+Epoch #140:  85%|########5 | 3200/3750 [00:05<00:00, 673.50it/s, env_step=670400, gradient_step=4609, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.355, pursuer_1/loss=0.360, pursuer_2/loss=0.383, pursuer_3/loss=0.408, pursuer_4/loss=0.444, rew=-0.66]
+Epoch #140: 4800it [00:07, 614.32it/s, env_step=672000, gradient_step=4620, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.361, pursuer_1/loss=0.366, pursuer_2/loss=0.380, pursuer_3/loss=0.417, pursuer_4/loss=0.428, rew=-0.66]
+Epoch #141:   0%|          | 0/3750 [00:00<?, ?it/s]00, gradient_step=4620, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.361, pursuer_1/loss=0.366, pursuer_2/loss=0.380, pursuer_3/loss=0.417, pursuer_4/loss=0.428, rew=-0.66]
+Epoch #141:   0%|          | 0/3750 [00:00<?, ?it/s]00, gradient_step=4620, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.361, pursuer_1/loss=0.366, pursuer_2/loss=0.380, pursuer_3/loss=0.417, pursuer_4/loss=0.428, rew=-0.66]
+Epoch #141:  43%|####2     | 1600/3750 [00:02<00:02, 772.82it/s, env_step=673600, gradient_step=4631, len=681, n/ep=3, n/st=1600, pursuer_0/loss=0.372, pursuer_1/loss=0.373, pursuer_2/loss=0.385, pursuer_3/loss=0.420, pursuer_4/loss=0.424, rew=1.79]
+Epoch #141:  85%|########5 | 3200/3750 [00:05<00:00, 707.44it/s, env_step=675200, gradient_step=4642, len=750, n/ep=7, n/st=1600, pursuer_0/loss=0.376, pursuer_1/loss=0.369, pursuer_2/loss=0.382, pursuer_3/loss=0.423, pursuer_4/loss=0.425, rew=-1.32]
+Epoch #141: 4800it [00:07, 657.96it/s, env_step=675200, gradient_step=4642, len=750, n/ep=7, n/st=1600, pursuer_0/loss=0.376, pursuer_1/loss=0.369, pursuer_2/loss=0.382, pursuer_3/loss=0.423, pursuer_4/loss=0.425, rew=-1.32]
+Epoch #141: 4800it [00:07, 607.05it/s, env_step=676800, gradient_step=4653, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.363, pursuer_1/loss=0.375, pursuer_2/loss=0.383, pursuer_3/loss=0.421, pursuer_4/loss=0.434, rew=-1.32]
+Epoch #141: 4800it [00:07, 607.05it/s, env_step=676800, gradient_step=4653, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.363, pursuer_1/loss=0.375, pursuer_2/loss=0.383, pursuer_3/loss=0.421, pursuer_4/loss=0.434, rew=-1.32]
+Epoch #142:   0%|          | 0/3750 [00:00<?, ?it/s]00, gradient_step=4653, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.363, pursuer_1/loss=0.375, pursuer_2/loss=0.383, pursuer_3/loss=0.421, pursuer_4/loss=0.434, rew=-1.32]
+Epoch #142:  43%|####2     | 1600/3750 [00:02<00:02, 885.30it/s, env_step=678400, gradient_step=4664, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.359, pursuer_1/loss=0.373, pursuer_2/loss=0.389, pursuer_3/loss=0.412, pursuer_4/loss=0.427, rew=-1.32]
+Epoch #142:  85%|########5 | 3200/3750 [00:05<00:00, 716.52it/s, env_step=680000, gradient_step=4675, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.368, pursuer_1/loss=0.371, pursuer_2/loss=0.384, pursuer_3/loss=0.421, pursuer_4/loss=0.437, rew=-1.32]
+Epoch #142: 4800it [00:07, 651.43it/s, env_step=681600, gradient_step=4686, len=733, n/ep=4, n/st=1600, pursuer_0/loss=0.368, pursuer_1/loss=0.360, pursuer_2/loss=0.386, pursuer_3/loss=0.429, pursuer_4/loss=0.437, rew=2.60]

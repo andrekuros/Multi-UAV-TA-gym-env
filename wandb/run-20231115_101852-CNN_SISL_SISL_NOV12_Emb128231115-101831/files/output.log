@@ -1,0 +1,32 @@
+
+Best Saved
+
+
+
+
+Epoch #1: 4800it [00:08, 536.68it/s, env_step=4800, gradient_step=33, len=0, n/ep=0, n/st=1600, pursuer_0/loss=0.144, pursuer_1/loss=0.148, pursuer_2/loss=0.176, pursuer_3/loss=0.214, pursuer_4/loss=0.168, rew=0.00]
+Best Saved
+Epoch #1: test_reward: -12.056560 ± 4.007173, best_reward: -12.056560 ± 4.007173 in #1
+
+
+
+Epoch #2: 4800it [00:07, 641.25it/s, env_step=9600, gradient_step=66, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.151, pursuer_1/loss=0.140, pursuer_2/loss=0.158, pursuer_3/loss=0.203, pursuer_4/loss=0.200, rew=-11.08]
+Best Saved
+Epoch #2: test_reward: -9.921820 ± 4.533283, best_reward: -9.921820 ± 4.533283 in #2
+
+
+
+
+Epoch #3: 4800it [00:07, 647.25it/s, env_step=14400, gradient_step=99, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.147, pursuer_1/loss=0.140, pursuer_2/loss=0.141, pursuer_3/loss=0.192, pursuer_4/loss=0.189, rew=-11.08]
+Best Saved
+Epoch #3: test_reward: -9.623600 ± 3.462771, best_reward: -9.623600 ± 3.462771 in #3
+
+
+
+
+Epoch #4: 4800it [00:08, 586.49it/s, env_step=19200, gradient_step=132, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.140, pursuer_1/loss=0.126, pursuer_2/loss=0.126, pursuer_3/loss=0.167, pursuer_4/loss=0.170, rew=-10.85]
+Epoch #4: test_reward: -13.208880 ± 2.804602, best_reward: -9.623600 ± 3.462771 in #3
+
+
+
+

@@ -1,0 +1,146 @@
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+Epoch #1:  43%|####2     | 640/1500 [00:01<00:01, 447.80it/s]
+0
+Best Saved
+0
+
+Epoch #1:  85%|########5 | 1280/1500 [00:05<00:00, 237.18it/s, agent0/loss=1599.147, env_step=1280, gradient_step=8, len=61, n/ep=10, n/st=640, rew=0.00]
+0
+
+Epoch #1: 1920it [00:06, 286.78it/s, agent0/loss=1501.711, env_step=1920, gradient_step=12, len=51, n/ep=14, n/st=640, rew=0.00]
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+Epoch #2:  43%|####2     | 640/1500 [00:01<00:01, 443.63it/s, agent0/loss=1545.782, env_step=2560, gradient_step=16, len=40, n/ep=15, n/st=640, rew=0.00]
+Epoch #1: test_reward: 0.000000 ± 0.000000, best_reward: 0.000000 ± 0.000000 in #0
+
+Epoch #2:  85%|########5 | 1280/1500 [00:03<00:00, 388.31it/s, agent0/loss=1596.262, env_step=3200, gradient_step=20, len=50, n/ep=13, n/st=640, rew=0.00]
+2
+
+Epoch #2: 1920it [00:04, 391.59it/s, agent0/loss=1613.671, env_step=3840, gradient_step=24, len=46, n/ep=14, n/st=640, rew=0.00]
+1
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+Epoch #3: 1920it [00:04, 392.22it/s, agent0/loss=1707.261, env_step=5760, gradient_step=36, len=79, n/ep=9, n/st=640, rew=0.00]
+Epoch #4: 1920it [00:04, 411.72it/s, agent0/loss=1690.282, env_step=7680, gradient_step=48, len=60, n/ep=11, n/st=640, rew=0.00]
+Epoch #5:  43%|####2     | 640/1500 [00:02<00:02, 288.75it/s, agent0/loss=1712.061, env_step=8320, gradient_step=52, len=50, n/ep=12, n/st=640, rew=0.00]
+0
+0
+Epoch #2: test_reward: 0.000000 ± 0.000000, best_reward: 0.000000 ± 0.000000 in #0
+0
+9
+0
+1
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+Epoch #3: test_reward: 0.000000 ± 0.000000, best_reward: 0.000000 ± 0.000000 in #0
+0
+5
+0
+1
+2
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+
+Epoch #5:  85%|########5 | 1280/1500 [00:04<00:00, 293.90it/s, agent0/loss=1716.167, env_step=8960, gradient_step=56, len=71, n/ep=9, n/st=640, rew=0.00]
+0
+
+Epoch #5: 1920it [00:06, 298.15it/s, agent0/loss=1716.167, env_step=8960, gradient_step=56, len=71, n/ep=9, n/st=640, rew=0.00]
+0
+
+Epoch #5: 1920it [00:06, 291.66it/s, agent0/loss=1716.074, env_step=9600, gradient_step=60, len=41, n/ep=16, n/st=640, rew=0.00]
+0
+0
+0
+0
+0

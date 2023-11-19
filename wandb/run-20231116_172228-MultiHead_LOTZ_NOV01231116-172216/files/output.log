@@ -1,0 +1,443 @@
+
+Epoch #1:   2%|2         | 600/24000 [00:01<00:22, 1049.75it/s, agent0/loss=1.047, env_step=600, gradient_step=10, len=24, n/ep=20, n/st=600, rew=0.55]
+
+
+
+
+
+
+
+
+
+
+
+
+
+Epoch #1:  98%|#########7| 23400/24000 [00:28<00:00, 829.81it/s, agent0/loss=2.108, env_step=23400, gradient_step=390, len=24, n/ep=20, n/st=600, rew=1.65]
+Epoch #1: 24001it [00:29, 827.59it/s, agent0/loss=2.076, env_step=24000, gradient_step=400, len=24, n/ep=30, n/st=600, rew=0.13]
+
+
+
+
+
+
+
+
+
+
+
+
+Epoch #2:  98%|#########7| 23400/24000 [00:25<00:00, 925.65it/s, agent0/loss=2.945, env_step=47400, gradient_step=790, len=24, n/ep=21, n/st=600, rew=1.14]
+Epoch #2: 24001it [00:25, 930.67it/s, agent0/loss=3.007, env_step=48000, gradient_step=800, len=24, n/ep=29, n/st=600, rew=0.66]
+
+
+
+
+
+
+
+
+
+
+
+
+
+Epoch #3:  95%|#########5| 22800/24000 [00:27<00:01, 853.81it/s, agent0/loss=2.925, env_step=70200, gradient_step=1170, len=24, n/ep=21, n/st=600, rew=1.52]
+Epoch #3: 24001it [00:28, 828.36it/s, agent0/loss=2.944, env_step=72000, gradient_step=1200, len=24, n/ep=29, n/st=600, rew=1.45]
+
+
+
+
+
+
+
+
+
+
+
+
+
+Epoch #4:  95%|#########5| 22800/24000 [00:26<00:01, 898.96it/s, agent0/loss=3.603, env_step=94800, gradient_step=1580, len=24, n/ep=29, n/st=600, rew=1.66]
+Best Saved
+Epoch #4: 24001it [00:27, 863.78it/s, agent0/loss=3.447, env_step=96000, gradient_step=1600, len=24, n/ep=29, n/st=600, rew=1.03]
+
+
+
+
+
+
+
+
+
+
+
+
+
+Epoch #5: 24001it [00:28, 845.86it/s, agent0/loss=3.822, env_step=120000, gradient_step=2000, len=24, n/ep=29, n/st=600, rew=2.69]
+Epoch #6:   0%|          | 0/24000 [00:00<?, ?it/s]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Epoch #6: 24001it [00:28, 847.47it/s, agent0/loss=3.622, env_step=144000, gradient_step=2400, len=24, n/ep=28, n/st=600, rew=2.14]
+Epoch #6: test_reward: 1.000000 ± 0.000000, best_reward: 1.000000 ± 0.000000 in #4
+
+
+
+
+
+
+
+
+
+
+
+
+Epoch #7: 24001it [00:27, 869.62it/s, agent0/loss=3.797, env_step=168000, gradient_step=2800, len=24, n/ep=29, n/st=600, rew=1.48]
+Epoch #8:   0%|          | 0/24000 [00:00<?, ?it/s]
+
+
+
+
+
+
+
+
+
+
+
+
+
+Epoch #8: 24001it [00:28, 855.58it/s, agent0/loss=3.614, env_step=192000, gradient_step=3200, len=24, n/ep=29, n/st=600, rew=2.62]
+Epoch #9:   0%|          | 0/24000 [00:00<?, ?it/s]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Epoch #9:  98%|#########7| 23400/24000 [00:27<00:00, 859.14it/s, agent0/loss=4.130, env_step=215400, gradient_step=3590, len=24, n/ep=22, n/st=600, rew=3.95]
+Epoch #9: 24001it [00:28, 854.74it/s, agent0/loss=4.132, env_step=216000, gradient_step=3600, len=24, n/ep=28, n/st=600, rew=3.50]
+
+
+
+
+
+
+
+
+
+
+
+
+
+Epoch #10: 24001it [00:29, 814.37it/s, agent0/loss=3.826, env_step=240000, gradient_step=4000, len=24, n/ep=28, n/st=600, rew=1.50]
+Epoch #11:   0%|          | 0/24000 [00:00<?, ?it/s]
+Best Saved
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Epoch #11: 24001it [00:28, 852.04it/s, agent0/loss=4.075, env_step=264000, gradient_step=4400, len=23, n/ep=27, n/st=600, rew=4.41]
+Best Saved
+Epoch #11: test_reward: 3.000000 ± 0.000000, best_reward: 3.000000 ± 0.000000 in #11
+
+
+
+
+
+
+
+
+
+
+
+
+
+Epoch #12: 100%|##########| 24000/24000 [00:27<00:00, 857.67it/s, agent0/loss=4.337, env_step=287400, gradient_step=4790, len=24, n/ep=24, n/st=600, rew=2.96]
+Epoch #12: 24001it [00:28, 854.69it/s, agent0/loss=4.218, env_step=288000, gradient_step=4800, len=24, n/ep=26, n/st=600, rew=2.35]
+
+
+
+
+
+
+
+
+
+
+
+
+
+Epoch #13:  98%|#########7| 23400/24000 [00:27<00:00, 802.88it/s, agent0/loss=5.283, env_step=311400, gradient_step=5190, len=24, n/ep=25, n/st=600, rew=3.48]
+Epoch #13: 24001it [00:28, 842.18it/s, agent0/loss=5.255, env_step=312000, gradient_step=5200, len=24, n/ep=25, n/st=600, rew=2.48]
+
+
+
+
+
+
+
+
+
+
+
+
+
+Epoch #14:  95%|#########5| 22800/24000 [00:27<00:01, 868.12it/s, agent0/loss=4.790, env_step=334800, gradient_step=5580, len=24, n/ep=25, n/st=600, rew=2.92]
+Epoch #14: 24001it [00:28, 843.35it/s, agent0/loss=4.908, env_step=336000, gradient_step=5600, len=23, n/ep=25, n/st=600, rew=6.40]
+
+
+
+
+
+
+
+
+
+
+
+
+
+Epoch #15: 24001it [00:28, 841.25it/s, agent0/loss=5.641, env_step=360000, gradient_step=6000, len=24, n/ep=24, n/st=600, rew=3.29]
+Epoch #16:   0%|          | 0/24000 [00:00<?, ?it/s]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Epoch #16:  98%|#########7| 23400/24000 [00:28<00:00, 822.90it/s, agent0/loss=6.018, env_step=383400, gradient_step=6390, len=24, n/ep=25, n/st=600, rew=4.20]
+Epoch #16: 24001it [00:28, 828.64it/s, agent0/loss=6.060, env_step=384000, gradient_step=6400, len=24, n/ep=25, n/st=600, rew=1.92]
+
+
+
+
+
+
+
+
+
+
+
+
+
+Epoch #17:  95%|#########5| 22800/24000 [00:26<00:01, 840.19it/s, agent0/loss=5.855, env_step=406800, gradient_step=6780, len=24, n/ep=27, n/st=600, rew=4.22]
+Epoch #17: 24001it [00:28, 845.94it/s, agent0/loss=5.680, env_step=408000, gradient_step=6800, len=24, n/ep=27, n/st=600, rew=2.26]
+
+
+
+
+
+
+
+
+
+
+
+
+
+Epoch #18:  95%|#########5| 22800/24000 [00:27<00:01, 847.94it/s, agent0/loss=6.604, env_step=430800, gradient_step=7180, len=24, n/ep=26, n/st=600, rew=2.92]
+Epoch #18: 24001it [00:28, 848.72it/s, agent0/loss=6.422, env_step=432000, gradient_step=7200, len=24, n/ep=26, n/st=600, rew=3.08]
+
+
+
+
+
+
+
+
+
+
+
+
+
+Epoch #19:  95%|#########5| 22800/24000 [00:25<00:01, 904.19it/s, agent0/loss=6.513, env_step=454800, gradient_step=7580, len=23, n/ep=25, n/st=600, rew=5.24]
+Best Saved
+Epoch #19: 24001it [00:27, 875.78it/s, agent0/loss=6.500, env_step=456000, gradient_step=7600, len=24, n/ep=25, n/st=600, rew=3.76]
+
+
+
+
+
+
+
+
+
+
+
+
+
+Epoch #20:  98%|#########7| 23400/24000 [00:26<00:00, 904.75it/s, agent0/loss=7.582, env_step=478800, gradient_step=7980, len=23, n/ep=25, n/st=600, rew=6.48]
+Epoch #20: 24001it [00:27, 870.72it/s, agent0/loss=7.684, env_step=480000, gradient_step=8000, len=24, n/ep=24, n/st=600, rew=3.58]
+
+
+
+
+
+
+
+
+
+
+
+
+
+Epoch #21:  95%|#########5| 22800/24000 [00:26<00:01, 830.67it/s, agent0/loss=8.057, env_step=502800, gradient_step=8380, len=24, n/ep=25, n/st=600, rew=4.04]
+Epoch #21: 24001it [00:28, 854.12it/s, agent0/loss=7.888, env_step=504000, gradient_step=8400, len=24, n/ep=25, n/st=600, rew=3.76]
+
+
+
+
+
+
+
+
+
+
+
+
+
+Epoch #22:  98%|#########7| 23400/24000 [00:27<00:00, 870.75it/s, agent0/loss=7.479, env_step=527400, gradient_step=8790, len=24, n/ep=27, n/st=600, rew=1.96]
+Epoch #22: 24001it [00:27, 867.78it/s, agent0/loss=7.444, env_step=528000, gradient_step=8800, len=24, n/ep=23, n/st=600, rew=1.70]
+
+
+
+
+
+
+
+
+
+
+
+
+
+Epoch #23:  98%|#########7| 23400/24000 [00:27<00:00, 819.24it/s, agent0/loss=7.433, env_step=551400, gradient_step=9190, len=24, n/ep=26, n/st=600, rew=2.27]
+Epoch #23: 24001it [00:27, 860.12it/s, agent0/loss=7.734, env_step=552000, gradient_step=9200, len=24, n/ep=24, n/st=600, rew=2.58]
+
+
+
+
+
+
+
+
+
+
+
+
+
+Epoch #24:  98%|#########7| 23400/24000 [00:27<00:00, 891.15it/s, agent0/loss=8.432, env_step=575400, gradient_step=9590, len=24, n/ep=27, n/st=600, rew=3.30]
+Epoch #24: 24001it [00:27, 859.54it/s, agent0/loss=8.330, env_step=576000, gradient_step=9600, len=23, n/ep=24, n/st=600, rew=6.62]
+
+
+
+
+
+
+
+
+
+
+
+
+
+Epoch #25: 100%|##########| 24000/24000 [00:27<00:00, 906.50it/s, agent0/loss=5.013, env_step=599400, gradient_step=9990, len=24, n/ep=27, n/st=600, rew=3.07]
+Epoch #25: 24001it [00:27, 865.14it/s, agent0/loss=5.001, env_step=600000, gradient_step=10000, len=24, n/ep=23, n/st=600, rew=2.87]
+
+
+
+
+
+
+
+
+
+
+
+
+
+Epoch #26:  98%|#########7| 23400/24000 [00:27<00:00, 840.58it/s, agent0/loss=4.968, env_step=623400, gradient_step=10390, len=24, n/ep=25, n/st=600, rew=2.96]
+Epoch #26: 24001it [00:28, 846.11it/s, agent0/loss=4.873, env_step=624000, gradient_step=10400, len=24, n/ep=25, n/st=600, rew=5.12]
+
+
+
+
+
+
+
+
+
+
+
+
+
+Epoch #27:  98%|#########7| 23400/24000 [00:27<00:00, 846.49it/s, agent0/loss=4.727, env_step=647400, gradient_step=10790, len=24, n/ep=25, n/st=600, rew=4.52]
+Epoch #27: 24001it [00:28, 856.12it/s, agent0/loss=4.612, env_step=648000, gradient_step=10800, len=24, n/ep=25, n/st=600, rew=3.48]
+
+
+
+
+
+
+
+
+
+
+
+
+
+Epoch #28:  98%|#########7| 23400/24000 [00:26<00:00, 842.64it/s, agent0/loss=4.863, env_step=671400, gradient_step=11190, len=24, n/ep=24, n/st=600, rew=3.79]
+Epoch #28: 24001it [00:27, 868.56it/s, agent0/loss=4.834, env_step=672000, gradient_step=11200, len=24, n/ep=26, n/st=600, rew=2.73]
+
+
+
+
+
+
+
+
+
+
+
+
+
+Epoch #29:  98%|#########7| 23400/24000 [00:27<00:00, 845.82it/s, agent0/loss=4.398, env_step=695400, gradient_step=11590, len=24, n/ep=24, n/st=600, rew=4.92]
+Epoch #29: 24001it [00:27, 860.49it/s, agent0/loss=4.518, env_step=696000, gradient_step=11600, len=24, n/ep=26, n/st=600, rew=2.19]

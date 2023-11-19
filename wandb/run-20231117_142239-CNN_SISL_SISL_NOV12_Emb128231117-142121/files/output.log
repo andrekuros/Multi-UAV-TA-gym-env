@@ -1,0 +1,17 @@
+
+Best Saved
+
+
+
+
+
+
+Epoch #1: 7680it [00:20, 373.90it/s, env_step=7680, len=0, n/ep=0, n/st=2560, pursuer_0/loss=0.011, pursuer_1/loss=0.004, pursuer_2/loss=0.004, pursuer_3/loss=0.003, pursuer_4/loss=0.004, pursuer_5/loss=0.004, pursuer_6/loss=0.020, pursuer_7/loss=0.010, rew=0.00]
+Best Saved
+Epoch #1: test_reward: -47.201250 ± 0.862957, best_reward: -47.201250 ± 0.862957 in #1
+
+
+
+
+
+

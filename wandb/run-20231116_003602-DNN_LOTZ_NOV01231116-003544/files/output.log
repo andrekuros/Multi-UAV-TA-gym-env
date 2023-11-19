@@ -1,0 +1,45 @@
+
+Best Saved
+
+
+
+
+Epoch #1: 1920it [00:08, 238.77it/s, agent0/loss=1228.719, env_step=1920, gradient_step=12, len=51, n/ep=14, n/st=640, rew=0.00]
+Epoch #1: test_reward: 0.000000 ± 0.000000, best_reward: 0.000000 ± 0.000000 in #0
+
+
+Epoch #2: 1920it [00:06, 304.27it/s, agent0/loss=1284.802, env_step=3840, gradient_step=24, len=46, n/ep=14, n/st=640, rew=0.00]
+Epoch #2: test_reward: 0.000000 ± 0.000000, best_reward: 0.000000 ± 0.000000 in #0
+
+
+
+Epoch #3: 1920it [00:05, 354.50it/s, agent0/loss=1343.459, env_step=5760, gradient_step=36, len=79, n/ep=9, n/st=640, rew=0.00]
+Epoch #3: test_reward: 0.000000 ± 0.000000, best_reward: 0.000000 ± 0.000000 in #0
+
+
+
+
+Epoch #4: 1920it [00:06, 291.61it/s, agent0/loss=1314.957, env_step=7680, gradient_step=48, len=60, n/ep=11, n/st=640, rew=0.00]
+Epoch #4: test_reward: 0.000000 ± 0.000000, best_reward: 0.000000 ± 0.000000 in #0
+
+
+
+Epoch #5: 1920it [00:05, 365.92it/s, agent0/loss=1317.264, env_step=9600, gradient_step=60, len=82, n/ep=8, n/st=640, rew=0.00]
+Epoch #5: test_reward: 0.000000 ± 0.000000, best_reward: 0.000000 ± 0.000000 in #0
+
+
+
+Epoch #6: 1920it [00:05, 361.31it/s, agent0/loss=1336.411, env_step=11520, gradient_step=72, len=65, n/ep=10, n/st=640, rew=0.00]
+Epoch #6: test_reward: 0.000000 ± 0.000000, best_reward: 0.000000 ± 0.000000 in #0
+
+
+
+Epoch #7: 1920it [00:05, 355.76it/s, agent0/loss=1303.538, env_step=13440, gradient_step=84, len=32, n/ep=17, n/st=640, rew=0.00]
+Epoch #7: test_reward: 0.000000 ± 0.000000, best_reward: 0.000000 ± 0.000000 in #0
+
+
+
+Epoch #8: 1920it [00:05, 357.44it/s, agent0/loss=1275.080, env_step=15360, gradient_step=96, len=80, n/ep=8, n/st=640, rew=0.00]
+Epoch #8: test_reward: 0.000000 ± 0.000000, best_reward: 0.000000 ± 0.000000 in #0
+
+

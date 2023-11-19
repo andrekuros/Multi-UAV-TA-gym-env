@@ -1,0 +1,4 @@
+
+Starting Simulations
+16.508184000000007
+{"action": "NoneType", "agent": "str", "env": "OrderEnforcingWrapper", "get_direction_to_closest_enemy": "function", "get_ipython": "function", "i": "int", "idx_agent": "int", "info": "dict", "max_cycles": "int", "n_agents": "int", "n_targes": "int", "np": "module", "obs_range": "int", "observation": "ndarray", "os": "module", "pursuit_v4": "module", "random": "module", "reward": "float64", "rewards": "list", "seed": "int", "size": "list", "temp_rews": "list", "termination": "bool", "time": "module", "total_rews": "float64", "truncation": "bool", "wandb": "module"}

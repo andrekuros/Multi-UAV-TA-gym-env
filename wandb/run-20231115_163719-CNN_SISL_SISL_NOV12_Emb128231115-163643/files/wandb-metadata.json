@@ -1,0 +1,44 @@
+{
+    "os": "Windows-10-10.0.22621-SP0",
+    "python": "3.11.6",
+    "heartbeatAt": "2023-11-15T21:37:22.759573",
+    "startedAt": "2023-11-15T21:37:19.927496",
+    "docker": null,
+    "cuda": null,
+    "args": [],
+    "state": "running",
+    "program": "Tianshow_Centralized_Training",
+    "codePathLocal": null,
+    "git": {
+        "remote": "https://github.com/andrekuros/Multi-UAV-TA-gym-env.git",
+        "commit": null
+    },
+    "email": "andrekuros@gmail.com",
+    "root": "s:\\GITHUB\\SiSL Eval\\Multi-UAV-TA-gym-env",
+    "host": "Note_5406",
+    "username": "andre",
+    "executable": "s:\\Python311\\python.exe",
+    "cpu_count": 4,
+    "cpu_count_logical": 8,
+    "cpu_freq": {
+        "current": 1690.0,
+        "min": 0.0,
+        "max": 1690.0
+    },
+    "cpu_freq_per_core": [
+        {
+            "current": 1690.0,
+            "min": 0.0,
+            "max": 1690.0
+        }
+    ],
+    "disk": {
+        "/": {
+            "total": 206.47167587280273,
+            "used": 33.12151336669922
+        }
+    },
+    "memory": {
+        "total": 19.733192443847656
+    }
+}

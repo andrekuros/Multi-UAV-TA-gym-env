@@ -1,0 +1,115 @@
+d:\Python311\Lib\site-packages\torch\nn\init.py:412: UserWarning: Initializing zero-element tensors is a no-op
+  warnings.warn("Initializing zero-element tensors is a no-op")
+Buffer Warming Up
+.
+Buffer Lenght:  10.0
+Epoch #1:   0%|          | 0/3750 [00:00<?, ?it/s]
+
+
+
+
+Epoch #1: 4800it [00:08, 571.96it/s, env_step=4800, gradient_step=33, len=0, n/ep=0, n/st=1600, pursuer_0/loss=0.144, pursuer_1/loss=0.148, pursuer_2/loss=0.176, pursuer_3/loss=0.214, pursuer_4/loss=0.168, rew=0.00]
+Epoch #2:   0%|          | 0/3750 [00:00<?, ?it/s]
+Best Saved
+
+
+
+
+Epoch #2: 4800it [00:07, 642.99it/s, env_step=9600, gradient_step=66, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.151, pursuer_1/loss=0.140, pursuer_2/loss=0.158, pursuer_3/loss=0.203, pursuer_4/loss=0.200, rew=-11.08]
+Epoch #3:   0%|          | 0/3750 [00:00<?, ?it/s]
+Best Saved
+
+
+
+
+Epoch #3: 4800it [00:07, 681.95it/s, env_step=14400, gradient_step=99, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.147, pursuer_1/loss=0.140, pursuer_2/loss=0.141, pursuer_3/loss=0.192, pursuer_4/loss=0.189, rew=-11.08]
+Epoch #4:   0%|          | 0/3750 [00:00<?, ?it/s]
+
+
+
+Epoch #4: 4800it [00:06, 687.18it/s, env_step=19200, gradient_step=132, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.140, pursuer_1/loss=0.126, pursuer_2/loss=0.126, pursuer_3/loss=0.167, pursuer_4/loss=0.170, rew=-10.85]
+Epoch #5:  43%|####2     | 1600/3750 [00:01<00:02, 842.86it/s]
+
+
+
+Epoch #5: 4800it [00:07, 619.51it/s, env_step=24000, gradient_step=165, len=750, n/ep=10, n/st=1600, pursuer_0/loss=0.127, pursuer_1/loss=0.121, pursuer_2/loss=0.118, pursuer_3/loss=0.154, pursuer_4/loss=0.139, rew=-12.64]
+Best Saved
+Epoch #5: test_reward: -4.086700 ± 4.085945, best_reward: -4.086700 ± 4.085945 in #5
+
+
+
+
+Epoch #6: 4800it [00:07, 613.52it/s, env_step=28800, gradient_step=198, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.112, pursuer_1/loss=0.103, pursuer_2/loss=0.118, pursuer_3/loss=0.137, pursuer_4/loss=0.127, rew=-12.64]
+Epoch #6: test_reward: -6.476200 ± 4.541743, best_reward: -4.086700 ± 4.085945 in #5
+
+
+
+Epoch #7: 4800it [00:06, 685.99it/s, env_step=33600, gradient_step=231, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.106, pursuer_1/loss=0.102, pursuer_2/loss=0.119, pursuer_3/loss=0.131, pursuer_4/loss=0.126, rew=-11.99]
+Epoch #7: test_reward: -12.314980 ± 2.846809, best_reward: -4.086700 ± 4.085945 in #5
+
+
+
+Epoch #8: 4800it [00:07, 621.31it/s, env_step=38400, gradient_step=264, len=750, n/ep=10, n/st=1600, pursuer_0/loss=0.101, pursuer_1/loss=0.093, pursuer_2/loss=0.117, pursuer_3/loss=0.113, pursuer_4/loss=0.126, rew=-12.26]
+Epoch #8: test_reward: -5.230120 ± 3.445909, best_reward: -4.086700 ± 4.085945 in #5
+
+
+
+
+Epoch #9: 4800it [00:07, 651.62it/s, env_step=43200, gradient_step=297, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.097, pursuer_1/loss=0.094, pursuer_2/loss=0.121, pursuer_3/loss=0.115, pursuer_4/loss=0.124, rew=-12.26]
+Epoch #9: test_reward: -7.784200 ± 4.642429, best_reward: -4.086700 ± 4.085945 in #5
+
+
+
+
+Epoch #10: 4800it [00:07, 639.19it/s, env_step=48000, gradient_step=330, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.100, pursuer_1/loss=0.098, pursuer_2/loss=0.117, pursuer_3/loss=0.112, pursuer_4/loss=0.122, rew=-9.65]
+Epoch #10: test_reward: -5.601380 ± 6.024065, best_reward: -4.086700 ± 4.085945 in #5
+
+
+
+Epoch #11: 4800it [00:07, 670.92it/s, env_step=52800, gradient_step=363, len=750, n/ep=10, n/st=1600, pursuer_0/loss=0.110, pursuer_1/loss=0.110, pursuer_2/loss=0.114, pursuer_3/loss=0.121, pursuer_4/loss=0.133, rew=-12.16]
+Epoch #11: test_reward: -4.545840 ± 4.464543, best_reward: -4.086700 ± 4.085945 in #5
+
+
+
+
+Epoch #12: 4800it [00:07, 617.96it/s, env_step=57600, gradient_step=396, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.116, pursuer_1/loss=0.112, pursuer_2/loss=0.110, pursuer_3/loss=0.119, pursuer_4/loss=0.124, rew=-12.16]
+Epoch #12: test_reward: -8.657340 ± 1.845591, best_reward: -4.086700 ± 4.085945 in #5
+
+
+
+
+Epoch #13: 4800it [00:07, 650.49it/s, env_step=62400, gradient_step=429, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.118, pursuer_1/loss=0.120, pursuer_2/loss=0.115, pursuer_3/loss=0.117, pursuer_4/loss=0.124, rew=-10.98]
+Epoch #13: test_reward: -5.489900 ± 3.793737, best_reward: -4.086700 ± 4.085945 in #5
+
+
+
+
+Epoch #14: 4800it [00:07, 670.92it/s, env_step=67200, gradient_step=462, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.123, pursuer_1/loss=0.122, pursuer_2/loss=0.105, pursuer_3/loss=0.116, pursuer_4/loss=0.119, rew=-10.98]
+Epoch #14: test_reward: -6.055140 ± 3.686117, best_reward: -4.086700 ± 4.085945 in #5
+
+
+
+
+Epoch #15: 4800it [00:07, 645.87it/s, env_step=72000, gradient_step=495, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.119, pursuer_1/loss=0.119, pursuer_2/loss=0.108, pursuer_3/loss=0.113, pursuer_4/loss=0.115, rew=-12.17]
+Epoch #15: test_reward: -7.908480 ± 6.072996, best_reward: -4.086700 ± 4.085945 in #5
+
+
+
+Epoch #16: 4800it [00:06, 699.21it/s, env_step=76800, gradient_step=528, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.115, pursuer_1/loss=0.113, pursuer_2/loss=0.112, pursuer_3/loss=0.119, pursuer_4/loss=0.118, rew=-10.80]
+Best Saved
+Epoch #16: test_reward: -3.216740 ± 4.290175, best_reward: -3.216740 ± 4.290175 in #16
+
+
+
+
+Epoch #17: 4800it [00:07, 679.33it/s, env_step=81600, gradient_step=561, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.101, pursuer_1/loss=0.116, pursuer_2/loss=0.115, pursuer_3/loss=0.121, pursuer_4/loss=0.118, rew=-10.80]
+Epoch #17: test_reward: -5.751880 ± 4.971546, best_reward: -3.216740 ± 4.290175 in #16
+
+
+
+
+Epoch #18: 4800it [00:07, 657.85it/s, env_step=86400, gradient_step=594, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.106, pursuer_1/loss=0.121, pursuer_2/loss=0.116, pursuer_3/loss=0.124, pursuer_4/loss=0.126, rew=-10.83]
+Epoch #18: test_reward: -11.125260 ± 3.452893, best_reward: -3.216740 ± 4.290175 in #16
+
+
+

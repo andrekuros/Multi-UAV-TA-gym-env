@@ -1,0 +1,237 @@
+
+Best Saved
+Epoch #1:   0%|          | 600/256000 [00:00<02:27, 1734.27it/s]batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+Epoch #1:   0%|          | 1200/256000 [00:02<08:37, 492.02it/s, agent0/loss=0.004, env_step=600, gradient_step=10, len=0, n/ep=0, n/st=600, rew=0.00]batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+Epoch #1:   1%|          | 1800/256000 [00:03<07:20, 577.22it/s, agent0/loss=0.005, env_step=1200, gradient_step=20, len=0, n/ep=0, n/st=600, rew=0.00]batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+Epoch #1:   1%|          | 2400/256000 [00:03<06:40, 633.27it/s, agent0/loss=0.009, env_step=1800, gradient_step=30, len=0, n/ep=0, n/st=600, rew=0.00]batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+Epoch #1:   1%|1         | 3000/256000 [00:04<06:29, 650.33it/s, agent0/loss=0.029, env_step=2400, gradient_step=40, len=0, n/ep=0, n/st=600, rew=0.00]batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+Epoch #1:   1%|1         | 3600/256000 [00:05<06:08, 684.27it/s, agent0/loss=0.059, env_step=3000, gradient_step=50, len=0, n/ep=0, n/st=600, rew=0.00]batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+Epoch #1:   2%|1         | 4200/256000 [00:06<05:59, 701.25it/s, agent0/loss=0.087, env_step=3600, gradient_step=60, len=0, n/ep=0, n/st=600, rew=0.00]batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+Epoch #1:   2%|1         | 4800/256000 [00:07<05:54, 709.08it/s, agent0/loss=0.108, env_step=4200, gradient_step=70, len=0, n/ep=0, n/st=600, rew=0.00]batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+Epoch #1:   2%|2         | 5400/256000 [00:07<05:49, 716.31it/s, agent0/loss=0.148, env_step=4800, gradient_step=80, len=0, n/ep=0, n/st=600, rew=0.00]batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+Epoch #1:   2%|2         | 6000/256000 [00:08<05:48, 717.32it/s, agent0/loss=0.192, env_step=5400, gradient_step=90, len=256, n/ep=20, n/st=600, rew=-11.42]batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.ew=-11.42]batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.ew=-11.42]batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+Epoch #1:   3%|2         | 7200/256000 [00:10<05:43, 725.02it/s, agent0/loss=0.251, env_step=6600, gradient_step=110, len=256, n/ep=0, n/st=600, rew=-11.42]batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+Epoch #1:   3%|3         | 7800/256000 [00:11<05:54, 700.80it/s, agent0/loss=0.286, env_step=7200, gradient_step=120, len=256, n/ep=0, n/st=600, rew=-11.42]batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+Epoch #1:   3%|3         | 8400/256000 [00:12<05:48, 709.60it/s, agent0/loss=0.346, env_step=7800, gradient_step=130, len=256, n/ep=0, n/st=600, rew=-11.42]batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+Epoch #1:   4%|3         | 9000/256000 [00:12<05:46, 712.78it/s, agent0/loss=0.390, env_step=8400, gradient_step=140, len=256, n/ep=0, n/st=600, rew=-11.42]batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+Epoch #1:   4%|3         | 9600/256000 [00:13<05:55, 693.17it/s, agent0/loss=0.429, env_step=9000, gradient_step=150, len=256, n/ep=0, n/st=600, rew=-11.42]batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+Epoch #1:   4%|3         | 10200/256000 [00:14<05:55, 690.95it/s, agent0/loss=0.516, env_step=9600, gradient_step=160, len=256, n/ep=0, n/st=600, rew=-11.42]batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+Epoch #1:   4%|4         | 10800/256000 [00:15<05:51, 697.87it/s, agent0/loss=0.612, env_step=10200, gradient_step=170, len=256, n/ep=0, n/st=600, rew=-11.42]batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+Epoch #1:   4%|4         | 11400/256000 [00:16<05:50, 697.41it/s, agent0/loss=0.677, env_step=10800, gradient_step=180, len=256, n/ep=20, n/st=600, rew=-8.77]batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+Epoch #1:   5%|4         | 12000/256000 [00:17<05:53, 689.95it/s, agent0/loss=0.739, env_step=11400, gradient_step=190, len=256, n/ep=0, n/st=600, rew=-8.77]batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+Epoch #1:   5%|4         | 12600/256000 [00:18<05:54, 687.44it/s, agent0/loss=0.801, env_step=12000, gradient_step=200, len=256, n/ep=0, n/st=600, rew=-8.77]batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+Epoch #1:   5%|5         | 13200/256000 [00:19<05:42, 708.77it/s, agent0/loss=0.892, env_step=12600, gradient_step=210, len=256, n/ep=0, n/st=600, rew=-8.77]batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+Epoch #1:   5%|5         | 13800/256000 [00:19<05:40, 711.16it/s, agent0/loss=0.988, env_step=13200, gradient_step=220, len=256, n/ep=0, n/st=600, rew=-8.77]batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+Epoch #1:   6%|5         | 14400/256000 [00:20<05:42, 706.35it/s, agent0/loss=1.094, env_step=13800, gradient_step=230, len=256, n/ep=0, n/st=600, rew=-8.77]batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.
+batch has no attribute 'weight', but buffer has an update_weight method. This is probably a mistake.Prioritized replay is disabled for this batch.

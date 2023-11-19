@@ -1,0 +1,25 @@
+
+Best Saved
+
+
+
+
+
+Epoch #1: 4800it [00:17, 277.10it/s, env_step=4800, gradient_step=33, len=0, n/ep=0, n/st=1600, pursuer_0/loss=0.144, pursuer_1/loss=0.148, pursuer_2/loss=0.176, pursuer_3/loss=0.214, pursuer_4/loss=0.168, rew=0.00]
+Best Saved
+Epoch #1: test_reward: -12.056560 ± 4.007173, best_reward: -12.056560 ± 4.007173 in #1
+
+
+
+
+
+
+Epoch #2: 4800it [00:18, 256.31it/s, env_step=9600, gradient_step=66, len=750, n/ep=0, n/st=1600, pursuer_0/loss=0.151, pursuer_1/loss=0.140, pursuer_2/loss=0.158, pursuer_3/loss=0.203, pursuer_4/loss=0.201, rew=-11.08]
+Epoch #3:   0%|          | 0/3750 [00:00<?, ?it/s]
+Best Saved
+
+
+
+
+
+

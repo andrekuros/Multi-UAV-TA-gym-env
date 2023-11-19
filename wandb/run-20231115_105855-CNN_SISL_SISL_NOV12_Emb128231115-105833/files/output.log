@@ -1,0 +1,39 @@
+logou
+Best Saved
+Epoch #1:   0%|          | 0/3750 [00:00<?, ?it/s]
+logou
+
+Epoch #1:  43%|####2     | 1600/3750 [00:01<00:02, 834.54it/s]
+logou
+logou
+logou
+logou
+logou
+logou
+logou
+logou
+
+Epoch #1:  43%|####2     | 1600/3750 [00:04<00:02, 834.54it/s, env_step=1600, gradient_step=11, len=0, n/ep=0, n/st=1600, pursuer_0/loss=0.194, pursuer_1/loss=0.142, pursuer_2/loss=0.203, pursuer_3/loss=0.205, pursuer_4/loss=0.252, rew=0.00]
+logou
+logou
+logou
+logou
+logou
+logou
+logou
+logou
+logou
+logou
+
+Epoch #1:  85%|########5 | 3200/3750 [00:06<00:01, 503.11it/s, env_step=3200, gradient_step=22, len=0, n/ep=0, n/st=1600, pursuer_0/loss=0.177, pursuer_1/loss=0.151, pursuer_2/loss=0.195, pursuer_3/loss=0.250, pursuer_4/loss=0.181, rew=0.00]
+logou
+logou
+logou
+logou
+logou
+logou
+logou
+logou
+logou
+logou
+

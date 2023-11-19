@@ -1,0 +1,52 @@
+{
+    "os": "Windows-10-10.0.22621-SP0",
+    "python": "3.11.6",
+    "heartbeatAt": "2023-11-15T16:00:15.588211",
+    "startedAt": "2023-11-15T16:00:09.631593",
+    "docker": null,
+    "cuda": null,
+    "args": [],
+    "state": "running",
+    "program": "Tianshow_Centralized_Training",
+    "codePathLocal": null,
+    "git": {
+        "remote": "https://github.com/andrekuros/Multi-UAV-TA-gym-env.git",
+        "commit": "e1a959e480d0fd1b253dab3b1da225f2c61d98e9"
+    },
+    "email": "ANDREKUROS@GMAIL.COM",
+    "root": "D:/GITHUB/SiSL Eval/Multi-UAV-TA-gym-env",
+    "host": "ThinkPadKur",
+    "username": "andre",
+    "executable": "d:\\Python311\\python.exe",
+    "cpu_count": 6,
+    "cpu_count_logical": 12,
+    "cpu_freq": {
+        "current": 3601.0,
+        "min": 0.0,
+        "max": 3601.0
+    },
+    "cpu_freq_per_core": [
+        {
+            "current": 3601.0,
+            "min": 0.0,
+            "max": 3601.0
+        }
+    ],
+    "disk": {
+        "/": {
+            "total": 206.47167587280273,
+            "used": 33.119632720947266
+        }
+    },
+    "gpu": "NVIDIA GeForce GTX 1660 SUPER",
+    "gpu_count": 1,
+    "gpu_devices": [
+        {
+            "name": "NVIDIA GeForce GTX 1660 SUPER",
+            "memory_total": 6442450944
+        }
+    ],
+    "memory": {
+        "total": 15.916183471679688
+    }
+}

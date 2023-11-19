@@ -20,8 +20,7 @@ class CustomNetMultiHead(Net):
     ):
         super().__init__(            
             state_shape=0,
-            action_shape=action_shape,
-            hidden_sizes=hidden_sizes,
+            action_shape=action_shape,            
             device=device,
         )               
 
