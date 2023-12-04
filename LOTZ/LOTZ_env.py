@@ -119,11 +119,11 @@ class LeadingOnesTrailingZerosEnv(AECEnv):
         
         self._cumulative_rewards = {agent : 0  for agent in self.possible_agents}
         # If none seed explicitly generate worst case, 6-bit string would be 000111 - comment out if you use seed
-        if True:
+        if False:
             # self.state = np.random.randint(2, size=self.string_length, dtype=np.int32)
             self.state = np.array([0] * (self.string_length // 2) + [1] * (self.string_length // 2), dtype=np.int32)
         else:
-            np.random.seed(seed)
+            # np.random.seed(seed)
             self.state = np.random.randint(2, size=self.string_length, dtype=np.int32)
 
         # print(f"START STATE : {self.state}")
@@ -178,7 +178,7 @@ class LeadingOnesTrailingZerosEnv(AECEnv):
         reward = (lotz - self.last_lotz) #* (self.current_step / self.m_steps) #/ max_step_reward
         
         if reward == 0:
-            reward -= 0.1
+            reward -= max_step_reward / self.string_length
         
         self.last_lotz = lotz
 
