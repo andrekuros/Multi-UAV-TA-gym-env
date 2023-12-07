@@ -1,53 +1,68 @@
-from tianshou.data import VectorReplayBuffer
+from typing import Any, List, Optional, Union
 import numpy as np
-
-class PrioritizedFeatureVectorReplayBuffer(VectorReplayBuffer):
-    def __init__(self, size, buffer_num, alpha=0.6, beta=0.4, history_length=10, feature_size=None, **kwargs):
-        super().__init__(size, buffer_num, **kwargs)
-        self.alpha = alpha
-        self.beta = beta
-        self.history_length = history_length
-        self.priorities = np.zeros((size,), dtype=np.float32)
-        self.max_priority = 1.0
-        self.feature_buffer = np.zeros((size, feature_size))  # Adjust feature_size accordingly
+from tianshou.data import Batch, VectorReplayBuffer, ReplayBufferManager, HERReplayBuffer, ReplayBuffer
+import torch
+from collections import deque
+from typing import Tuple, Dict
 
 
-    def add(self, data, buffer_ids=None):
-        # Handle buffer_ids to correctly add data to the specific buffer
-        if buffer_ids is None:
-            buffer_ids = np.arange(len(data.obs))  # Default to all buffers
+class StateMemoryVectorReplayBuffer(VectorReplayBuffer):
+    def __init__(self, total_size: int, buffer_num: int, memory_size: int, **kwargs: Any):
+        super().__init__(total_size, buffer_num, **kwargs)
+        self.memory_size = memory_size
+        # State memory storage for each sub-buffer
+        self.state_memory = [deque(maxlen=memory_size) for _ in range(buffer_num)]
 
-        for i in buffer_ids:
-            idx = self._index[i]  # Current position in buffer i
-            self.priorities[idx] = self.max_priority
+    def add(self, batch: Batch, buffer_ids: Optional[Union[np.ndarray, List[int]]] = None, state_memory: Optional[List[np.ndarray]] = None):    
+        # Call the super().add method and store its return value
+        add_info = super().add(batch, buffer_ids)
 
-            # Process observation through CNN here and store the feature
-            # Ensure that policy.model.cnn_process is correctly implemented
-            feature = policy.model.cnn_process(data.obs[i])
-            self.feature_buffer[idx] = feature
+        if state_memory is not None:
+            for i, buffer_id in enumerate(buffer_ids or range(len(batch))):
+                self.state_memory[buffer_id].append(state_memory[i])
 
-            # Call add method of VectorReplayBuffer for the i-th buffer
-            super(VectorReplayBuffer, self).add(
-                data=data[i], buffer_ids=[i]
-            )
+        # Return the information received from the super().add call
+        return add_info
 
-    def sample(self, batch_size):
-        # Sample based on priorities
-        if self._size == 0:
-            return {}
-        sampling_probabilities = self.priorities ** self.alpha
-        sampling_probabilities /= sampling_probabilities.sum()
-        indices = np.random.choice(self._size, batch_size, p=sampling_probabilities)
-        return self.get(indices)
+    def sample(self, batch_size: int) -> Tuple[Batch, np.ndarray]:
+        sampled_data, indices = super().sample(batch_size)
+        # Retrieve state memory for the sampled indices
+        sampled_memory = []
+        for idx in indices:
+            buffer_id, buffer_idx = self._get_buffer_id(idx)
+            sampled_memory.append(self.state_memory[buffer_id][buffer_idx])
+        sampled_data.state_memory = sampled_memory
+        return sampled_data, indices
 
-    def get(self, index):
-        # Override to return a sequence of features along with raw observations
-        buffer_index = (self._index - self.history_length + self.maxsize) % self.maxsize
-        index = (index - self.history_length + self.maxsize) % self.maxsize
-        feature_seq = [self.feature_buffer[i] for i in range(index, buffer_index)]
-        return {k: self._meta[k][index] if k != "obs" else (self._meta["obs"][index], feature_seq) for k in self._meta}
+    def _get_buffer_id(self, index: int) -> Tuple[int, int]:
+        # Find which buffer and index within the buffer a global index corresponds to
+        for i, offset in enumerate(self._offset):
+            if index < offset + self.buffers[i].maxsize:
+                return i, index - offset
+        raise IndexError("Index out of range.")
 
-    def update_priorities(self, indices, priorities):
-        for idx, priority in zip(indices, priorities):
-            self.priorities[idx] = priority
-            self.max_priority = max(self.max_priority, priority)
+
+
+    
+
+from tianshou.trainer import OffpolicyTrainer
+
+
+class MemoryOffpolicyTrainer(OffpolicyTrainer):
+
+    def policy_update_fn(self, data: Dict[str, Any], result: Dict[str, Any]) -> None:
+        """Perform off-policy updates."""
+        assert self.train_collector is not None
+        for _ in range(round(self.update_per_step * result["n/st"])):
+            self.gradient_step += 1
+            # Sample a batch of experiences, including state memory
+            batch, indices = self.train_collector.buffer.sample(self.batch_size)
+            state_memory = batch.state_memory  # Assuming state memory is stored in the batch
+
+            # Update the policy with the sampled batch and state memory
+            losses = self.policy.update(batch, state_memory=state_memory)
+
+            # Log losses and update statistics
+            self.log_update_data(data, losses)
+
+

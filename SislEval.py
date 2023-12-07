@@ -142,5 +142,3 @@ for i in range(runs):
 env.close()
 print(total_rews/(i+1))
 
-
-# %%
