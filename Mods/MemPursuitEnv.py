@@ -16,6 +16,8 @@ class MemPursuitEnv(pursuit_v4.raw_env):
         
 
     def step(self, action):
+        
+        
         super().step(action)
         
         if self.att_memory:
