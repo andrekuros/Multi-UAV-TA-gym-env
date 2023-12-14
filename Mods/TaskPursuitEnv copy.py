@@ -3,7 +3,7 @@ from pettingzoo.utils import wrappers
 import numpy as np
 import torch
 import time
-import math
+import random
 
 from gymnasium import spaces
 
@@ -47,10 +47,11 @@ class Task:
         self.target_object = target_object        
 
         self.forced_action = forced_action
-        #self.distance = distance
-        
-        self.slot_offset = np.array([[1,0], [0,1], [-1,0], [0,-1]])
+                
+        self.slot_offset = [[1,0], [0,1], [-1,0], [0,-1]]
         self.slots = [0, 0, 0, 0]
+        
+        
         
    
     def get_one_hot(self):
@@ -60,7 +61,8 @@ class Task:
         # Example feature vector; adjust according to your task attributes
         task_type_one_hot = self.get_one_hot()  # One-hot encoding of task type
         # desired_action = self.determine_desired_action(agent_position)
-        feature_vector = task_type_one_hot + list(self.getDistSinCos(agent_position,self.target_object.current_pos)) #+ [self.distance]#, desired_action]
+        
+        feature_vector = task_type_one_hot + list(self.target_object.current_pos - agent_position) + [sum(self.slots)/4] 
         return feature_vector
     
 
@@ -93,7 +95,8 @@ class Task:
 
         #create a function that select between the 4 possible slots considering the closest and the ocupied one
         minV = min(self.slots)
-        idxMin = self.slots.index(minV)
+        occurs = [index for index, element in enumerate(self.slots) if element == minV]
+        idxMin = np.random.choice(occurs)
         return idxMin
 
 
@@ -122,32 +125,6 @@ class Task:
 
         
 
-
-    def getDistSinCos(self, point_a, point_b):
-        # Unpack the points
-        x1, y1 = point_a
-        x2, y2 = point_b
-        
-        # Calculate the differences
-        dx = x2 - x1
-        dy = y2 - y1
-
-        # Euclidean distance
-        distance = math.sqrt(dx**2 + dy**2)
-
-        # Calculate the angle in radians
-        angle = math.atan2(dy, dx)
-
-        # Sine and Cosine of the angle
-        sin_angle = math.sin(angle)
-        cos_angle = math.cos(angle)
-
-        return distance, sin_angle, cos_angle
-    
-    def distance_bearing(self, pos1, pos2):
-        """Calculate Euclidean distance between two points."""
-        return ((pos1[0] - pos2[0]) ** 2 + (pos1[1] - pos2[1]) ** 2) ** 0.5
-    
     def random_direction(self):
         """
         Return a random direction.
@@ -193,6 +170,9 @@ class TaskPursuitEnv(pursuit_v4.raw_env):
         self.tasks_evaders = []
         self.tasks_allies = []
         self.last_tasks = {agent : [] for agent in self.agents}
+        self.last_len_tasks = {agent : [] for agent in self.agents}
+        self.tasks_inertia = {agent : [] for agent in self.agents}
+        
         self.tasks = []
 
         self.last_actions = [(self.tasks_basic[0], self.tasks_basic[0].forced_action, 0 ) for _ in self.agents]
@@ -218,6 +198,7 @@ class TaskPursuitEnv(pursuit_v4.raw_env):
         self.update_tasks()
 
         self.last_tasks = {agent : [] for agent in self.agents}
+        self.last_len_tasks = {agent : [] for agent in self.agents}
         self.last_actions = [(self.tasks_basic[0], self.tasks_basic[0].forced_action, 0) for _ in self.agents]
 
     def observe(self, agent):
@@ -233,6 +214,7 @@ class TaskPursuitEnv(pursuit_v4.raw_env):
 
         pusuer_idx = agent.split("_")[-1]
         pusuer_idx = int(pusuer_idx)
+        pursuer_obj = self.env.pursuers[pusuer_idx]
 
         #agent_positions = self.get_agent_positions()
         agent_position = self.env.pursuer_layer.get_position(pusuer_idx)
@@ -245,26 +227,29 @@ class TaskPursuitEnv(pursuit_v4.raw_env):
         y_upper_bound = agent_position[1] + range_ref
 
         # Filter tasks within the observation box
-        tasks_in_range = [task for task in self.tasks if x_lower_bound <= task.target_object.current_pos[0] <= x_upper_bound and y_lower_bound <= task.target_object.current_pos[1] <= y_upper_bound]
+        tasks_in_range = [task for task in self.tasks if x_lower_bound <= task.target_object.current_pos[0] <= x_upper_bound and y_lower_bound <= task.target_object.current_pos[1] <= y_upper_bound and task.target_object != pursuer_obj]
 
-        self.last_tasks[agent] = tasks_in_range
+        last_tasks = tasks_in_range + self.tasks_explore
+        self.last_len_tasks[agent] = len(last_tasks)
 
         #Pad or truncate the task list to ensure a fixed number of tasks
-        if len(tasks_in_range) < self.max_tasks:
-            tasks_in_range.extend([np.random.choice(self.tasks_explore) for _ in range( self.max_tasks - len(tasks_in_range) )])
+        if len(last_tasks) < self.max_tasks:
+#             last_tasks.extend([self.tasks_basic[0] for _ in range( self.max_tasks - len(last_tasks) )])
+            last_tasks.extend([np.random.choice(self.tasks_explore) for _ in range( self.max_tasks - len(last_tasks) )])
         else:
-            tasks_in_range = tasks_in_range[:self.max_tasks]
+            last_tasks = self.last_tasks[agent][:self.max_tasks]
 
+        self.last_tasks[agent] = last_tasks
         # Convert tasks to tensor
-        task_features = [task.get_feature_vector(agent_position) for task in tasks_in_range]
-        task_tensor = torch.tensor(task_features, dtype=torch.float32).to("cuda")
+        task_features = [task.get_feature_vector(agent_position) for task in self.last_tasks[agent]]
+        task_tensor = torch.tensor(task_features, dtype=torch.float32).to("cpu")
         
         return task_tensor
 
     
     def step(self, action):
                 
-        debug = False
+        debug = True
         
         if (
             self.terminations[self.agent_selection]
@@ -275,22 +260,39 @@ class TaskPursuitEnv(pursuit_v4.raw_env):
         agent = self.agent_selection
 
         pusuer_idx = agent.split("_")[-1]
-        pusuer_idx = int(pusuer_idx)
+        pusuer_idx = int(pusuer_idx)        
         
         agent_position = self.env.pursuer_layer.get_position(pusuer_idx)        
                
         task = self.last_tasks[agent][action]
                           
         if task != self.last_actions[pusuer_idx][0]:
-                        
+                                                
             slot = task.get_newSlot(agent_position)
             task.slots[slot] += 1 
 
             last_task_data = self.last_actions[pusuer_idx]
             last_task_data[0].slots[last_task_data[2]] -= 1
+                        
+            self.last_actions[pusuer_idx] = (task, action, slot, self.last_len_tasks[agent])
 
-            self.last_actions[pusuer_idx] = (task, action, slot)
 
+        else:
+            
+            if random.random() > 0.80:
+                
+                last_task_data = self.last_actions[pusuer_idx]
+                last_task_data[0].slots[last_task_data[2]] -= 1
+
+                slot = task.get_newSlot(agent_position)
+                task.slots[slot] += 1 
+            
+                self.last_actions[pusuer_idx] = (task, action, slot, self.last_len_tasks[agent])
+            else:
+                slot = self.last_actions[pusuer_idx][2]
+                self.last_actions[pusuer_idx] = (task, action, slot, self.last_len_tasks[agent])
+                    
+            
         
         # print(self.last_tasks[agent])
         action = self.convert_task2action(self.last_tasks[agent], action , agent_position, self.last_actions[pusuer_idx][2])        
@@ -355,9 +357,9 @@ class TaskPursuitEnv(pursuit_v4.raw_env):
                 
         active_evaders = [self.tasks_evaders[i] for i in range(len(self.tasks_evaders)) if not self.env.evaders_gone[i]]
         
-        # self.tasks = active_evaders + self.tasks_basic + self.tasks_allies
+        self.tasks = active_evaders + self.tasks_allies
 
-        self.tasks = active_evaders + self.tasks_basic 
+#         self.tasks = active_evaders + self.tasks_basic 
 
     def print_grid(self):
         clear_output(wait=True)  # Clear the output of the current cell
@@ -385,10 +387,10 @@ class TaskPursuitEnv(pursuit_v4.raw_env):
         if hasattr(self, 'last_actions'):
 
             # Extract task type, action, and slot from each entry in last_actions
-            formatted_actions = [(task.type, action, slot) for task, action, slot in self.last_actions]
+            formatted_actions = [(task.type, action, slot, len_last) for task, action, slot, len_last in self.last_actions]
             
             # Create a DataFrame from the formatted list
-            actions_df = pd.DataFrame(formatted_actions, columns=['Task Type', 'Action', 'Slot'])
+            actions_df = pd.DataFrame(formatted_actions, columns=['Task Type', 'Action', 'Slot', 'nTasks'])
             actions_html = '<td>' + actions_df.to_html(index=True, border=0) + '</td>'
             
         
@@ -396,7 +398,7 @@ class TaskPursuitEnv(pursuit_v4.raw_env):
         # Display grid and actions table side by side within a parent table
         parent_table_html = f'<table><tr><td style="vertical-align: top;">{grid_html}</td>{actions_html}</tr></table>'
         display(HTML(parent_table_html))
-        time.sleep(0.2)
+        time.sleep(0.3)
         
         
 

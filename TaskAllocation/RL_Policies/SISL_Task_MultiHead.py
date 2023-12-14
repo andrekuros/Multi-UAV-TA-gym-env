@@ -23,9 +23,11 @@ class SISL_Task_MultiHead(nn.Module):
             nn.ReLU(),
             nn.Linear(16, 32),
             nn.ReLU(),
-            nn.Linear(32, 32),
+             nn.Linear(32, 64),
             nn.ReLU(),
-            nn.Linear(32, self.embedding_size)  # Ensure this matches the action space
+            nn.Linear(64, 128),
+            nn.ReLU(),
+            nn.Linear(128, self.embedding_size)  # Ensure this matches the action space
         ).to(device)
 
         # Multi-head attention layers
@@ -40,7 +42,7 @@ class SISL_Task_MultiHead(nn.Module):
 
     def forward(self, obs: torch.Tensor, state=None, info=None):
         # obs shape is expected to be [batch_size, num_tasks, num_features_per_task]
-
+       
         # Process each task independently through the task encoder
         batch_size, num_tasks, num_features = obs.shape
         obs_reshaped = obs.view(-1, num_features)  # [batch_size * num_tasks, num_features]
