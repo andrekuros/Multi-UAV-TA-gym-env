@@ -5,6 +5,7 @@ import torch
 import time
 import math
 
+
 from gymnasium import spaces
 
 import pandas as pd
@@ -49,20 +50,9 @@ class Task:
         self.forced_action = forced_action
         #self.distance = distance
         
-        self.slot_offset = np.array([[1,0], [0,1], [-1,0], [0,-1]])
+        self.slot_offset = np.array([[-1,0], [1,0], [0,1], [0,-1]])
         self.slots = [0, 0, 0, 0]
-        
-   
-    def get_one_hot(self):
-        return TASK_TYPES[self.type]
-    
-    def get_feature_vector(self, agent_position):
-        # Example feature vector; adjust according to your task attributes
-        task_type_one_hot = self.get_one_hot()  # One-hot encoding of task type
-        # desired_action = self.determine_desired_action(agent_position)
-        feature_vector = task_type_one_hot + list(self.getDistSinCos(agent_position,self.target_object.current_pos)) #+ [self.distance]#, desired_action]
-        return feature_vector
-    
+            
 
     def calculate_default_action(self):
         # Return a default action (e.g., stay)
@@ -83,17 +73,19 @@ class Task:
         
         elif self.type == 'explore':
             # Task to explore: This could be a predefined direction or a random action
-            return self.forced_action if self.forced_action != 4 else self.random_direction()
+            return self.calculate_direction_to_target(np.array([0,0]), self.target_object.current_pos[::-1] )
         
         else:
             # Default action (e.g., 'stay')
             return self.calculate_default_action()
     
+    
     def get_newSlot(self, agent_position):
 
         #create a function that select between the 4 possible slots considering the closest and the ocupied one
         minV = min(self.slots)
-        idxMin = self.slots.index(minV)
+        occurs = [index for index, element in enumerate(self.slots) if element == minV]
+        idxMin = np.random.choice(occurs)
         return idxMin
 
 
@@ -164,7 +156,9 @@ class TaskPursuitEnv(pursuit_v4.raw_env):
         self.env = _env(*args, **kwargs)        
 
         self.render_mode = kwargs.get("render_mode")
-        pygame.init()
+        if self.render_mode  == "human":
+            pygame.init()
+                
         self.agents = ["pursuer_" + str(a) for a in range(self.env.num_agents)]
         self.possible_agents = self.agents[:]
         self.agent_name_mapping = dict(zip(self.agents, list(range(self.num_agents))))
@@ -187,12 +181,17 @@ class TaskPursuitEnv(pursuit_v4.raw_env):
 
         self.refGeneric = refPoint([0,0])
         
-        self.tasks_explore = [ Task("explore", self.refGeneric, forced_action = i) for i in range(4) ]
+        self.exploreRefs = [refPoint(pos) for pos in  np.array([[-2,0], [2,0], [0,2], [0,-2]])]
+        
+        self.tasks_explore = [ Task("explore", refExplore, forced_action = i) for i,refExplore in enumerate(self.exploreRefs) ]
         self.tasks_basic = [Task('stay', self.refGeneric, forced_action = 4)] 
 
         self.tasks_evaders = []
         self.tasks_allies = []
         self.last_tasks = {agent : [] for agent in self.agents}
+        self.last_len_tasks = {agent : [] for agent in self.agents}
+
+        self.task_historic = [0 for _ in self.agents]
         self.tasks = []
 
         self.last_actions = [(self.tasks_basic[0], self.tasks_basic[0].forced_action, 0 ) for _ in self.agents]
@@ -218,11 +217,26 @@ class TaskPursuitEnv(pursuit_v4.raw_env):
         self.update_tasks()
 
         self.last_tasks = {agent : [] for agent in self.agents}
-        self.last_actions = [(self.tasks_basic[0], self.tasks_basic[0].forced_action, 0) for _ in self.agents]
+        self.last_len_tasks = {agent : [] for agent in self.agents}
+        self.last_actions = [[self.tasks_basic[0], self.tasks_basic[0].forced_action, 0, 1, 0] for _ in self.agents]
+        self.task_historic = [0 for _ in self.agents]
+        
+    def is_valid_explore_task(self,task, layer):
+            
+            # Calculate the target position for the explore task
+            target_position = [3 + task.target_object.current_pos[0], 3 + task.target_object.current_pos[1]] 
+            
+            #print(layer[target_position[1], target_position[0]])
 
+            # Check if the target position is a wall
+            return layer[target_position[0], target_position[1]] == 0
+    
+    
     def observe(self, agent):
         
         current_obs = super().observe(agent)
+
+        # print("Observation: ",current_obs)
         
         if np.sum(self.env.evaders_gone) != self.removed_evader:
             
@@ -233,6 +247,7 @@ class TaskPursuitEnv(pursuit_v4.raw_env):
 
         pusuer_idx = agent.split("_")[-1]
         pusuer_idx = int(pusuer_idx)
+        pursuer_obj = self.env.pursuers[pusuer_idx]
 
         #agent_positions = self.get_agent_positions()
         agent_position = self.env.pursuer_layer.get_position(pusuer_idx)
@@ -243,29 +258,120 @@ class TaskPursuitEnv(pursuit_v4.raw_env):
         x_upper_bound = agent_position[0] + range_ref
         y_lower_bound = agent_position[1] - range_ref
         y_upper_bound = agent_position[1] + range_ref
-
-        # Filter tasks within the observation box
-        tasks_in_range = [task for task in self.tasks if x_lower_bound <= task.target_object.current_pos[0] <= x_upper_bound and y_lower_bound <= task.target_object.current_pos[1] <= y_upper_bound]
-
-        self.last_tasks[agent] = tasks_in_range
-
-        #Pad or truncate the task list to ensure a fixed number of tasks
-        if len(tasks_in_range) < self.max_tasks:
-            tasks_in_range.extend([np.random.choice(self.tasks_explore) for _ in range( self.max_tasks - len(tasks_in_range) )])
-        else:
-            tasks_in_range = tasks_in_range[:self.max_tasks]
-
-        # Convert tasks to tensor
-        task_features = [task.get_feature_vector(agent_position) for task in tasks_in_range]
-        task_tensor = torch.tensor(task_features, dtype=torch.float32).to("cuda")
         
-        return task_tensor
+        wall_channel = current_obs[..., 0]  # Assuming the first channel represents walls        
+        allies_channel = current_obs[...,1]  # Assuming the first channel represents walls        
+        enemies_channel = current_obs[...,2]  # Assuming the first channel represents walls        
+               
+        last_tasks = []               
+        
+        if self.last_actions[pusuer_idx][0].type == "explore" and sum(sum(enemies_channel)) == 0:
+            
+            current_task = self.last_actions[pusuer_idx][0]
+            
+            if self.task_historic[pusuer_idx] <= 16:
+                if self.is_valid_explore_task(current_task, wall_channel):                    
+                    last_tasks = [current_task]
+                
+                
+        # Filter tasks within the observation box
+        if last_tasks == []:
+            tasks_in_range = [task for task in self.tasks if x_lower_bound <= task.target_object.current_pos[0] <= x_upper_bound and y_lower_bound <= task.target_object.current_pos[1] <= y_upper_bound and task.target_object != pursuer_obj]
+            
+            # Filter out explore tasks that lead to a wall
+            tasks_to_explore = [task for task in self.tasks_explore if self.is_valid_explore_task(task, wall_channel)]                        
+            last_tasks = tasks_in_range + tasks_to_explore
+        
+        self.last_len_tasks[agent] = len(last_tasks)
+        
+        mask = [True for _ in last_tasks]
+        mask.extend([False] * (self.max_tasks - len(last_tasks)))
+                
+        #Pad or truncate the task list to ensure a fixed number of tasks
+        if len(last_tasks) < self.max_tasks:
+            last_tasks.extend([self.tasks_basic[0] for _ in range( self.max_tasks - len(last_tasks) )])
+            # last_tasks.extend([np.random.choice(self.tasks_explore) for _ in range( self.max_tasks - len(last_tasks) )])
+        else:
+            last_tasks = self.last_tasks[agent][:self.max_tasks]
+
+        self.last_tasks[agent] = last_tasks
+        # Convert tasks to tensor
+                      
+        task_features = [self.get_feature_vector(pusuer_idx, current_obs,  agent_position, task) for task in last_tasks]
+        
+        # task_tensor = torch.tensor(task_features, dtype=torch.float32).to("cuda")
+        
+        self.infos[agent]["mask"] = mask
+        observation = {"observation" : task_features, "action_mask" : mask, "info" : mask}
+        
+        
+        return observation 
+    
+    
+    def get_one_hot(self, task):
+        return TASK_TYPES[task.type]
+    
+    def get_feature_vector(self, pusuer_idx, current_obs, agent_position, task):
+        
+        if task.type == "explore":
+            channel = 0
+        elif task.type == "coordinate":
+            channel = 1        
+        else:
+            channel = 2
+
+        stats = self.calculate_statistics( current_obs, channel )
+        
+        historic = 0 if self.last_actions[pusuer_idx][0] != task else self.task_historic[pusuer_idx] 
+
+        task_type_one_hot = self.get_one_hot(task)  # One-hot encoding of task type
+        
+        if task.type != 'explore':
+            task_pos = task.target_object.current_pos
+        else:
+            task_pos = np.array([ agent_position[0] + task.target_object.current_pos[1], agent_position[1] + task.target_object.current_pos[0]])
+        
+        feature_vector = task_type_one_hot + list(task.getDistSinCos(agent_position, task_pos)) +\
+                        [                             
+                           sum(task.slots)/4,
+                           historic / 5,
+                           #aliies_in_sight,
+                        ] + stats
+        
+        
+        return feature_vector
 
     
-    def step(self, action):
-                
-        debug = False
+    def calculate_statistics(self, observation, channel):
+        # Supondo que a observação seja uma matriz NumPy ou tensor PyTorch de forma [7, 7, 3]
+        stats = []
         
+        # Exemplo: suponha que o primeiro canal representa inimigos
+        selected_channel = observation[..., channel]
+        #print(enemy_channel)
+
+        # Contagem de inimigos
+        enemy_count = np.sum(selected_channel) / 4
+
+        # Densidade de inimigos
+        enemy_density = enemy_count / (7 * 7) * 7
+
+        # Centro de massa dos inimigos (média da posição)
+        enemy_positions = np.argwhere(selected_channel)
+#         print(enemy_positions)
+        if len(enemy_positions) > 0:
+            center_of_mass = np.mean(enemy_positions, axis=0)
+        else:
+            center_of_mass = [3, 3]  # Ou outro valor representativo quando não houver inimigos
+
+        dist = self.distance(center_of_mass, [3,3])
+        # Adicionando as estatísticas à lista
+        stats.extend([center_of_mass[0], center_of_mass[1], dist, enemy_density])
+
+        return stats
+    
+    def step(self, action):
+                                
         if (
             self.terminations[self.agent_selection]
             or self.truncations[self.agent_selection]
@@ -284,23 +390,29 @@ class TaskPursuitEnv(pursuit_v4.raw_env):
         if task != self.last_actions[pusuer_idx][0]:
                         
             slot = task.get_newSlot(agent_position)
-            task.slots[slot] += 1 
+            
+            task.slots[slot] += 1 if task.type != "explore" else 4
 
             last_task_data = self.last_actions[pusuer_idx]
-            last_task_data[0].slots[last_task_data[2]] -= 1
-
-            self.last_actions[pusuer_idx] = (task, action, slot)
-
+            last_task_data[0].slots[last_task_data[2]] -= 1 if last_task_data[0].type != "explore" else 4
+            
+            self.last_actions[pusuer_idx] = [task, action, slot, self.last_len_tasks[agent], self.task_historic[pusuer_idx]]
+            self.task_historic[pusuer_idx] = 0
         
-        # print(self.last_tasks[agent])
-        action = self.convert_task2action(self.last_tasks[agent], action , agent_position, self.last_actions[pusuer_idx][2])        
+        else:
+            
+            self.task_historic[pusuer_idx] += 1
+            self.last_actions[pusuer_idx][4] =  self.task_historic[pusuer_idx]
+              
+        
+        action = self.convert_task2action(self.last_tasks[agent], action , agent_position, self.last_actions[pusuer_idx][2]) 
+                
         
         self.env.step(
             action, self.agent_name_mapping[agent], self._agent_selector.is_last()
         )
                      
-        if self._agent_selector.is_last() and debug:
-            self.print_grid()                        
+                        
             
         for k in self.terminations:
             if self.env.frames >= self.env.max_cycles:
@@ -315,6 +427,9 @@ class TaskPursuitEnv(pursuit_v4.raw_env):
         self._cumulative_rewards[self.agent_selection] = 0
         self.agent_selection = self._agent_selector.next()
         self._accumulate_rewards()
+
+        if self._agent_selector.is_last() and self.render_mode == "html":
+            self.print_grid()  
 
         if self.render_mode == "human":
             self.render()
@@ -355,10 +470,12 @@ class TaskPursuitEnv(pursuit_v4.raw_env):
                 
         active_evaders = [self.tasks_evaders[i] for i in range(len(self.tasks_evaders)) if not self.env.evaders_gone[i]]
         
-        # self.tasks = active_evaders + self.tasks_basic + self.tasks_allies
+        self.tasks = active_evaders + self.tasks_allies #+ self.tasks_basic 
 
-        self.tasks = active_evaders + self.tasks_basic 
+        # self.tasks = active_evaders + self.tasks_basic 
+        # self.tasks = self.tasks_basic.copy()
 
+ 
     def print_grid(self):
         clear_output(wait=True)  # Clear the output of the current cell
 
@@ -367,14 +484,16 @@ class TaskPursuitEnv(pursuit_v4.raw_env):
         # Place evaders and pursuers on the grid    
         for evader in self.env.evaders:            
             x, y = evader.current_pos
-            grid[y][x] = 'O'
+            # Color evaders in red
+            grid[y][x] = f'<span style="color: red;">O</span>'
 
         # Place pursuers on the grid
         for i, pursuer in enumerate(self.env.pursuers):
             x, y = pursuer.current_pos
-            grid[y][x] = str(i)
+            # Color pursuers in blue
+            grid[y][x] = f'<span style="color: blue;">{i}</span>'
 
-         # Convert the grid to an HTML table with enhanced visibility
+        # Convert the grid to an HTML table with enhanced visibility
         grid_html = '<table style="border-collapse: collapse;">'
         for row in grid:
             grid_html += '<tr>' + ''.join([f'<td style="width: 16px; height: 16px; text-align: center; border: 1px solid black;">{cell if cell.strip() != "" else "&nbsp;"}</td>' for cell in row]) + '</tr>'
@@ -383,20 +502,17 @@ class TaskPursuitEnv(pursuit_v4.raw_env):
         # Convert last_actions to an HTML table
         actions_html = ''
         if hasattr(self, 'last_actions'):
-
             # Extract task type, action, and slot from each entry in last_actions
-            formatted_actions = [(task.type, action, slot) for task, action, slot in self.last_actions]
+            formatted_actions = [(task.type, task.id, action, len_last, task.slots,  hist) for task, action, slot, len_last, hist in self.last_actions]
             
             # Create a DataFrame from the formatted list
-            actions_df = pd.DataFrame(formatted_actions, columns=['Task Type', 'Action', 'Slot'])
+            actions_df = pd.DataFrame(formatted_actions, columns=['Task Type', 'id', 'action', 'nTasks', 'Slots' , 'Hist'])
             actions_html = '<td>' + actions_df.to_html(index=True, border=0) + '</td>'
-            
-        
 
         # Display grid and actions table side by side within a parent table
         parent_table_html = f'<table><tr><td style="vertical-align: top;">{grid_html}</td>{actions_html}</tr></table>'
         display(HTML(parent_table_html))
-        time.sleep(0.2)
+        time.sleep(0.3)
         
         
 

@@ -38,8 +38,8 @@ class CNN_SISL(Net):
         
         self._value_out = self.value_fn(model_out)
         
-        print("policy_output", self.policy_fn(model_out).shape)
-        print("value_output", state.shape)
+        # print("policy_output", self.policy_fn(model_out).shape)
+        # print("value_output", state.shape)
               
         return self.policy_fn(model_out), state
 
