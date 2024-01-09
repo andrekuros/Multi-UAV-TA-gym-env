@@ -1,3 +1,4 @@
+from ssl import get_default_verify_paths
 from pettingzoo.sisl import pursuit_v4
 from pettingzoo.utils import wrappers
 import numpy as np
@@ -59,13 +60,20 @@ class Task:
         return 4  # Stay
 
  
-    def determine_desired_action(self, agent_position, slot):
+    def determine_desired_action(self, agent_position, slot, wall_channel):
         """
         Determine the action to take based on the task type and agent's position.
         """
         if self.type == 'chase_evader':
             # Task to chase an evader: Move towards the evader's position            
-            return self.calculate_direction_to_target(agent_position, self.target_object.current_pos + self.slot_offset[slot])
+            action = self.calculate_direction_to_target(agent_position, self.target_object.current_pos + self.slot_offset[slot])
+            
+            if action != 4 and wall_channel[3 + self.slot_offset[action][1], 3 + self.slot_offset[action][0]] == 1 :
+                slot = self.get_newSlot(agent_position, slot, exclusion = slot)
+                action = self.calculate_direction_to_target(agent_position, self.target_object.current_pos + self.slot_offset[slot])
+
+
+            return action
         
         elif self.type == 'coordinate':
             # Task to coordinate with another agent: Move towards the other agent's position
@@ -80,13 +88,42 @@ class Task:
             return self.calculate_default_action()
     
     
-    def get_newSlot(self, agent_position):
+    #Randonly select an more empty slot
+    def get_newSlot(self, agent_position, current_slot, exclusion = 99):
+                                
+        
+        #exclusions = self.check_slots(wall_channel)
+        
+        slots = [slot if idx != exclusion else 999 for idx,slot in enumerate(self.slots)]
+                            
+        minV = min(slots) 
+        
+        dists = [self.get_dist(agent_position, self.target_object.current_pos + self.slot_offset[i]) if slot == minV else 999 for i,slot in enumerate(slots)]
+        
+        #occurs = [index for index, element in enumerate(self.slots) if element == minV]                
+        #idxMin = np.random.choice(occurs)
+        idxMin = dists.index(min(dists))
 
-        #create a function that select between the 4 possible slots considering the closest and the ocupied one
-        minV = min(self.slots)
-        occurs = [index for index, element in enumerate(self.slots) if element == minV]
-        idxMin = np.random.choice(occurs)
+        if exclusion == 99:
+            self.slots[idxMin] += 1
+
         return idxMin
+    
+    def update_slots(self):        
+        
+        return 0
+    
+    def check_slots(self, wall_layer):
+                
+        #need to invert slots considering wall is inverted x,y
+        wall_check = [wall_layer[ 1, 0] == 1, # Above center
+                      wall_layer[ 1, 2] == 1, # Below center
+                      wall_layer[ 2, 1] == 1, # Left of center
+                      wall_layer[ 0, 1] == 1  # Right of center
+                    ]
+
+        
+        return wall_check
 
 
     
@@ -113,8 +150,6 @@ class Task:
             return np.random.choice(options)
 
         
-
-
     def getDistSinCos(self, point_a, point_b):
         # Unpack the points
         x1, y1 = point_a
@@ -135,6 +170,11 @@ class Task:
         cos_angle = math.cos(angle)
 
         return distance, sin_angle, cos_angle
+    
+    def get_dist(self, posA, posB):
+        return math.sqrt((posB[0] - posA[0])**2 + (posB[1] - posA[1])**2)
+
+
     
     def distance_bearing(self, pos1, pos2):
         """Calculate Euclidean distance between two points."""
@@ -194,7 +234,8 @@ class TaskPursuitEnv(pursuit_v4.raw_env):
         self.task_historic = [0 for _ in self.agents]
         self.tasks = []
 
-        self.last_actions = [(self.tasks_basic[0], self.tasks_basic[0].forced_action, 0 ) for _ in self.agents]
+        self.last_actions = [(self.tasks_basic[0], self.tasks_basic[0].forced_action, -1, 1 ,0 ) for _ in self.agents]
+        self.raw_observations = [None for _ in self.agents]
 
         self.tasks_map = {}
         self.allocation_table = []
@@ -215,11 +256,17 @@ class TaskPursuitEnv(pursuit_v4.raw_env):
 
         self.tasks = self.generate_tasks()
         self.update_tasks()
+        self.tasks_explore = [ Task("explore", refExplore, forced_action = i) for i,refExplore in enumerate(self.exploreRefs) ]
+        self.tasks_basic = [Task('stay', self.refGeneric, forced_action = 4)] 
 
         self.last_tasks = {agent : [] for agent in self.agents}
         self.last_len_tasks = {agent : [] for agent in self.agents}
-        self.last_actions = [[self.tasks_basic[0], self.tasks_basic[0].forced_action, 0, 1, 0] for _ in self.agents]
+        self.last_actions = [[self.tasks_basic[0], self.tasks_basic[0].forced_action, -1, 1, 0] for _ in self.agents]
         self.task_historic = [0 for _ in self.agents]
+
+       
+
+        self.raw_observations = [None for _ in self.agents]
         
     def is_valid_explore_task(self,task, layer):
             
@@ -236,6 +283,7 @@ class TaskPursuitEnv(pursuit_v4.raw_env):
         
         current_obs = super().observe(agent)
 
+    
         # print("Observation: ",current_obs)
         
         if np.sum(self.env.evaders_gone) != self.removed_evader:
@@ -248,6 +296,8 @@ class TaskPursuitEnv(pursuit_v4.raw_env):
         pusuer_idx = agent.split("_")[-1]
         pusuer_idx = int(pusuer_idx)
         pursuer_obj = self.env.pursuers[pusuer_idx]
+
+        self.raw_observations[pusuer_idx]  = current_obs
 
         #agent_positions = self.get_agent_positions()
         agent_position = self.env.pursuer_layer.get_position(pusuer_idx)
@@ -269,7 +319,7 @@ class TaskPursuitEnv(pursuit_v4.raw_env):
             
             current_task = self.last_actions[pusuer_idx][0]
             
-            if self.task_historic[pusuer_idx] <= 3:
+            if self.task_historic[pusuer_idx] <= 16:
                 if self.is_valid_explore_task(current_task, wall_channel):                    
                     last_tasks = [current_task]
                 
@@ -331,12 +381,14 @@ class TaskPursuitEnv(pursuit_v4.raw_env):
         else:
             task_pos = np.array([ agent_position[0] + task.target_object.current_pos[1], agent_position[1] + task.target_object.current_pos[0]])
         
-        feature_vector = task_type_one_hot + list(task.getDistSinCos(agent_position, task_pos)) +\
+        feature_vector = task_type_one_hot +  list(task.getDistSinCos(agent_position, task_pos)) +\
                         [                             
+                           agent_position[0]/15, 
+                           agent_position[1]/15,
                            sum(task.slots)/4,
                            historic / 5,
                            #aliies_in_sight,
-                        ] + stats
+                        ] #+ stats
         
         
         return feature_vector
@@ -364,9 +416,9 @@ class TaskPursuitEnv(pursuit_v4.raw_env):
         else:
             center_of_mass = [3, 3]  # Ou outro valor representativo quando não houver inimigos
 
-        dest = self.distance(center_of_mass, [3,3])
+        dist = self.distance(center_of_mass, [3,3])
         # Adicionando as estatísticas à lista
-        stats.extend([center_of_mass[0], center_of_mass[1], dest, enemy_density])
+        stats.extend([center_of_mass[0], center_of_mass[1], dist, enemy_density])
 
         return stats
     
@@ -382,37 +434,40 @@ class TaskPursuitEnv(pursuit_v4.raw_env):
 
         pusuer_idx = agent.split("_")[-1]
         pusuer_idx = int(pusuer_idx)
+
+                   
+        wall_channel = self.raw_observations[pusuer_idx][..., 0]  # Assuming the first channel represents walls        
+        # allies_channel = current_obs[...,1]  # Assuming the first channel represents walls        
+        # enemies_channel = current_obs[...,2]  # Assuming the first channel represents walls    
         
         agent_position = self.env.pursuer_layer.get_position(pusuer_idx)        
                
         task = self.last_tasks[agent][action]
-                          
-        if task != self.last_actions[pusuer_idx][0]:
-                        
-            slot = task.get_newSlot(agent_position)
-            
-            task.slots[slot] += 1 if task.type != "explore" else 4
 
-            last_task_data = self.last_actions[pusuer_idx]
-            last_task_data[0].slots[last_task_data[2]] -= 1 if last_task_data[0].type != "explore" else 4
-            
-            self.last_actions[pusuer_idx] = [task, action, slot, self.last_len_tasks[agent], self.task_historic[pusuer_idx]]
-            self.task_historic[pusuer_idx] = 0
+        last_task_data = self.last_actions[pusuer_idx]                                          
+        
+        if task != self.last_actions[pusuer_idx][0]:                                                                                    
+                                    
+            last_task_data[0].slots[last_task_data[2]] -= 1
+
+            slot = task.get_newSlot(agent_position, last_task_data[2])
+            self.last_actions[pusuer_idx] = [task, action, slot, self.last_len_tasks[agent], 1]
+            self.task_historic[pusuer_idx] = 1
         
         else:
-            
+                                                
+            #self.last_actions[pusuer_idx][2] = slot            
             self.task_historic[pusuer_idx] += 1
-            self.last_actions[pusuer_idx][4] =  self.task_historic[pusuer_idx]
+            self.last_actions[pusuer_idx][4] += 1
               
         
-        action = self.convert_task2action(self.last_tasks[agent], action , agent_position, self.last_actions[pusuer_idx][2]) 
+        action = self.convert_task2action(self.last_tasks[agent], action , agent_position, self.last_actions[pusuer_idx][2], wall_channel) 
                 
         
         self.env.step(
             action, self.agent_name_mapping[agent], self._agent_selector.is_last()
         )
-                     
-                        
+                                             
             
         for k in self.terminations:
             if self.env.frames >= self.env.max_cycles:
@@ -454,7 +509,7 @@ class TaskPursuitEnv(pursuit_v4.raw_env):
         """Calculate Euclidean distance between two points."""
         return ((pos1[0] - pos2[0]) ** 2 + (pos1[1] - pos2[1]) ** 2) ** 0.5
    
-    def convert_task2action(self, last_tasks, task_num, agent_position, slot):
+    def convert_task2action(self, last_tasks, task_num, agent_position, slot, wall_channel):
         # Get the selected task
         
         selected_task = last_tasks[task_num] if task_num < len(last_tasks) else None
@@ -464,7 +519,7 @@ class TaskPursuitEnv(pursuit_v4.raw_env):
             return 4  # Assuming 4 is the default 'stay' action        
 
         # Determine the desired action based on the task type
-        return selected_task.determine_desired_action(agent_position, slot)
+        return selected_task.determine_desired_action(agent_position, slot, wall_channel)
 
     def update_tasks(self):
                 
@@ -472,8 +527,8 @@ class TaskPursuitEnv(pursuit_v4.raw_env):
         
         self.tasks = active_evaders + self.tasks_allies #+ self.tasks_basic 
 
-        #self.tasks = active_evaders + self.tasks_basic 
-        #self.tasks = self.tasks_basic.copy()
+        # self.tasks = active_evaders + self.tasks_basic 
+        # self.tasks = self.tasks_basic.copy()
 
  
     def print_grid(self):

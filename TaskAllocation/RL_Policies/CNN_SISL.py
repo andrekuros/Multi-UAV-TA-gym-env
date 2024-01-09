@@ -27,25 +27,21 @@ class CNN_SISL(Net):
      
 
     def forward(self, obs, state=None, info=None):
-        # Permute the input dimensions to (batch_size, channels, height, width)        
-
-        current_obs = obs[:, :1, :, :]  # Current obs is the first channel
-        current_obs = current_obs.squeeze(1)
-        obs_tensor = torch.tensor(current_obs, dtype=torch.float32).to(self.device)
+        # Permute the input dimensions to (batch_size, channels, height, width)
+        obs_tensor = torch.tensor(obs, dtype=torch.float32).to(self.device)
         obs_permuted = obs_tensor.permute(0, 3, 1, 2)        
-        
         model_out = self.model(obs_permuted)
-        
         self._value_out = self.value_fn(model_out)
-        
-        # print("policy_output", self.policy_fn(model_out).shape)
-        # print("value_output", state.shape)
-              
         return self.policy_fn(model_out), state
 
     def value_function(self):
         return self._value_out.flatten()
-    
-    def freeze_conv_layers(self):
-            for param in self.model.parameters():
-                param.requires_grad = False
+        
+        
+
+        conv_output = self.conv_net(obs_permuted)
+   
+        output = self.fc_net(conv_output)
+        
+        
+        return output, state
