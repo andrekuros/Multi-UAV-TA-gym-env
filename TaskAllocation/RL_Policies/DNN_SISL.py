@@ -3,9 +3,7 @@ import torch.nn as nn
 from typing import Optional, Any, List, Dict
 from tianshou.utils.net.common import Net
 import numpy as np
-import torch.nn.functional as F
-from mUAV_TA.MultiDroneEnvData import SceneData
-import random
+
 
 
 class DNN_SISL(Net):

@@ -1,5 +1,5 @@
 from ssl import get_default_verify_paths
-from pettingzoo.sisl import pursuit_v4
+from pettingzoo.sisl import waterworld_v4
 from pettingzoo.utils import wrappers
 import numpy as np
 import torch
@@ -30,10 +30,10 @@ __all__ = ["ManualPolicy", "env", "parallel_env", "raw_env"]
 
 
 TASK_TYPES = {
-    'chase_evader': [1, 0, 0],
-    'coordinate': [0, 1, 0],    
-    'explore': [0, 0, 1],
-    'stay': [0, 0, 0]
+    'chase_food'  : [1, 0, 0],
+    'coordinate'  : [0, 1, 0],    
+    'explore'     : [0, 0, 1],
+    'avoid_poison': [0, 0, 0]
 }
 
 class refPoint:
@@ -43,26 +43,22 @@ class refPoint:
 class Task:
     _id_counter = 0  # Class variable for generating unique IDs
 
-    def __init__(self, task_type, target_object, forced_action = 4, num_agents=0):
+    def __init__(self, task_type, target_object, forced_action = np.array([0,0])):
+        
         self.id = Task._id_counter
-        # print(self.id, " - ", task_type)
+        
         Task._id_counter += 1
         self.type = task_type
         self.target_object = target_object        
 
         self.forced_action = forced_action
         #self.distance = distance
-        
-        self.slot_offset = np.array([[-1,0], [1,0], [0,1], [0,-1]])
-        self.slots = [0, 0, 0, 0]
-
-        self.refExp = np.array([[3, 3], [3, 13], [13, 3], [13, 13]])
+                        
+        self.refExp = np.array([[0, 1], [1, 0], [-1, 0], [0, -1]])
             
 
-    def calculate_default_action(self):
-        # Return a default action (e.g., stay)
-        return 4  # Stay    
-
+    def calculate_default_action(self):        
+        return np.array([0,0]) #stay   
 
     
     def find_closest_point(self, my_position, points_array):
@@ -132,48 +128,12 @@ class Task:
         
         else:
             # Default action (e.g., 'stay')
-            return self.calculate_default_action()
+            return self.calculate_default_action()            
     
-    
-    #Randonly select an more empty slot
-    def get_newSlot(self, agent_position, current_slot, exclusion = 99):
-                                
-        
-        #exclusions = self.check_slots(wall_channel)
-        
-        slots = [slot if idx != exclusion else 999 for idx,slot in enumerate(self.slots)]
-                            
-        minV = min(slots) 
-        
-        dists = [self.get_dist(agent_position, self.target_object.current_pos + self.slot_offset[i]) if slot == minV else 999 for i,slot in enumerate(slots)]
-        
-        #occurs = [index for index, element in enumerate(self.slots) if element == minV]                
-        #idxMin = np.random.choice(occurs)
-        idxMin = dists.index(min(dists))
-
-        if exclusion == 99:
-            self.slots[idxMin] += 1
-
-        return idxMin
-    
-    def update_slots(self):        
-        
+    def update_slots(self):                
         return 0
     
-    def check_slots(self, wall_layer):
-                
-        #need to invert slots considering wall is inverted x,y
-        wall_check = [wall_layer[ 1, 0] == 1, # Above center
-                      wall_layer[ 1, 2] == 1, # Below center
-                      wall_layer[ 2, 1] == 1, # Left of center
-                      wall_layer[ 0, 1] == 1  # Right of center
-                    ]
-
-        
-        return wall_check
-
-
-    
+   
     def calculate_direction_to_target(self, agent_position, target_position):
         """
         Calculate the direction from the agent's position to the target's position.

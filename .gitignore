@@ -6,6 +6,7 @@ Results/
 Logs/
 *.csv
 dqn_SISL/*.pth
+dqn_SPREAD/*.pth
 wandb/*
 
 wandb/run-20231118_215516-CNN_SISL_SISL_NOV12_Emb128231118-215404/run-CNN_SISL_SISL_NOV12_Emb128231118-215404.wandb
