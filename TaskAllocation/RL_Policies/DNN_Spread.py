@@ -21,24 +21,23 @@ class DNN_Spread(Net):
         self.obs_shape = obs_shape
        
         self.scene_encoder = nn.Sequential(
-            nn.Linear(obs_shape, 32),
+            nn.Linear(obs_shape, 128),
             nn.ReLU(),
-            nn.Linear(32, 64),
-            nn.ReLU(),
-           
-            nn.Linear(64, 128),
-            nn.ReLU(),
-            # nn.Linear(128, 256),
-            # nn.ReLU(),
-            # nn.Linear(256, 128),
-            # nn.ReLU(),  
-            nn.Linear(128, 64),
-            nn.ReLU(),  
-            
-            nn.Linear(64, 32),
-            nn.ReLU(),       
-            nn.Linear(32, action_shape)  # Ensure the output matches the action shape
+            nn.Linear(128, 256),
+            nn.ReLU(),     
+            nn.Linear(256, 256),
+            nn.ReLU(),                
+            nn.Linear(256, action_shape)  # Ensure the output matches the action shape
         ).to(device)
+
+
+        # self.scene_encoder = nn.Sequential(
+        #     nn.Linear(obs_shape, 32),
+        #     nn.Tanh(),
+        #     nn.Linear(32, 32),
+        #     nn.Tanh(),                
+        #     nn.Linear(32, action_shape)  # Ensure the output matches the action shape
+        # ).to(device)
 
     def forward(self, obs: torch.Tensor, state: Optional[Any] = None, info: Optional[Any] = None):
 
@@ -47,8 +46,10 @@ class DNN_Spread(Net):
         output = self.scene_encoder(torch.tensor(np.array(obs), dtype=torch.float32).to(self.device))
        
         # Generate random values with the same shape as the output tensor
-        #random_values = torch.rand_like(output, requires_grad=True)
+        # random_values = torch.rand_like(output, requires_grad=True)
         # zeros = torch.zeros_like(output,  requires_grad=True)
+
+        # print(output)
        
        
         return output, state

@@ -140,7 +140,7 @@ runs = 30
 
 Spread_Config = {
     "N": 3,                      # Default = 3
-    "local_ratio": 0.5,          # Default = 0.5
+    "local_ratio": 0.50,          # Default = 0.5
     "max_cycles": 25,            # Default = 25
     "continuous_actions": False, # Default = False
     "render_mode": None#"human"          # Default = None 
@@ -191,7 +191,9 @@ for i in range(runs):
         #ind = 0
         agent_index = int(re.search(r'\d+', agent).group())
 
-        reward_run += reward / 3
+        # print(step, reward)
+
+        reward_run += reward / 3 
 
         if termination or truncation:
             action = None
@@ -215,10 +217,11 @@ for i in range(runs):
                         
             if dist_agents < 5:
                 action = direction_to_avoid_target([0,0], agent_speed ,[observation[-4], observation[-3]])
-                print(dist_agents, "Avoiding" , action)
+                # print(dist_agents, "Avoiding" , action)
 
             if action == -1:
                 action = choose_actionPID(agent_index, landmark_positions, agent_speed)
+            action = random.randint(0,4)
             #action = 0
 
         env.step(action)

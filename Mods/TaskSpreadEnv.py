@@ -415,11 +415,6 @@ class TaskSpreadEnv(simple_spread_v3.raw_env):
     #     active_evaders = [self.tasks_evaders[i] for i in range(len(self.tasks_evaders)) if not self.env.evaders_gone[i]]        
     
         self.tasks = self.tasks_landmarks #+ self.tasks_allies + self.tasks_explore
-   
- 
-          
-        
-
 
 def env(**kwargs):
     environment = TaskSpreadEnv(**kwargs)
