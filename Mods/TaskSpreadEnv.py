@@ -242,7 +242,7 @@ class TaskSpreadEnv(simple_spread_v3.raw_env):
         self.agents = ["agent_" + str(a) for a in range(n_agents)]
         self.possible_agents = self.agents[:]
         #Env modification for Task based policy
-        self.max_tasks = n_agents #* 2 - 1  + 4 # Maximum number of tasks
+        self.max_tasks = n_agents * 2 - 1  #+ 4 # Maximum number of tasks
         self.act_space = spaces.Discrete(self.max_tasks)
         self._action_space = [self.act_space for _ in range(n_agents)]
         self.action_spaces = dict(zip(self.agents, self._action_space))
@@ -348,15 +348,15 @@ class TaskSpreadEnv(simple_spread_v3.raw_env):
     #         task_pos = np.array([ agent_position[0] + task.target_object.current_pos[1], agent_position[1] + task.target_object.current_pos[0]])
         
         # feature_vector = task_type_one_hot +  list(task.getDistSinCos(agent.state.p_pos, task.target_object.state.p_pos)) +\
-        feature_vector = slot_count  + list([get_dist(agent.state.p_pos, task.target_object.state.p_pos)])#+\
-    #                      [                             
-    #                          agent.state.p_vel[0],
-    #                          agent.state.p_vel[1],  
-    # #                        agent_position[1]/15,
-    # #                        sum(task.slots)/4,
-    # #                        #historic / 5,
-    # #                        #aliies_in_sight,
-    #                      ] #+ self.action_historic[pusuer_idx]#+ stats
+        feature_vector = task_type_one_hot  + list(task.getDistSinCos(agent.state.p_pos, task.target_object.state.p_pos)) +\
+            [                             
+                              agent.state.p_vel[0],
+                              agent.state.p_vel[1],  
+                            #agent_position[1]/15,
+                            #sum(task.slots)/4,
+                            #historic / 5,
+                            #aliies_in_sight,
+                          ] #+ self.action_historic[pusuer_idx]#+ stats
         
         
         return feature_vector
@@ -386,7 +386,7 @@ class TaskSpreadEnv(simple_spread_v3.raw_env):
 
         else:
             action = self.convert_task2action(agent_obj, selected_task ) 
-            print("HAHAHA")
+            #print("HAHAHA")
 
         super().step(action)
     
@@ -414,7 +414,7 @@ class TaskSpreadEnv(simple_spread_v3.raw_env):
                 
     #     active_evaders = [self.tasks_evaders[i] for i in range(len(self.tasks_evaders)) if not self.env.evaders_gone[i]]        
     
-        self.tasks = self.tasks_landmarks #+ self.tasks_allies + self.tasks_explore
+        self.tasks = self.tasks_landmarks + self.tasks_allies #+ self.tasks_explore
 
 def env(**kwargs):
     environment = TaskSpreadEnv(**kwargs)

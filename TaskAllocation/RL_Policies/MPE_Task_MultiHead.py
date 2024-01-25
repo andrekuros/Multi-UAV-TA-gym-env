@@ -26,11 +26,11 @@ class MPE_Task_MultiHead(nn.Module):
             nn.ReLU(),
             nn.Linear(32, 64),
             nn.ReLU(),
-            nn.Linear(64, 256),
+            nn.Linear(64, 64),
+            # nn.ReLU(),
+            # nn.Linear(256, 512),
             nn.ReLU(),
-            nn.Linear(256, 512),
-            nn.ReLU(),
-            nn.Linear(512, self.embedding_size)  # Ensure this matches the action space
+            nn.Linear(64, self.embedding_size)  # Ensure this matches the action space
         ).to(device)
 
         # Multi-head attention layers
@@ -51,11 +51,11 @@ class MPE_Task_MultiHead(nn.Module):
         # ).to(device)
 
         self.output = nn.Sequential(
-            nn.Linear(self.embedding_size, 256),
+            nn.Linear(self.embedding_size, 32),
             nn.ReLU(),
-            nn.Linear(256, 128),
+            nn.Linear(32, 64),
             nn.ReLU(),          
-            nn.Linear(128, 64),
+            nn.Linear(64, 64),
             nn.ReLU(),          
             nn.Linear(64, 1)  # Ensure this matches the action space
 
