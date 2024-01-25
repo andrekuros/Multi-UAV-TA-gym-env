@@ -215,13 +215,13 @@ for i in range(runs):
             dist_agents = distance([0,0] + agent_speed, [observation[-4], observation[-3]])
             # dist_agents = distance([0,0], [observation[-4], observation[-3]])
                         
-            if dist_agents < 5:
+            if dist_agents < -1:
                 action = direction_to_avoid_target([0,0], agent_speed ,[observation[-4], observation[-3]])
-                # print(dist_agents, "Avoiding" , action)
+                #print(dist_agents, "Avoiding" , action)
 
             if action == -1:
                 action = choose_actionPID(agent_index, landmark_positions, agent_speed)
-            action = random.randint(0,4)
+            #action = random.randint(0,4)
             #action = 0
 
         env.step(action)
@@ -233,7 +233,7 @@ for i in range(runs):
         
 env.close()         
 print(rewards)
-print(np.sum(rewards) / runs)
+print("Mean Reward", np.sum(rewards) / runs)
 print(np.std(rewards))
 print(np.max(rewards))
 print(np.min(rewards))
