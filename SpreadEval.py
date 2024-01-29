@@ -136,7 +136,7 @@ def direction_to_avoid_target(agent_position, agent_speed, target_position):
 
 
 seed = 0
-runs = 30
+runs = 100
 
 Spread_Config = {
     "N": 3,                      # Default = 3
@@ -193,7 +193,7 @@ for i in range(runs):
 
         # print(step, reward)
 
-        reward_run += reward / 3 
+        reward_run += reward 
 
         if termination or truncation:
             action = None
@@ -221,7 +221,7 @@ for i in range(runs):
 
             if action == -1:
                 action = choose_actionPID(agent_index, landmark_positions, agent_speed)
-            #action = random.randint(0,4)
+            action = random.randint(0,4)
             #action = 0
 
         env.step(action)
