@@ -136,7 +136,7 @@ def direction_to_avoid_target(agent_position, agent_speed, target_position):
 
 
 seed = 0
-runs = 100
+runs = 150
 
 Spread_Config = {
     "N": 3,                      # Default = 3
