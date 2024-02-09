@@ -523,8 +523,7 @@ class TaskPursuitEnv(pursuit_v4.raw_env):
               
         
         action = self.convert_task2action(self.last_tasks[agent], action , agent_position, self.last_actions[pusuer_idx][2], wall_channel) 
-                
-        action = random.randint(0,4)
+                        
         self.env.step(
             action, self.agent_name_mapping[agent], self._agent_selector.is_last()
         )

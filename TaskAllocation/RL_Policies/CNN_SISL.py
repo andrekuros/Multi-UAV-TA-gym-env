@@ -19,7 +19,7 @@ class CNN_SISL(Net):
             nn.Conv2d(64, 64, [2, 2]),
             nn.ReLU(),
             nn.Flatten(),
-            (nn.Linear(2304, 64)),
+            (nn.Linear(1024, 64)),
             nn.ReLU(),
         )
         self.policy_fn = nn.Linear(64, 5)
