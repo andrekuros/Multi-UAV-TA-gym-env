@@ -21,22 +21,26 @@ class CBBA():
         self.bids = {task.id: {'agent_id': None, 'bid': 0} for task in tasks}
 
         while remaining_tasks:
-            bid_sum = 0
+            allocation_changed = False
             for task_id in remaining_tasks:
                 self.rndGen.shuffle(agents)  # Randomize the order of agents
                 #print([agent.id for agent in agents])
                 for agent in agents:
                     task = task_dict[task_id]
                     if task_id not in bundles[agent.id]:
-                        bid = self.calculate_bid(agent, task, paths[agent.id], Qs=Qs)   
-                        bid_sum += bid                    
+                        bid = self.calculate_bid(agent, task, paths[agent.id], Qs=Qs)
                         if bid > self.bids[task_id]['bid']:
+                            allocation_changed = True
+                            prev_agent_id = self.bids[task_id]['agent_id']
+                            if prev_agent_id is not None:
+                                if task_id in paths[prev_agent_id]:
+                                    paths[prev_agent_id].remove(task_id)
                             self.bids[task_id] = {'agent_id': agent.id, 'bid': bid}
                             # Determine where to insert the task in the path
                             insertion_point = self.determine_insertion_point(agent, task, paths[agent.id])
                             paths[agent.id].insert(insertion_point, task_id)
 
-            if bid_sum == 0:
+            if not allocation_changed:
                 break
             
             # Consensus phase
