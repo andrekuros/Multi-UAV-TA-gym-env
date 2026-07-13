@@ -4,9 +4,9 @@ from typing import List, Optional
 from ctypes import util
 from email import utils
 from pkgutil import extend_path
-import gym
-from gym import spaces
-from gym.spaces import Dict, Discrete, MultiDiscrete, Box
+import gymnasium as gym
+from gymnasium import spaces
+from gymnasium.spaces import Dict, Discrete, MultiDiscrete, Box
 import numpy as np
 import random
 import copy
@@ -21,14 +21,15 @@ import seaborn as sns
 
 from pettingzoo import ParallelEnv
 from pettingzoo.utils import parallel_to_aec, wrappers
-from pettingzoo.utils import agent_selector
+from pettingzoo.utils.agent_selector import agent_selector
 from torch import pinverse
 
 from .DroneEnvComponents import UAV, SquareArea, Task, Obstacle, Threat
 from .MultiDroneEnvData import SceneData 
 from .MultiDroneEnvUtils import agentEnvOptions, EnvUtils, ACMIExporter
 
-import pygame
+# pygame removed
+import core_sim
 
 MAX_INT = sys.maxsize
 EPS = 1e-12
@@ -204,11 +205,12 @@ class MultiUAVEnv(ParallelEnv):
         self.recrdr = None
         self.scale_factor = 1.0
         
-        if self.render_enabled:
-            import pygame
-            pygame.init()
-            self.clock = pygame.time.Clock()
-            # Configurar o MovieWriter
+        if self.render_mode == "human":
+            self.screen = None
+
+        elif self.render_mode == "rgb_array":
+            self.screen = None
+            self.recrdr = None# Configurar o MovieWriter
             #self.recrdr = pgr("Test_Tessi.gif") # init recorder object
         if self.debuger_data:
             # Set up a socket connection
@@ -525,7 +527,7 @@ class MultiUAVEnv(ParallelEnv):
         
         for ng, threat_group in enumerate(self.threats_list):
 
-            group_pos = np.array([self.rndAgentGen.randint(0 + self.threat_wide, max_horz - self.threat_wide), 0])
+            group_pos = np.array([self.rndAgentGen.randint(int(0 + self.threat_wide), int(max_horz - self.threat_wide)), 0])
             group_type = threat_group[0]
             self.threats_groups.append([])
             
@@ -546,7 +548,7 @@ class MultiUAVEnv(ParallelEnv):
             
             for _ in range(threat_group[1]): 
 
-                start_position = np.array([self.rndAgentGen.randint(group_pos[0] - self.threat_wide, group_pos[0] + self.threat_wide), 0])
+                start_position = np.array([self.rndAgentGen.randint(int(group_pos[0] - self.threat_wide), int(group_pos[0] + self.threat_wide)), 0])
                 speed = self.sceneData.maxSpeeds[group_type]
                 engageRange = self.sceneData.engage_range[group_type]
                 attack = self.sceneData.UavCapTable[group_type][2]
@@ -768,6 +770,8 @@ class MultiUAVEnv(ParallelEnv):
                                                                                                                                
             if self.hidden_obstacles:            
                 self.detect_segments()
+                
+            obs_array = [[obs.position[0], obs.position[1], obs.size] for obs in self.obstacles]
             
             # Calcular as novas posições dos agents 
             for i, agent in enumerate(self.agents_obj):
@@ -832,7 +836,8 @@ class MultiUAVEnv(ParallelEnv):
                                         agent.task_start = self.time_steps
                                     else:
                                         movement = dir_task_norm 
-                                        avoid_vector = agent.avoid_obstacles(agent, self.obstacles, movement, self.sceneData)  
+                                        avoid_vector = core_sim.SimCore.avoid_obstacles(agent.position.tolist(), obs_array, movement.tolist())
+                                        avoid_vector = np.array(avoid_vector)
                                         
                                 
                                 elif distance_task < agent.max_speed:                      
@@ -845,7 +850,8 @@ class MultiUAVEnv(ParallelEnv):
                                 else:
 
                                     movement = dir_task_norm 
-                                    avoid_vector = agent.avoid_obstacles(agent, self.obstacles, movement, self.sceneData)                                                  
+                                    avoid_vector = core_sim.SimCore.avoid_obstacles(agent.position.tolist(), obs_array, movement.tolist())
+                                    avoid_vector = np.array(avoid_vector)
                                     
                             #----------------IN TASK-------------------#
                             elif agent.state == 2: 
@@ -918,7 +924,8 @@ class MultiUAVEnv(ParallelEnv):
                             agent.state = 0
                         else:
                             movement = EnvUtils.norm_vector(self.bases[0]  - agent.position)
-                            avoid_vector = agent.avoid_obstacles(agent, self.obstacles, movement, self.sceneData)     
+                            avoid_vector = core_sim.SimCore.avoid_obstacles(agent.position.tolist(), obs_array, movement.tolist())
+                            avoid_vector = np.array(avoid_vector)
                                                                                                                         
                     movement = EnvUtils.norm_vector(movement + avoid_vector) * agent.max_speed
                                                                                 
@@ -1439,342 +1446,4 @@ class MultiUAVEnv(ParallelEnv):
             
         plt.tight_layout()
         plt.show()
-
-#####--------------- Rendering in PyGame -------------------###################
-
-    def draw_rotated_triangle(self, surface, x, y, size, angle, agent, state, font):
-        
-        mod_size = size / 2
-        color = (0, 0, 255) if state >= 1 else (100, 100, 100)
-                
-        if agent.type == "R1" or agent.type == "R2":
-            mod_size = size / 1.5
-            color = (0, 200, 200) if state >= 1 else color 
-        
-        if agent.type == "C1":
-            mod_size = size / 1.5
-            color = (230, 230, 230) if state >= 1 else color 
-
-        if agent.type == "T1":
-            mod_size = size / 1.0
-            color = (250, 0, 0) if state >= 1 else color 
-                            
-        angle_rad = np.radians(angle)    
-        dx1 = mod_size  * np.cos(angle_rad - np.pi / 0.7)
-        dy1 = mod_size  * np.sin(angle_rad - np.pi / 0.7)    
-        dx2 = mod_size * np.cos(angle_rad)
-        dy2 = mod_size * np.sin(angle_rad)        
-        dx3 = mod_size  * np.cos(angle_rad + np.pi / 0.7)
-        dy3 = mod_size  * np.sin(angle_rad + np.pi / 0.7)           
-        points = [(x + dx1, y + dy1), (x + dx2, y + dy2), (x + dx3, y + dy3)]
-
-
-        pygame.draw.polygon(surface, color, points )                
-        if agent.type == "F1" or agent.type == "F2":
-                    
-            task_text = font.render(str(agent.attackCap), True, (200, 200, 200))  # Renderizar o texto (preto)                    
-            text_rect = task_text.get_rect(center=(points[0][0] + 5, points[0][1]))  # Centralizar o texto no círculo
-            surface.blit(task_text, text_rect)
-        
-        if state == -1:
-            line_width = 3
-            pygame.draw.line(surface, (230, 0, 0), (x - 10, y - 10), (x + 10, y + 10), line_width)
-            pygame.draw.line(surface, (230, 0, 0), (x - 10, y + 10), (x + 10, y - 10), line_width)
-        
-        if state == 2:
-            self.draw_rotated_triangle( surface, x, y, size*0.8, angle, agent, 0, font)
-
-
-    def draw_rotated_x(self,surface, x, y, size, angle, agent_type):
-        half_size = size / 2
-        angle_rad = np.radians(angle)
-    
-        dx1 = half_size * np.cos(angle_rad - np.pi / 4)
-        dy1 = half_size * np.sin(angle_rad - np.pi / 4)
-    
-        dx2 = half_size * np.cos(angle_rad + np.pi / 4)
-        dy2 = half_size * np.sin(angle_rad + np.pi / 4)
-    
-        pygame.draw.line(surface, (0, 0, 255), (x - dx1, y - dy1), (x + dx1, y + dy1), 2)
-        pygame.draw.line(surface, (0, 0, 255), (x - dx2, y - dy2), (x + dx2, y + dy2), 2)
-    
-    def serialize(self, obj):
-        """JSON serializer for objects not serializable by default json code"""
-        if isinstance(obj, np.ndarray):
-            return obj.tolist()
-        raise TypeError("Type not serializable")
-
-
-    def render(self, show_lines = True):
-               
-        if self.screen is None:
-            
-            pygame.init()
-            self.screen = pygame.display.set_mode((self.area_width , self.area_height), pygame.RESIZABLE)
-            pygame.display.set_caption('Multi agent Task Allocation')
-
-        virtual_screen = pygame.Surface((self.area_width, self.area_height))
-               
-        # Desenhar fundo
-        agents_surface = pygame.Surface((self.area_width, self.area_height))        
-        
-        comm_surface = pygame.Surface((self.area_width, self.area_height))
-        comm_surface.fill((0, 0, 0))
-        comm_surface.set_alpha(100)
-
-        # if self.debug_panel is not None:
-            # Gather data for all tasks
-        # Gather data for all tasks
-        tasks_data = [{
-            'id': str(task.id),
-            'currentReqs': task.currentReqs.tolist(),
-            'allocatedAgents': [alloc[0] for alloc in task.allocationDetails.items()]  # Adjust as per your data structure
-        } for task in self.tasks]
-
-        # print(tasks_data)
-        data_to_send = json.dumps(tasks_data, default=self.serialize)
-        self.client_socket.sendall(data_to_send.encode('utf-8'))
-
-        # pos = pygame.mouse.get_pos()
-        # data = json.dumps({'x': pos[0], 'y': pos[1]})
-        # self.client_socket.sendall(data.encode('utf-8'))
-        
-        pygame.draw.line(agents_surface, (0, 0, 90), (0, self.sceneData.ContactLine),(self.area_width, self.sceneData.ContactLine) , 3)
-
-        #Draw Base
-        base_size = 50
-        base_x = self.bases[0][0]
-        base_y = self.bases[0][1]
-        
-        pygame.draw.rect(agents_surface, (10,80,30), (base_x-base_size/2, base_y-base_size/2, base_size, base_size))
-        
-        font = pygame.font.Font(None, 18)
-        font2 = pygame.font.Font(None, 24)
-
-        #Draw misison Areas
-
-        # Inside the render function:
-        for area in self.mission_areas:
-
-            # Draw dashed rectangle
-            self.draw_dashed_line(agents_surface, (200, 200, 200), area.top_left, area.top_right) # top side
-            self.draw_dashed_line(agents_surface, (200, 200, 200), area.top_right, area.bottom_right) # right side
-            self.draw_dashed_line(agents_surface, (200, 200, 200), area.bottom_right, area.bottom_left) # bottom side
-            self.draw_dashed_line(agents_surface, (200, 200, 200), area.bottom_left, area.top_left) # left side
-        
-        # Draw Tasks
-        for task in self.tasks:
-                    
-            if task.type == "Rec":
-                color = (0, 255, 0) if task.status == 2 else (40, 80, 40)           
-                pygame.draw.circle(agents_surface, color, (int(task.position[0]), int(task.position[1])), 8)
-
-            elif task.type == "Hold":
-                color = (80, 0, 80)           
-                pygame.draw.circle(agents_surface, color, (int(task.position[0]), int(task.position[1])), 10)               
-            else:
-                if task.info == "Threat":
-                    if task.status != 2:
-                        color = (200, 0, 0) if task.status == 2 else (80, 40, 40)           
-                        pygame.draw.circle(agents_surface, color, (int(task.position[0]), int(task.position[1])), 10) 
-                    else:                    
-                        line_width = 3
-                        pygame.draw.line(agents_surface, (230, 0, 0), (int(task.position[0]) - 10, (int(task.position[1]) - 10)), (int(task.position[0]) + 10, (int(task.position[1]) + 10)), line_width)
-                        pygame.draw.line(agents_surface, (230, 0, 0), (int(task.position[0]) - 10, (int(task.position[1]) + 10)), (int(task.position[0]) + 10, (int(task.position[1]) - 10)), line_width)
-                else:
-                    color = (200, 0, 0) if task.status == 2 else (80, 40, 40)           
-                    pygame.draw.circle(agents_surface, color, (int(task.position[0]), int(task.position[1])), 10) 
-                
-            # Renderizar o número do alvo e desenhá-lo no centro do círculo
-            task_number_text = font.render(str(task.id), True, (30, 30, 30))  # Renderizar o texto (preto)
-            text_rect = task_number_text.get_rect(center=(int(task.position[0]), int(task.position[1])))  # Centralizar o texto no círculo
-            agents_surface.blit(task_number_text, text_rect)
-                        
-        # Draw agents
-        for i,agent in enumerate(self.agents_obj):
-                                   
-            pygame.draw.circle(comm_surface, (40, 40, 40), (int(agent.position[0]), int(agent.position[1])), agent.relay_area)
-            
-            if show_lines:
-                if len(agent.tasks) > 0 and agent.tasks[0].id != 0: 
-                    # Desenhar linha entre o agent e seu alvo atual            
-                    if not agent.re_eval:
-                        pygame.draw.line(agents_surface, (210, 210, 210), agent.position, agent.tasks[0].position, 1)
-                    else:
-                        pygame.draw.line(agents_surface, (0, 210, 210), agent.position, agent.tasks[0].position, 1)
-            
-                # Desenhar linha entre o alvo atual e o próximo (mais clara)
-                for j,task in enumerate(agent.tasks[1:-2]):                                                       
-                    pygame.draw.line(agents_surface, (80, 80, 80), agent.tasks[j].position, agent.tasks[j+1].position, 1)
-            
-            #pygame.draw.circle(self.screen, (0, 0, 255), (int(agent.position[0]), int(agent.position[1])), 7)
-            #self.draw_rotated_x(self.screen, int(agent.position[0]), int(agent.position[1]), 10, self.agent_directions[i])
-         
-            if agent.state != 0:
-                self.draw_rotated_triangle(agents_surface, int(agent.position[0]), int(agent.position[1]), 20, np.degrees(np.arctan2(self.agent_directions[i][1],self.agent_directions[i][0])) , agent, agent.state, font)                           
-            else:
-                self.draw_rotated_triangle(agents_surface, int(agent.position[0]), int(agent.position[1]), 20, -90 , agent, agent.state, font)            
-
-            id_text = font.render(str(agent.id), True, (200, 200, 200))  # Renderizar o texto (preto)                    
-            text_rect = id_text.get_rect(center=(int(agent.position[0]), int(agent.position[1])))  # Centralizar o texto no círculo
-            agents_surface.blit(id_text, text_rect)                            
-               
-        # Desenhar obstáculos
-        for obstacle in self.obstacles:
-            obstacle_color = (150, 40, 40)  # Cor vermelha clara
-            
-            if not self.hidden_obstacles:
-                pygame.draw.circle(comm_surface, obstacle_color, (int(obstacle.position[0]), int(obstacle.position[1])), obstacle.size)
-                # Renderizar o texto "No Fly Zone" e desenhá-lo no centro do círculo
-                obstacle_text = font.render("NFZ", True, (0, 0, 0))  # Renderizar o texto (preto)
-                text_rect = obstacle_text.get_rect(center=(int(obstacle.position[0]), int(obstacle.position[1])))  # Centralizar o texto no círculo
-                comm_surface.blit(obstacle_text, text_rect)        
-            else:
-                self.draw_detected_circle_segments(comm_surface, (255, 70, 70) ,obstacle)
-                                                    
-                                  
-        # Drawing threats and their directions
-        for threat in self.threats:            
-            # Drawing threat's direction as a line (or arrow) towards its target
-            line_length = threat.engage_range  # or any suitable length
-            if threat.target_agent != None and threat.attackCap > 0 and threat.status != 2:
-                direction = np.array(threat.target_agent.position) - np.array(threat.position)
-                direction = direction / np.linalg.norm(direction) * line_length
-            else:
-                direction = np.array([0,-1])
-            
-            end_position = (threat.position[0] + direction[0], threat.position[1] + direction[1])
-            pygame.draw.line(agents_surface, (255, 0, 0), threat.position, end_position, 2)
-
-            self.draw_rotated_triangle(agents_surface, 
-                                       int(threat.position[0]), 
-                                       int(threat.position[1]), 
-                                       10, 
-                                       np.degrees(np.arctan2(direction[1],direction[0])), 
-                                       agent, 1, font) 
-            #Attack Missiles
-            text_att = font.render(str(threat.attackCap), True, (200, 200, 200))  # Renderizar o texto (preto)
-            text_rect = text_att.get_rect(center=(int(threat.position[0]), int(threat.position[1]))) # Centralizar o texto no círculo
-            agents_surface.blit(text_att, text_rect)           
-
-
-        
-        virtual_screen.blit(agents_surface, (0,0))
-        virtual_screen.blit(comm_surface, (0,0))
-        
-        texto = font.render(str(self.time_steps), True, (200,200,200))
-        virtual_screen.blit(texto, (self.sceneData.GameArea[0] - 35, self.sceneData.GameArea[1] - 20))
-        
-        info = font2.render(self.info, True, (250,250,250))
-        virtual_screen.blit(info, (20, 20))
-        
-        scaled_surface = pygame.transform.smoothscale(virtual_screen, (int((self.area_width) * self.scale_factor), int(self.area_height * self.scale_factor)))
-        self.screen.blit(scaled_surface, (0, 0))  # Blit at the top-left corner
-
-        pygame.display.flip()  # Update the screen
-        
-        
-        # Salvar a imagem atual do jogo
-        if self.recrdr is not None:
-            self.recrdr.click(virtual_screen) # save frame as png to _temp_/ folder
-        
-        # Limitar a taxa de quadros
-        self.clock.tick(self.render_speed * 10)
-
-        
-        # Verificar se a janela está fechada
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                return False
-        
-        return True
-   
-    def close(self):
-        if self.recrdr != None:
-            self.recrdr.save() 
-        #pygame.quit()
-
-    def draw_dashed_line(self, surface, color, start_pos, end_pos, dash_length=10, space_length=5):
-       
-        x1, y1 = start_pos
-        x2, y2 = end_pos
-        dx = x2 - x1
-        dy = y2 - y1
-        distance = int(math.sqrt(dx**2 + dy**2))
-        dashes = distance // (dash_length + space_length)
-        
-        for i in range(dashes):
-            start = (x1 + (dx * i / dashes), y1 + (dy * i / dashes))
-            end = (x1 + (dx * (i + 0.5) / dashes), y1 + (dy * (i + 0.5) / dashes))
-            pygame.draw.line(surface, color, start, end, 1)
-
-    
-    def draw_detected_circle_segments(self, surface, color, obstacle, width=1):
-        
-        radius = obstacle.size
-        center = obstacle.position
-        
-        for start_angle, stop_angle in obstacle.detected_segments:
-            rect = pygame.Rect(center[0] - radius, center[1] - radius, radius * 2, radius * 2)
-            pygame.draw.arc(surface, color, rect, start_angle, stop_angle, width)
-
-    def draw_side_panel(self ,screen, tasks, side_panel_rect):
-        # Fill the side panel background
-        side_panel_color = (230, 230, 230)  # Light gray color
-        pygame.draw.rect(screen, side_panel_color, side_panel_rect)
-        
-        # Define starting Y position for text
-        start_y = 10  # Padding from top of the panel
-        for task in tasks:
-            # Render task information here
-            # You would access the task's requirements and create a text surface
-            font = pygame.font.SysFont(None, 24)
-            task_text = f"Task {task.id}: Requirement {task.currentReqs}"
-            text_surface = font.render(task_text, True, (0, 0, 0))
-            screen.blit(text_surface, (side_panel_rect.x + 10, start_y))
-            start_y += 30  # Move down for the next task
-
-
-
-    def draw_buttons(self ,screen, play_button_rect, pause_button_rect, simulation_running):
-        # Choose colors based on simulation state
-        play_button_color = (0, 200, 0) if not simulation_running else (0, 100, 0)
-        pause_button_color = (200, 0, 0) if simulation_running else (100, 0, 0)
-
-        # Draw play and pause buttons
-        pygame.draw.rect(screen, play_button_color, play_button_rect)
-        pygame.draw.rect(screen, pause_button_color, pause_button_rect)
-    
-    def renderDebugScreen(self, show_lines = True):
-               
-        if self.debug_panel is None:
-                       
-            # Create the side panel window
-            self.debug_panel = pygame.display.set_mode((300, 1000), flags=pygame.HWSURFACE | pygame.DOUBLEBUF | pygame.RESIZABLE)
-            pygame.display.set_caption('Side Panel Window')
-
-        play_button_rect = pygame.Rect(self.area_width + 50, 10, 80, 30)
-        pause_button_rect = pygame.Rect(self.area_width + 50, 50, 80, 30)
-
-        for event in pygame.event.get():
-        # ... existing event handling ...
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                if play_button_rect.collidepoint(event.pos):
-                    self.simulation_running = True
-                elif pause_button_rect.collidepoint(event.pos):
-                    self.simulation_running = False                       
-
-              
-        #Draw Debug Panel
-        self.draw_side_panel(self.debug_panel, self.tasks, pygame.Rect(300, 0, 300, self.area_height))
-        self.debug_panel.fill((0, 0, 100))
-
-        pygame.display.flip()  # Update the screen
-                       
-        
-        # Verificar se a janela está fechada
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                return False
-        
-        return True
+

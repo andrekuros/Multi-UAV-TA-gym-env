@@ -33,14 +33,12 @@ def softmax_stable(x):
     return(np.exp(x - np.max(x)) / np.exp(x - np.max(x)).sum())
 
 algorithms = []
-# algorithms += ['Random']
-# # # #algorithms += ['Random2']
-# algorithms += ["Greedy"]
-# algorithms += ["Swarm-GAP"]
-# algorithms += ["CBBA"]
-algorithms +=  ["TBTA"]
-#algorithms +=  ["TBTA2"]
-#algorithms +=  ["CTBTA"]
+algorithms += ['Random']
+algorithms += ["Greedy"]
+algorithms += ["Swarm-GAP"]
+algorithms += ["CBBA"]
+algorithms += ["TBTA"]
+algorithms += ["TBTA-PPO"]
 
 episodes = 10
 fail_rate = 0.0
@@ -50,7 +48,7 @@ print(algorithms)
 
 same_policy = False
    
-scal_analysis = "None"
+scal_analysis = "Agents"
 cases = []
 
 if scal_analysis == "Tasks":
@@ -68,8 +66,7 @@ elif scal_analysis == "Agents":
         case['Rec'] = 24
         cases.append(case)
 else:
-    cases =  [{'case' : 0, 'Hold': 4, 'Att': 4, 'Rec' : 16, 'F1':1, 'F2': 0, "R1" : 6 }]
-    cases =  [{'case' : 0, 'Hold': 0, 'Att': 10, 'Rec' : 0,  'F1':0, 'F2': 1, "R1" : 0, "R2" : 0 }]
+    cases =  [{'case' : 0, 'Hold': 0, 'Att': 15, 'Rec' : 0,  'F1':0, 'F2': 2, "R1" : 0, "R2" : 0 }]
 
 caseResults = []
 totalMetrics = []
@@ -115,8 +112,8 @@ for c_idx,case in enumerate(cases):
             simulation_frame_rate = 0.01 * resolution_increase, #Std 0.02
             max_time_steps = 150 * resolution_increase,
             action_mode= "TaskAssign",
-            agents= {"F1" : case['F1'], "F2" : case['F2'], "R1" : case['R1'], "R2" : case['R2']},                 
-            tasks= { "Att" : case['Att'], "Rec" : case['Rec'],  "Hold" : case['Hold']},
+             agents= {"F1" : case.get('F1', 0), "F2" : case.get('F2', 0), "R1" : case.get('R1', 0), "R2" : case.get('R2', 0)},                 
+             tasks= { "Att" : case.get('Att', 0), "Rec" : case.get('Rec', 0),  "Hold" : case.get('Hold', 0)},
             random_init_pos = False,
             num_obstacles = 0,
             hidden_obstacles = False,
@@ -181,34 +178,32 @@ for c_idx,case in enumerate(cases):
                 worldModel.multiple_agents_per_task = True
 
             
-            if algorithm == "TBTA" or algorithm == "TBTA2":
+            if algorithm in ["TBTA", "TBTA2", "TBTA-PPO"]:
                 # load policy as in your original code
                 worldModel.multiple_tasks_per_agent = False                
                 worldModel.multiple_agents_per_task = True
                 
                 if algorithm == "TBTA":
-                    # load_policy_name = 'policy_CustomNetMultiHead_Eval_TBTA_4R120RT_02.pth'
                     load_policy_name = 'policy_CustomNetMultiHead_TBTA_NOV06_Emb128.pth'
                     load_policy_path = os.path.join("dqn_Custom", load_policy_name) 
-                    # load_policy_name = 'PPO_CustomNetMultiHead_Eval_TBTA_OCT01.pth'
-                    # load_policy_path = os.path.join("ppo_Custom", load_policy_name) 
-                    
-                    # load_policy_name2 = 'policy_CustomNetMultiHead_Eval_TBTA_OCT01F.pth'
-                       
-                    # load_policy_path2 = os.path.join("dqn_Custom", load_policy_name2)                
-                    policy = _get_model(model="CustomNetMultiHead", env=worldModel, seed = episode_seed)   
-                    # policyF = _get_model(model="CustomNetMultiHead", env=worldModel, seed = episode_seed)         
-                    
+                    policy = _get_model(model="CustomNetMultiHead", env=worldModel, seed = episode_seed, algorithm="DQN")   
 
                 if algorithm == "TBTA2": 
                     load_policy_name = 'policy_CustomNetMultiHead_Eval_TBTA_02_simplified_UCF1.pth'            
                     load_policy_path = os.path.join("dqn_Custom", load_policy_name)                    
-                    policy = _get_model(model="CustomNetMultiHead", env=worldModel,  seed = episode_seed)
+                    policy = _get_model(model="CustomNetMultiHead", env=worldModel,  seed = episode_seed, algorithm="DQN")
+
+                if algorithm == "TBTA-PPO":
+                    load_policy_name = 'PPO_CustomNetMultiHead_PPO_OCT01_2.pth'            
+                    load_policy_path = os.path.join("ppo_Custom", load_policy_name)                    
+                    policy = _get_model(model="CustomNetMultiHead", env=worldModel, seed = episode_seed, algorithm="PPO")
                 
-                saved_state = torch.load(load_policy_path )           
+                device = "cuda" if torch.cuda.is_available() else "cpu"
+                saved_state = torch.load(load_policy_path, map_location=device)           
                 policy.load_state_dict(saved_state)
                 policy.eval()
-                policy.set_eps(0.0)
+                if algorithm != "TBTA-PPO":
+                    policy.set_eps(0.0)
         
             if algorithm == "CTBTA":
 
@@ -217,7 +212,8 @@ for c_idx,case in enumerate(cases):
                 load_policy_path = os.path.join("dqn_Custom", load_policy_name)                             
                 policy2 = _get_model(model="CustomNetMultiHead", env=worldModel, seed = episode_seed)
     
-                saved_state = torch.load(load_policy_path )           
+                device = "cuda" if torch.cuda.is_available() else "cpu"
+                saved_state = torch.load(load_policy_path, map_location=device)           
                 policy2.load_state_dict(saved_state)
                 policy2.eval()
                 policy2.set_eps(0.0)
@@ -370,7 +366,7 @@ for c_idx,case in enumerate(cases):
                                 episode_process_time.append(end_time - start_time)
                                 # print(actions)
                                 
-                elif algorithm == "TBTA" or algorithm == "TBTA2":
+                elif algorithm in ["TBTA", "TBTA2", "TBTA-PPO"]:
                     
                     #un_taks_obj = [worldModel.tasks[i] for i in worldModel.unallocated_tasks()] 
                     un_taks_obj = worldModel.tasks 
@@ -389,7 +385,10 @@ for c_idx,case in enumerate(cases):
                                 agent_id = f'{worldModel.agents_obj[worldModel.agent_selector._current_agent].name}'                                            
                                 obs_batch = Batch(obs=[observation[agent_id]], info=[{}])                                               
                                 action = policy(obs_batch).act
-                                action = np.argmax(action)                                
+                                if algorithm == "TBTA-PPO":
+                                    action = action.item() if hasattr(action, "item") else action[0]
+                                else:
+                                    action = np.argmax(action)                                
                                 actions[agent_id] = action                                                                
                                 
                             end_time = time.time()
@@ -402,7 +401,10 @@ for c_idx,case in enumerate(cases):
                             #print(obs_batch)
                             if worldModel.agents_obj[worldModel.agent_selector._current_agent].type != "AA":                            
                                 action = policy(obs_batch).act
-                                action = np.argmax(action)                            
+                                if algorithm == "TBTA-PPO":
+                                    action = action.item() if hasattr(action, "item") else action[0]
+                                else:
+                                    action = np.argmax(action)                            
                                 actions[agent_id] = action                            
                                 end_time = time.time()
                                 episode_process_time.append(end_time - start_time)
@@ -510,6 +512,113 @@ metricsDf = pd.DataFrame(totalMetrics)
 metricsDf.to_csv(f'Resultados_{expName}.csv', index=False)
 print(f'\nResults Saved to:\nResultados_{expName}.csv' )
 
+try:
+    print("\nGenerating comparative plots...")
+    import seaborn as sns
+    sns.set_style("whitegrid")
+    
+    if scal_analysis in ["Tasks", "Agents"]:
+        # Line plots for scaling analysis
+        eval_param = "n_Tasks" if scal_analysis == "Tasks" else "n_Agents"
+        
+        # Make a copy of the dataframe
+        plot_df = casesDf.copy()
+        
+        # Calculate standard scalar values from the lists in casesDf
+        plot_df['avg_S_reward'] = plot_df['mean_S_reward'].apply(np.mean)
+        plot_df['avg_R_reward'] = plot_df['mean_R_reward'].apply(np.mean)
+        plot_df['avg_process_time'] = plot_df['mean_process_time'].apply(np.mean)
+        plot_df['avg_time_reward'] = plot_df['time_reward'].apply(np.mean)
+        plot_df['avg_distance_reward'] = plot_df['distance_reward'].apply(np.mean)
+        
+        # Plot 1: Mean F_Reward vs scaling dimension
+        plt.figure(figsize=(10, 6))
+        sns.lineplot(data=plot_df, x=eval_param, y='avg_R_reward', hue='algorithm', marker='o', linewidth=2.0)
+        plt.title(f'Mean Reward vs Number of {eval_param[2:]} (Episodes: {episodes})', fontsize=14)
+        plt.xlabel(f'Number of {eval_param[2:]}', fontsize=12)
+        plt.ylabel('Mean Reward (F_Reward)', fontsize=12)
+        plt.legend(title='Algorithm', fontsize=11, title_fontsize=12)
+        plt.tight_layout()
+        plt.savefig(f'Scaling_Reward_{expName}.png')
+        print(f"Scaling Reward plot saved to: Scaling_Reward_{expName}.png")
+        plt.close()
+        
+        # Plot 2: Decision Time vs scaling dimension
+        plt.figure(figsize=(10, 6))
+        sns.lineplot(data=plot_df, x=eval_param, y='avg_process_time', hue='algorithm', marker='o', linewidth=2.0)
+        plt.title(f'Mean Decision Time vs Number of {eval_param[2:]} (Episodes: {episodes})', fontsize=14)
+        plt.xlabel(f'Number of {eval_param[2:]}', fontsize=12)
+        plt.ylabel('Decision Time (seconds)', fontsize=12)
+        plt.legend(title='Algorithm', fontsize=11, title_fontsize=12)
+        plt.tight_layout()
+        plt.savefig(f'Scaling_Time_{expName}.png')
+        print(f"Scaling Time plot saved to: Scaling_Time_{expName}.png")
+        plt.close()
+        
+        # Plot 3: Distance vs scaling dimension
+        plt.figure(figsize=(10, 6))
+        sns.lineplot(data=plot_df, x=eval_param, y='avg_distance_reward', hue='algorithm', marker='o', linewidth=2.0)
+        plt.title(f'Mean Distance Reward vs Number of {eval_param[2:]} (Episodes: {episodes})', fontsize=14)
+        plt.xlabel(f'Number of {eval_param[2:]}', fontsize=12)
+        plt.ylabel('Distance Reward', fontsize=12)
+        plt.legend(title='Algorithm', fontsize=11, title_fontsize=12)
+        plt.tight_layout()
+        plt.savefig(f'Scaling_Distance_{expName}.png')
+        print(f"Scaling Distance plot saved to: Scaling_Distance_{expName}.png")
+        plt.close()
+    else:
+        # Filter the columns for plotting (exclude Algorithm and seed)
+        plot_df = metricsDf.copy()
+        metric_cols = [c for c in plot_df.columns if c not in ['Algorithm', 'seed']]
+        
+        grouped = plot_df.groupby('Algorithm', sort=False)
+        means = grouped.mean()
+        std_devs = grouped.std().fillna(0.0)
+        
+        if 'Random' in means.index:
+            means_rnd = means.loc['Random'].replace(0, 1.0)
+            std_devs = std_devs / means_rnd
+            means = means / means_rnd
+        
+        fig, ax = plt.subplots(figsize=(10, 6))
+        num_algorithms = len(grouped)
+        num_metrics = len(metric_cols)
+        palette = sns.color_palette("Set1", n_colors=num_algorithms)
+        
+        bar_width = 0.6 / num_algorithms
+        group_spacing = 0.9
+        
+        max_val = 0
+        for i, (algo, data) in enumerate(grouped):
+            index = np.arange(num_metrics) * group_spacing + i * bar_width       
+            y_vals = [means.loc[algo, col] for col in metric_cols]
+            y_errs = [std_devs.loc[algo, col] for col in metric_cols]
+            ax.bar(index, y_vals, bar_width, alpha=0.95, label=algo, yerr=y_errs, capsize=6, color=palette[i], linewidth=0.0)
+            
+            val_max = max(y_vals) if y_vals else 0
+            if val_max > max_val:
+                max_val = val_max
+                
+        ax.set_xlabel('Metrics', fontsize=12)
+        ax.set_ylabel('Values (Relative to Random)', fontsize=12)
+        ax.set_title(f'Task Allocation Performance Comparison (Episodes: {episodes})', fontsize=14)
+        
+        ax.set_xticks(np.arange(num_metrics) * group_spacing + (bar_width * (num_algorithms - 1) / 2))
+        ax.set_xticklabels(metric_cols, fontsize=12)
+        
+        ax.legend(loc='upper left', fontsize=13)
+        ax.set_ylim(0, max(max_val * 1.25, 2.0))
+        
+        plt.tight_layout()
+        plt.savefig(f'Resultados_{expName}.png')
+        print(f"Comparison plot saved to: Resultados_{expName}.png")
+        plt.close()
+except Exception as e:
+    print(f"Error generating plot: {e}")
+
+import sys
+sys.exit(0)
+
 
 #%%
 #metricsDf.to_csv('Resultado_Final_Qualify_Principal01_CaseMegaDist.csv', index=False)
@@ -518,7 +627,7 @@ import seaborn as sns
 import matplotlib as mpl
 
 fail_rate = 0.0
-metricsDf = pd.read_csv('Resultados_UCF_1_ep50_fail0.0_scal_None.csv')
+metricsDf = pd.read_csv(f'Resultados_{expName}.csv')
 
 #worldModel.plot_metrics(metricsDf, len(worldModel.agents), worldModel.n_tasks)
 import seaborn as sns

@@ -179,7 +179,7 @@ class CustomCollector(Collector):
 
 
 
-class CustomParallelToAECWrapper(OrderEnforcingWrapper):
+class CustomParallelToAECWrapper(BaseWrapper):
     def __init__(self, env):
         super().__init__(env)
         self._initialize_observation_spaces()

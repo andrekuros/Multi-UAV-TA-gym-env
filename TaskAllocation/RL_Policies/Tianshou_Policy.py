@@ -19,7 +19,7 @@ from .CustomClass_MultiHead_Transformer import CustomNetMultiHead
 from mUAV_TA.DroneEnv import MultiUAVEnv
 
 # "CustomNet" or "CustomNetSimple" or "CustomNetReduced" or "CustomNetMultiHead"
-def _get_model(model="CustomNetMultiHead", env = None, seed = 0):
+def _get_model(model="CustomNetMultiHead", env = None, seed = 0, algorithm="DQN"):
     
     env = _get_env(env, seed)
      
@@ -44,6 +44,71 @@ def _get_model(model="CustomNetMultiHead", env = None, seed = 0):
                   
     action_shape = env.action_space[agent_name].shape[0]
     #action_shape = env.action_space[agent_name].n
+
+    if algorithm == "PPO":
+        from tianshou.policy import PPOPolicy
+        from tianshou.utils.net.discrete import Actor, Critic
+        from tianshou.utils.net.common import ActorCritic
+        from .CustomClass_MultiHead_Transformer_PPO_Critic import CriticNetMultiHead
+        from gymnasium.spaces import Box
+
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+
+        if model == "CustomNetMultiHead":
+            netActor = CustomNetMultiHead(            
+                state_shape_agent=state_shape_agent,
+                state_shape_task=state_shape_task,
+                action_shape=action_shape,
+                hidden_sizes=[128,128],
+                device=device,
+                task_size=13,
+                embedding_size=64,
+                is_ppo=True,
+                deep_task_encoder=False,
+            ).to(device)
+
+            netCritic = CriticNetMultiHead(
+                state_shape_agent=state_shape_agent,
+                state_shape_task=state_shape_task,
+                action_shape=action_shape,
+                hidden_sizes=[128,128],
+                device=device,
+                task_size=13,
+                embedding_size=64,
+                is_ppo=True,
+                deep_task_encoder=False,
+            ).to(device)
+
+            actor = Actor(netActor, action_shape, device=device).to(device)
+            critic = Critic(netCritic, device=device).to(device)
+            
+            actor_critic = ActorCritic(actor, critic)
+            optim = torch.optim.Adam(actor_critic.parameters(), lr=1e-4)
+
+            dist = torch.distributions.Categorical
+
+            agent_learn = PPOPolicy(
+                actor=actor,
+                critic=critic,
+                optim=optim,
+                dist_fn=dist,
+                action_scaling=isinstance(env.action_space[env.agents[0]], Box),
+                discount_factor=0.99,
+                max_grad_norm=0.5,
+                eps_clip=0.2,
+                vf_coef=0.5,
+                ent_coef=0.0,
+                gae_lambda=0.95,
+                reward_normalization=0,
+                dual_clip=None,
+                value_clip=0,
+                action_space=env.action_space[env.agents[0]],
+                deterministic_eval=True,
+                advantage_normalization=0,
+                recompute_advantage=0,
+            )
+            agent_learn.action_type = "discrete"
+            return agent_learn
 
     if model == "CustomNetMultiHead":
         net = CustomNetMultiHead(            
@@ -94,5 +159,5 @@ def _get_env(env = None, seed = 0):
     #env = parallel_to_aec_wrapper(env_paralell)              
     env = CustomParallelToAECWrapper(env_paralell) 
     
-    return PettingZooEnv(env, seed)
+    return PettingZooEnv(env)
 

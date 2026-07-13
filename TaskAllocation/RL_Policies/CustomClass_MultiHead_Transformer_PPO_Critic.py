@@ -17,6 +17,10 @@ class CriticNetMultiHead(Net):
         device: str,
         nhead: int = 8,
         num_layers: int = 1,
+        task_size: Optional[int] = None,
+        embedding_size: Optional[int] = None,
+        is_ppo: bool = True,
+        deep_task_encoder: bool = False,
     ):
         super().__init__(            
             state_shape=0,
@@ -30,10 +34,10 @@ class CriticNetMultiHead(Net):
         self.obs_mode = "Pre_Process"
         #self.obs_mode = "Raw_Data"
 
-        self.embedding_size = 128 #sum of drone and task encoder  
+        self.embedding_size = embedding_size if embedding_size is not None else 128
 
         self.max_tasks = 31
-        self.task_size = 2 + 6 #int(state_shape_task / self.max_tasks)
+        self.task_size = task_size if task_size is not None else 2 + 6
 
         self.max_agents = 20
         self.agent_size = 5 
@@ -42,39 +46,51 @@ class CriticNetMultiHead(Net):
 
         self.sceneData = SceneData()                                                                 
                                
-        self.task_encoder = nn.Sequential(
-            nn.Linear(self.task_size, 64),
-            nn.ReLU(),
-            nn.Linear(64, 128),
-            nn.ReLU(),
-            nn.Linear(128, 256),
-            nn.ReLU(),
-            nn.Linear(256, 256),
-            nn.ReLU(),
-            nn.Linear(256, self.embedding_size)
-        ).to(device)
+        if deep_task_encoder:
+            self.task_encoder = nn.Sequential(
+                nn.Linear(self.task_size, 64),
+                nn.ReLU(),
+                nn.Linear(64, 128),
+                nn.ReLU(),
+                nn.Linear(128, 256),
+                nn.ReLU(),
+                nn.Linear(256, 256),
+                nn.ReLU(),
+                nn.Linear(256, self.embedding_size)
+            ).to(device)
+        else:
+            self.task_encoder = nn.Sequential(
+                nn.Linear(self.task_size, 64),
+                nn.ReLU(),
+                nn.Linear(64, 128),
+                nn.ReLU(),
+                nn.Linear(128, 128),
+                nn.ReLU(),
+                nn.Linear(128, self.embedding_size)
+            ).to(device)
 
-        #self.dropout = nn.Dropout(0.1) # 0.5 is the dropout probability
-        
+        if is_ppo:
+            self.norm1 = nn.Identity()
+            self.norm2 = nn.Identity()
+            self.output = nn.Linear(self.embedding_size, 1).to(device)
+        else:
+            self.norm1 = nn.LayerNorm(self.embedding_size).to(device)
+            self.norm2 = nn.LayerNorm(self.embedding_size).to(device)
+            self.output = nn.Sequential(
+                nn.Linear(self.embedding_size, 128),
+                nn.ReLU(),
+                nn.Linear(128, 256),
+                nn.ReLU(),
+                nn.Linear(256, 128),
+                nn.ReLU(),
+                nn.Linear(128, 64),
+                nn.ReLU(),
+                nn.Linear(64, 1)
+            ).to(device)
+
         self.own_attention = nn.MultiheadAttention(embed_dim=self.embedding_size, num_heads=self.nhead, batch_first=True).to(device)                
-        self.norm1 = nn.LayerNorm(self.embedding_size).to(device)
                
-        self.decoder_attention = nn.MultiheadAttention(embed_dim=self.embedding_size, num_heads=nhead, batch_first=True).to(device)    
-        self.norm2 = nn.LayerNorm(self.embedding_size).to(device)
-     
-        # self.output = nn.Linear(self.embedding_size, 1).to(device) 
-
-        self.output = nn.Sequential(
-            nn.Linear(self.embedding_size, 128),
-            nn.ReLU(),
-            nn.Linear(128, 256),
-            nn.ReLU(),
-            nn.Linear(256, 128),
-            nn.ReLU(),
-            nn.Linear(128, 64),
-            nn.ReLU(),
-            nn.Linear(64, 1)
-        ).to(device)
+        self.decoder_attention = nn.MultiheadAttention(embed_dim=self.embedding_size, num_heads=nhead, batch_first=True).to(device)
 
         if self.random_weights:
             self.weigths_reset()      
@@ -134,7 +150,7 @@ class CriticNetMultiHead(Net):
         if self.obs_mode == "Pre_Process":
         
             for i,batch in enumerate(obs["tasks_info"]):
-                                                        
+                batch = batch[:self.max_tasks]
                 batch_tasks = []                
 
                 for task in batch:
@@ -176,17 +192,18 @@ class CriticNetMultiHead(Net):
                         sin_theta = 0.0
                         cos_theta = 0.0
                                         
-                    batch_tasks.append([
-                        # agent_type[i] / 4, #1
+                    task_feature = [
                         distance,      #1
                         sin_theta,     #1
                         cos_theta,     #1                        
-                        # task['init_time'], #1
-                        # task['end_time'],   #1
                         is_alloc_task,    #1                                                
-                        ])
-                                    
-                    batch_tasks[-1].extend(reqs_result)
+                    ]
+                    task_feature.extend(reqs_result)
+                    if len(task_feature) < self.task_size:
+                        task_feature.extend([-0.03] * (self.task_size - len(task_feature)))
+                    else:
+                        task_feature = task_feature[:self.task_size]
+                    batch_tasks.append(task_feature)
                 
                 # Pad the task_values array to match the maximum number of tasks                
                 # num_padding_needed = self.max_tasks - len(batch_tasks)
@@ -209,9 +226,7 @@ class CriticNetMultiHead(Net):
         # Assuming the first dimension of valid_task_embeddings is the batch size
         all_task_embeddings = torch.zeros((valid_task_embeddings.shape[0], self.max_tasks, self.embedding_size), device=self.device)
 
-        # Create a boolean mask for valid tasks in the batch
-        # Assuming obs["mask"] contains a mask for each batch where True indicates a valid task
-        batch_mask = torch.tensor(obs["mask"], dtype=torch.bool).to(self.device)
+        batch_mask = torch.tensor(obs["mask"], dtype=torch.bool).to(self.device)[:, :self.max_tasks]
 
         # Copy the valid task embeddings into the all_task_embeddings tensor using the batch mask
         for b in range(valid_task_embeddings.shape[0]):  # Loop over the batch

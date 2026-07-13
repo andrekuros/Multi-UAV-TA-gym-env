@@ -114,6 +114,8 @@ class DQNPolicy(BasePolicy):
     ) -> torch.Tensor:
         """Compute the q value based on the network's raw output and action mask."""
         if mask is not None:
+            if mask.shape[1] > logits.shape[1]:
+                mask = mask[:, :logits.shape[1]]
             # the masked q value should be smaller than logits.min()
             min_value = logits.min() - logits.max() - 1.0
             logits = logits + to_torch_as(1 - mask, logits) * min_value
