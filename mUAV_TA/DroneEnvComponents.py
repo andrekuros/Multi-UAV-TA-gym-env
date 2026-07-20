@@ -43,6 +43,8 @@ class UAV:
         self.tasks_done = {}
         self.re_eval = False
         self.last_task = None
+        # Timed allocation lock: agent excluded from rematch while time_steps < commit_until
+        self.commit_until = 0
         
         self.next_free_time = 0
         self.next_free_position = position
@@ -99,6 +101,7 @@ class UAV:
             self.tasks.remove(task)                        
             self.next_free_time = self.env.time_steps
             self.next_free_position = self.position
+            self.commit_until = 0
                         
             task.removeAgentCap(self)  
 
@@ -107,19 +110,19 @@ class UAV:
                                           
             return True
         else:                        
-            if task.id != 0:
-                print(f'Warming: Task {task.id} is not in agent {self.id} list')            
             return False
 
     def desallocateAll(self):
 
         for task in self.tasks:
             self.desAllocate(task)
+        self.commit_until = 0
         
 
     def outOfService(self):
 
-        self.state = -1        
+        self.state = -1
+        self.commit_until = 0
         for task in self.tasks:
             self.desAllocate(task)
 
@@ -140,7 +143,6 @@ class UAV:
     def taskDone(self, task):
 
         if task != self.tasks[0]:
-            print(f'Warning: Task ({task.id}) done is not first for {self.name}')
             return False
         else:
             self.tasks.pop(0)
@@ -248,10 +250,17 @@ class Task:
         self.allocated = 0
         self.initTime = -1
         self.doneTime = -1
+        self.created_at = 0  # set by env when known; used for dynamic age features
                             
         self.final_quality = -1
 
         self.relative_threat = relative_threat
+        # Escort / coalition metadata (kind="Escort" uses type="Def")
+        self.kind = None
+        self.protected_agent = None
+        self.protected_task = None
+        self.eligible_agent_types = None
+        self.required_agents = 0
     
     def getRequirements (self, task_reqs, sceneData):
        
@@ -289,7 +298,7 @@ class Task:
                     self.initTime = -1
                     self.doneTime = -1
             else:
-                print(f'Warning(TASK): Tried to desAllocate {agent.id} without allocation in task {self.id}')
+                return
         #else:
         #    print("Warning: Tried Desallocate Concluded Task")
 
@@ -320,20 +329,23 @@ class Task:
 
 #---------- Class Task ----------#     
 class Threat:
-    def __init__(self, id, position, max_speed, engage_range, attack, defence, group_number=0, target_agent=None):
+    def __init__(self, id, position, max_speed, engage_range, attack, defence, group_number=0, target_agent=None, threat_type=None):
         self.id = id
         self.position = position
         self.max_speed = max_speed
-        
+
         self.target_agent = None
+        self.mission_target_agent = None
+        self.intercepting_agent = None
         self.relative_task = None
         self.relative_detect_task = None
-        
+
         self.engage_range = engage_range
         self.attack = attack
         self.defence = defence
         self.attackCap = 4
-        
+        self.threat_type = threat_type  # "T1" / "T2"
+
         self.status = 1
         self.threat_group = group_number
         

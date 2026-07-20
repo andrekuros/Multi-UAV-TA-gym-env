@@ -161,6 +161,10 @@ class DQNPolicy(BasePolicy):
         obs_next = obs.obs if hasattr(obs, "obs") else obs
         logits, hidden = model(obs_next, state=state, info=batch.info)
         q = self.compute_q_value(logits, getattr(obs, "mask", None))
+        # Prefer explicit legal_mask (capability/saturation) when present.
+        action_mask = getattr(obs, "legal_mask", None)
+        if action_mask is not None:
+            q = self.compute_q_value(q, action_mask)
         if not hasattr(self, "max_action_num"):
             self.max_action_num = q.shape[1]
         
@@ -199,11 +203,41 @@ class DQNPolicy(BasePolicy):
         batch: Batch,
     ) -> Union[np.ndarray, Batch]:
         if isinstance(act, np.ndarray) and not np.isclose(self.eps, 0.0):
+            # EvalDqn returns full Q-vectors (bsz, n_act); training DQN returns indices (bsz,).
+            if act.ndim == 2:
+                bsz, n_act = act.shape
+                rand_mask = np.random.rand(bsz) < self.eps
+                if not np.any(rand_mask):
+                    return act
+                q = np.random.rand(bsz, n_act).astype(act.dtype)
+                mask = getattr(batch.obs, "legal_mask", None)
+                if mask is None:
+                    mask = getattr(batch.obs, "mask", None)
+                if mask is not None:
+                    m = np.asarray(mask)
+                    if m.ndim == 1:
+                        m = m.reshape(1, -1)
+                    if m.shape[1] > n_act:
+                        m = m[:, :n_act]
+                    elif m.shape[1] < n_act:
+                        m = np.pad(m, ((0, 0), (0, n_act - m.shape[1])), constant_values=False)
+                    q = np.where(m, q, -1e9)
+                act = act.copy()
+                act[rand_mask] = q[rand_mask]
+                return act
+
             bsz = len(act)
             rand_mask = np.random.rand(bsz) < self.eps
-            q = np.random.rand(bsz, self.max_action_num)  # [0, 1]
-            if hasattr(batch.obs, "mask"):
-                q += batch.obs.mask
+            if not np.any(rand_mask):
+                return act
+            q = np.random.rand(bsz, self.max_action_num)
+            mask = getattr(batch.obs, "legal_mask", None)
+            if mask is None:
+                mask = getattr(batch.obs, "mask", None)
+            if mask is not None:
+                m = np.asarray(mask)
+                q = np.where(m[:, : self.max_action_num], q, -1e9)
             rand_act = q.argmax(axis=1)
+            act = act.copy()
             act[rand_mask] = rand_act[rand_mask]
         return act

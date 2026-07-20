@@ -48,8 +48,16 @@ npm install
 
 ## Running the 3D Visualization
 
-You can visualize the agents making decisions in real-time via the 3D dashboard.
-You need two terminals.
+The dashboard plays a deterministic WPS_commit log with dual-region bursts,
+online arrivals, local sensing, delayed knowledge, hard windows, UAV failures,
+commit locks, replanning, and the S_WPS metrics.
+
+Generate (or regenerate) the example replay:
+```bash
+.venv\Scripts\python.exe experiments\generate_simulation_replay.py --seed 0
+```
+
+Then use two terminals.
 
 **Terminal 1: Start the API Backend**
 ```bash
@@ -64,6 +72,10 @@ cd frontend
 npm run dev
 ```
 *Visit the localhost URL provided by Vite in your browser.*
+
+The dashboard supports play/pause, scrubbing, speed control, an event timeline,
+assignment and sensing overlays, and JSON-log download. The generated log is
+stored at `experiments/results/wps_commit_replay.json`.
 
 ## AI Development Guidelines
 If you are using AI coding assistants to develop this framework further, please refer to the `AI_DEVELOPMENT_GUIDE.md` for architectural context and instructions.

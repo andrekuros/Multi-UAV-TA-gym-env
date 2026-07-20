@@ -20,7 +20,36 @@ class agentEnvOptions:
                  fail_rate = 0.0,
                  threats_list = [("T1", 4), ("T2" , 2)],
                  fixed_seed = -1,
-                 info = "No Info"):
+                 info = "No Info",
+                 # RL experiment toggles (see RL_EXPERIMENT_PLAN.md)
+                 early_terminate=False,
+                 capability_mask=False,
+                 saturate_mask=False,
+                 reward_weights=None,
+                 # Dynamic TA (publication roadmap)
+                 arrival_rate=0.0,
+                 include_time_windows=False,
+                 dynamic_idle_penalty=0.0,
+                 # WPS (Windowed Pop-up Strike) — harder dynamic claim
+                 sense_radius=0.0,
+                 threat_delay=0,
+                 hard_windows=False,
+                 window_length=30,
+                 burst_mode=False,
+                 burst_size=3,
+                 miss_penalty=25.0,
+                 on_time_bonus=10.0,
+                 dual_region_bursts=False,
+                 share_knowledge=True,
+                 commit_horizon=0,
+                 reassign_penalty=0.0,
+                 # Escort / coalition protection
+                 escort_enabled=False,
+                 escort_radius=70.0,
+                 escort_requirement=1.2,
+                 escort_intercept_radius=100.0,
+                 mutual_support_radius=80.0,
+                 escort_agent_types=("F1", "F2")):
         
         self.render_mode = render_mode 
         self.render_speed = render_speed
@@ -39,6 +68,41 @@ class agentEnvOptions:
         self.threats_list = threats_list
         self.fixed_seed = fixed_seed
         self.info = info
+        self.early_terminate = early_terminate
+        self.capability_mask = capability_mask
+        self.saturate_mask = saturate_mask
+        # Defaults match current production weights; override for ablations.
+        self.reward_weights = reward_weights or {
+            "action": 0.0,
+            "distance": 1.0,
+            "quality": 1.0,
+            "s_quality": 1.0,
+            "time": 0.0,
+            "alloc": 0.0,
+            "time_penaulty": 0.0,
+            "step": 0.0,
+        }
+        self.arrival_rate = arrival_rate
+        self.include_time_windows = include_time_windows
+        self.dynamic_idle_penalty = dynamic_idle_penalty
+        self.sense_radius = sense_radius
+        self.threat_delay = threat_delay
+        self.hard_windows = hard_windows
+        self.window_length = window_length
+        self.burst_mode = burst_mode
+        self.burst_size = burst_size
+        self.miss_penalty = miss_penalty
+        self.on_time_bonus = on_time_bonus
+        self.dual_region_bursts = dual_region_bursts
+        self.share_knowledge = share_knowledge
+        self.commit_horizon = int(commit_horizon or 0)
+        self.reassign_penalty = float(reassign_penalty or 0.0)
+        self.escort_enabled = bool(escort_enabled)
+        self.escort_radius = float(escort_radius or 70.0)
+        self.escort_requirement = float(escort_requirement or 1.2)
+        self.escort_intercept_radius = float(escort_intercept_radius or 100.0)
+        self.mutual_support_radius = float(mutual_support_radius or 80.0)
+        self.escort_agent_types = tuple(escort_agent_types or ("F1", "F2"))
 
 class EnvUtils:
     
@@ -121,9 +185,19 @@ class EnvUtils:
         for agent in agents:
                         
             #Remove the agent caps from the task
-            for task in agent.tasks:                
+            for task in list(agent.tasks):
                 if agent.desAllocate(task):
-                    env.allocation_table[task.id].remove(agent.name)
+                    tid = getattr(task, "id", None)
+                    if tid is None or tid < 0 or tid >= len(env.allocation_table):
+                        continue
+                    bucket = env.allocation_table[tid]
+                    if isinstance(bucket, set) and agent.name in bucket:
+                        bucket.remove(agent.name)
+                    elif isinstance(bucket, (list, set)) and agent.name in bucket:
+                        try:
+                            bucket.remove(agent.name)
+                        except (ValueError, KeyError):
+                            pass
                     
             agent.tasks = [env.task_idle]
             agent.status = 0

@@ -199,6 +199,10 @@ class CustomNetMultiHead(Net):
                         is_alloc_task,    #1                                                
                     ]
                     task_feature.extend(reqs_result)
+                    # Optional dynamic fields from env (ignored if absent / padded)
+                    if isinstance(task, dict):
+                        task_feature.append(float(task.get("unmet", 0.0)))
+                        task_feature.append(float(task.get("age", 0.0)))
                     if len(task_feature) < self.task_size:
                         task_feature.extend([-0.03] * (self.task_size - len(task_feature)))
                     else:

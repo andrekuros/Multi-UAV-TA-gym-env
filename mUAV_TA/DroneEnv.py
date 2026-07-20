@@ -141,7 +141,7 @@ class MultiUAVEnv(ParallelEnv):
         self.agent_selector = agent_selector(self.possible_agents)
         self.current_agent = self.agent_selector.next()
                 
-        self.max_tasks = 30 + 1
+        self.max_tasks = 40 + 1
         self.n_tasks = sum(self.config.tasks.values()) + 1
         
         self.tasks_config = self.config.tasks               
@@ -171,7 +171,74 @@ class MultiUAVEnv(ParallelEnv):
         self.num_obstacles = self.config.num_obstacles        
         self.obstacles = None
         
-        self.fail_rate = self.config.fail_rate         
+        self.fail_rate = self.config.fail_rate
+        self.early_terminate = getattr(self.config, "early_terminate", False)
+        self.capability_mask = getattr(self.config, "capability_mask", False)
+        self.saturate_mask = getattr(self.config, "saturate_mask", False)
+        self.reward_weights = getattr(self.config, "reward_weights", None) or {
+            "action": 0.0,
+            "distance": 1.0,
+            "quality": 1.0,
+            "s_quality": 1.0,
+            "time": 0.0,
+            "alloc": 0.0,
+            "time_penaulty": 0.0,
+            "step": 0.0,
+        }
+        self.arrival_rate = float(getattr(self.config, "arrival_rate", 0.0) or 0.0)
+        self.include_time_windows = bool(getattr(self.config, "include_time_windows", False))
+        self.dynamic_idle_penalty = float(getattr(self.config, "dynamic_idle_penalty", 0.0) or 0.0)
+        # WPS knobs
+        self.sense_radius = float(getattr(self.config, "sense_radius", 0.0) or 0.0)
+        self.threat_delay = int(getattr(self.config, "threat_delay", 0) or 0)
+        self.hard_windows = bool(getattr(self.config, "hard_windows", False))
+        self.window_length = int(getattr(self.config, "window_length", 30) or 30)
+        self.burst_mode = bool(getattr(self.config, "burst_mode", False))
+        self.burst_size = int(getattr(self.config, "burst_size", 3) or 3)
+        self.miss_penalty = float(getattr(self.config, "miss_penalty", 25.0) or 0.0)
+        self.on_time_bonus = float(getattr(self.config, "on_time_bonus", 10.0) or 0.0)
+        self.dual_region_bursts = bool(getattr(self.config, "dual_region_bursts", False))
+        self.share_knowledge = bool(getattr(self.config, "share_knowledge", True))
+        self.commit_horizon = int(getattr(self.config, "commit_horizon", 0) or 0)
+        self.reassign_penalty = float(getattr(self.config, "reassign_penalty", 0.0) or 0.0)
+        self.escort_enabled = bool(getattr(self.config, "escort_enabled", False))
+        self.escort_radius = float(getattr(self.config, "escort_radius", 70.0) or 70.0)
+        self.escort_requirement = float(getattr(self.config, "escort_requirement", 1.2) or 1.2)
+        self.escort_intercept_radius = float(
+            getattr(self.config, "escort_intercept_radius", 100.0) or 100.0
+        )
+        self.mutual_support_radius = float(
+            getattr(self.config, "mutual_support_radius", 80.0) or 80.0
+        )
+        self.escort_agent_types = tuple(
+            getattr(self.config, "escort_agent_types", ("F1", "F2")) or ("F1", "F2")
+        )
+        self._burst_region_toggle = 0
+        self._next_task_id = 1  # 0 reserved for idle
+        self._next_threat_id = 0
+        self.n_reallocations = 0
+        self.n_task_switches = 0
+        self.n_arrivals = 0
+        self._pending_reset = False
+        self.agent_known_tasks = {}  # agent_name -> set of task ids
+        self.pending_reveals = []  # (reveal_time, task_id) for threat_delay
+        self.n_missed_windows = 0
+        self.n_on_time = 0
+        self.n_windowed_tasks = 0
+        self._idle_reserve_steps = 0
+        # Escort metrics
+        self.escort_requests = 0
+        self.escort_completed = 0
+        self.escort_failed = 0
+        self.escort_required_steps = 0
+        self.escort_covered_steps = 0
+        self.protection_breaches = 0
+        self.threats_intercepted = 0
+        self.recon_losses = 0
+        self.escort_losses = 0
+        self.mutual_support_engagements = 0
+        self.protected_rec_completed = 0
+        self._escort_by_recon = {}  # recon_name -> escort Task
         
         # self.tasks_current_quality = None        
         self.allocation_table = None
@@ -253,49 +320,120 @@ class MultiUAVEnv(ParallelEnv):
         
         self.observations = { agent: { } for agent in self.possible_agents  }    
 
+    def _alloc_task_id(self) -> int:
+        tid = int(self._next_task_id)
+        self._next_task_id = tid + 1
+        return tid
+
+    def _alloc_threat_id(self) -> int:
+        tid = int(self._next_threat_id)
+        self._next_threat_id = tid + 1
+        return tid
+
+    def _ensure_allocation_bucket(self, task_id: int):
+        if self.allocation_table is None:
+            self.allocation_table = []
+        while len(self.allocation_table) <= task_id:
+            self.allocation_table.append(set())
+
+    def _is_task_action_valid(self, agent, task):
+        """Return whether task is a legal discrete action for this agent."""
+        if task is None or task.status == 2:
+            return False
+
+        # Keep current allocation selectable so the agent can hold it.
+        if len(agent.tasks) > 0 and agent.tasks[0].id == task.id:
+            return True
+
+        eligible = getattr(task, "eligible_agent_types", None)
+        if eligible is not None:
+            if isinstance(eligible, str):
+                eligible = {eligible}
+            if agent.type not in eligible:
+                return False
+
+        if self.capability_mask and agent.currentCap2Task[task.typeIdx] <= 0:
+            return False
+
+        if self.saturate_mask and task.allocatedReqs[task.typeIdx] >= task.orgReqs[task.typeIdx]:
+            return False
+
+        return True
+
     def get_task_info(self, agent: UAV):
-                               
-        
-        
-        task_values = [ {
-                
+        open_tasks = [task for task in self.tasks if task.status != 2]
+        task_values = []
+        for task in open_tasks:
+            info = {
                 "id": task.id,
-                "position": task.position / self.max_coord,                
-                "status": task.status,                
-                "current_reqs": task.currentReqs,                
-                "alloc_reqs":  task.allocatedReqs,
-                # "init_time" : (task.initTime - self.time_steps) / self.max_time_steps,            
-                # "end_time" : (task.doneTime - self.time_steps) / self.max_time_steps
-                }  for task in self.tasks
-                if task.status != 2 #status = 2 is concluded 
-            ]    
-        
+                "position": task.position / self.max_coord,
+                "status": task.status,
+                "current_reqs": task.currentReqs,
+                "alloc_reqs": task.allocatedReqs,
+            }
+            if self.include_time_windows:
+                info["init_time"] = (getattr(task, "initTime", 0) - self.time_steps) / max(self.max_time_steps, 1)
+                info["end_time"] = (getattr(task, "doneTime", self.max_time_steps) - self.time_steps) / max(self.max_time_steps, 1)
+                info["type_idx"] = float(task.typeIdx) / 6.0
+            # Dynamic features (safe extras; encoders may ignore)
+            unmet = float(np.maximum(task.currentReqs[task.typeIdx] - task.allocatedReqs[task.typeIdx], 0.0))
+            info["unmet"] = unmet / max(float(task.orgReqs[task.typeIdx]), 1e-6)
+            created = float(getattr(task, "created_at", getattr(task, "initTime", 0)) or 0)
+            info["age"] = min((self.time_steps - created) / max(self.max_time_steps, 1), 1.0)
+            task_values.append(info)
+
         if len(task_values) == 0:
-            [{
-                
+            task_values = [{
                 "id": self.task_idle.id,
-                "position": self.task_idle.position / self.max_coord,                
-                "status": self.task_idle.status,                
-                "current_reqs": self.task_idle.currentReqs,                
-                "alloc_reqs":  self.task_idle.allocatedReqs,
-                # "init_time" : (task.initTime - self.time_steps) / self.max_time_steps,            
-                # "end_time" : (task.doneTime - self.time_steps) / self.max_time_steps
-            }  
-            ]    
+                "position": self.task_idle.position / self.max_coord,
+                "status": self.task_idle.status,
+                "current_reqs": self.task_idle.currentReqs,
+                "alloc_reqs": self.task_idle.allocatedReqs,
+            }]
+            pad_mask = [True]
+            action_mask = [True]
+        else:
+            # Pad mask must stay contiguous for the transformer encoder packing.
+            pad_mask = [True] * len(task_values)
+            action_mask = [self._is_task_action_valid(agent, task) for task in open_tasks]
+            if not any(action_mask):
+                current_id = agent.tasks[0].id if len(agent.tasks) > 0 else -1
+                for i, task in enumerate(open_tasks):
+                    if task.id == current_id:
+                        action_mask[i] = True
+                        break
+                else:
+                    action_mask[0] = True
 
+        pad = self.max_tasks - len(task_values)
+        pad_mask.extend([False] * pad)
+        action_mask.extend([False] * pad)
+        task_values.extend([{"status": -1} for _ in range(pad)])
 
-       
-        #print([f'Init: {task["init_time"]} / End: {task["end_time"]} / {task["alloc_reqs"]}' for task in task_values if task["id"] != 0])
-        
-        mask = [True for _ in task_values]
-        mask.extend([False] * (self.max_tasks - len(task_values)))
-        
+        return task_values, pad_mask, action_mask
 
-        # Pad the task_values array to match the maximum number of tasks
-        task_values.extend([{"status": -1} for _ in range(self.max_tasks - len(task_values))])
-        #task_values = np.array(task_values, dtype=np.float32)               
-              
-        return task_values, mask
+    def _event_flag_vector(self):
+        """Global [fail, new_threat, reset, time_frac, n_open_norm] for dynamic conditioning."""
+        fail = threat = reset = 0.0
+        for ev in getattr(self, "event_list", []) or []:
+            tag = ev[0] if isinstance(ev, (list, tuple)) and ev else ev
+            if tag == "Agent_Fail":
+                fail = 1.0
+            elif tag == "New_Threat":
+                threat = 1.0
+            elif tag == "Reset_Allocation":
+                reset = 1.0
+        open_n = sum(1 for t in self.tasks if t.id != 0 and t.status != 2)
+        return np.asarray(
+            [
+                fail,
+                threat,
+                reset,
+                self.time_steps / max(self.max_time_steps, 1),
+                open_n / max(self.max_tasks, 1),
+            ],
+            dtype=np.float32,
+        )
 
     def get_agents_info(self):
 
@@ -327,29 +465,27 @@ class MultiUAVEnv(ParallelEnv):
     
     def _generate_observations(self):
                         
-        #agents_info = self.get_agents_info()        
-        tasks_info, mask = self.get_task_info(self.agents_obj[0])                
-        self.observations = {
-            agent.name : {
-                #Add Own Data for relative features    
-                # "agent_type": agent.typeIdx,              
-                "agent_position": agent.position / self.max_coord,                
+        # tasks_info + pad mask are shared (contiguous). action_mask is per-agent.
+        shared_tasks_info, shared_pad_mask, _ = self.get_task_info(self.agents_obj[0])
+        self.observations = {}
+        for agent in self.agents_obj:
+            _, _, action_mask = self.get_task_info(agent)
+            if agent.state == 2:
+                action_mask = [
+                    True if task.get("status", -1) != -1 and task.get("id") == agent.tasks[0].id else False
+                    for task in shared_tasks_info
+                ]
+            self.observations[agent.name] = {
+                "agent_position": agent.position / self.max_coord,
                 "agent_caps": agent.currentCap2Task,
-                # "agent_attack_cap": agent.attackCap / 4,
-                # "next_free_time": 
-                    #  ((agent.next_free_time - self.time_steps) if (agent.next_free_time > self.time_steps) else 0) / self.max_time_steps,
-                
-                # "position_after_last_task": agent.next_free_position / self.max_coord,                                
-                "alloc_task": agent.tasks[0].id, 
-
-                #Complete data for tasks and agents
-                "tasks_info": tasks_info,
-                "mask": mask if agent.state !=2 else [True if task["status"] != -1 and task['id'] == agent.tasks[0].id else False for task in tasks_info]
-                #"agents_info": agents_info,              
-                
+                "alloc_task": agent.tasks[0].id,
+                "tasks_info": shared_tasks_info,
+                "mask": shared_pad_mask,
+                # Named legal_mask (not action_mask) so PettingZoo/Tianshou
+                # does not treat the obs Dict as the reserved action-mask layout.
+                "legal_mask": action_mask,
+                "event_flags": self._event_flag_vector(),
             }
-            for agent in self.agents_obj
-        }    
 
         self.last_tasks_info = [task for task in self.tasks if task.status != 2]            
 
@@ -410,8 +546,32 @@ class MultiUAVEnv(ParallelEnv):
         
         
         self.conclusion_time = self.max_time_steps + 1
-        self.F_Reward = 0           
-                                  
+        self.F_Reward = 0
+        self.n_reallocations = 0
+        self.n_task_switches = 0
+        self.n_arrivals = 0
+        self._pending_reset = False
+        self.agent_known_tasks = {}
+        self.pending_reveals = []
+        self.n_missed_windows = 0
+        self.n_on_time = 0
+        self.n_windowed_tasks = 0
+        self._idle_reserve_steps = 0
+        self._burst_region_toggle = 0
+        self._next_task_id = 1
+        self._next_threat_id = 0
+        self.escort_requests = 0
+        self.escort_completed = 0
+        self.escort_failed = 0
+        self.escort_required_steps = 0
+        self.escort_covered_steps = 0
+        self.protection_breaches = 0
+        self.threats_intercepted = 0
+        self.recon_losses = 0
+        self.escort_losses = 0
+        self.mutual_support_engagements = 0
+        self.protected_rec_completed = 0
+        self._escort_by_recon = {}
                         
         #-------------------  Define Obstacles  -------------------#
         self.obstacles = []
@@ -472,12 +632,7 @@ class MultiUAVEnv(ParallelEnv):
             )
 
         #-------------------  Define Tasks  -------------------#       
-
-        task_list = list(range(1, self.n_tasks))
-        
-        self.rndAgentGen.shuffle(task_list)                        
         self.tasks: List[Optional[Task]] = []
-        # self.tasks.append(self.task_idle)
        
         hold_tasks_num = 0
         
@@ -489,7 +644,7 @@ class MultiUAVEnv(ParallelEnv):
                 if self.n_mission_areas > 0:
                     selected_mission = self.rndMissionGen.choice(self.mission_areas)
                 
-                task_id = task_list.pop(0)
+                task_id = self._alloc_task_id()
                 
                 if task_type != "Hold":
                     task_position = self.random_position(self.rndTgtGen, obstacles = self.obstacles, contact_line = True, mission_area=selected_mission)
@@ -532,7 +687,7 @@ class MultiUAVEnv(ParallelEnv):
             self.threats_groups.append([])
             
             #Create Defensive task for threat group
-            task_id = len(self.tasks)
+            task_id = self._alloc_task_id()
             task_position = np.array( [ group_pos[0] , max_vert/5 ])
             
             detect_task = Task(task_id, 
@@ -554,8 +709,16 @@ class MultiUAVEnv(ParallelEnv):
                 attack = self.sceneData.UavCapTable[group_type][2]
                 defence = self.sceneData.UavCapTable[group_type][3]                            
                 
-                new_task_id = len(self.threats)                
-                new_threat = Threat(new_task_id, start_position, speed, engageRange, attack, defence, group_number=ng)
+                new_threat = Threat(
+                    self._alloc_threat_id(),
+                    start_position,
+                    speed,
+                    engageRange,
+                    attack,
+                    defence,
+                    group_number=ng,
+                    threat_type=group_type,
+                )
                 #TODO-> Correct frame rate handle
                 new_threat.max_speed = new_threat.max_speed / self.simulation_frame_rate * 0.02 
 
@@ -565,7 +728,8 @@ class MultiUAVEnv(ParallelEnv):
 
         
         #Tasks that each agent is doing                        
-        self.allocation_table = [set() for _ in range(self.max_time_steps + 1)]       
+        max_tid = max((t.id for t in self.tasks), default=0)
+        self.allocation_table = [set() for _ in range(max_tid + 1)]       
                 
         self.previous_agents_positions = None        
                 
@@ -586,6 +750,10 @@ class MultiUAVEnv(ParallelEnv):
         self.state = {agent.name : None for agent in self.agents_obj}
                         
         self.current_agent = self.agent_selector.reset()
+
+        # Static / initial tasks are known to everyone; dynamic pop-ups use sensing/delay.
+        static_ids = {t.id for t in self.tasks if t.id != 0}
+        self.agent_known_tasks = {a.name: set(static_ids) for a in self.agents_obj}
                                     
         self._generate_observations()
                        
@@ -626,13 +794,13 @@ class MultiUAVEnv(ParallelEnv):
             self.time_steps += 1
             self.previous_agents_positions = np.copy([agent.position for agent in self.agents_obj])                                          
            
-            #Process Shared Events
-            if len(self.event_list) != 0:                
-                event = self.event_list.pop()                                
+            #Process Shared Events (drain entire queue so New_Threat / Agent_Fail are not dropped)
+            done_events = []
+            while self.event_list:
+                event = self.event_list.pop(0)
+                done_events.append(event)
                 if event[0] == "Reset_Allocation":
                     self.releaseAllTasks(event[1])
-                    #print("Allocation_RESET")
-                    done_events.append(event)
                         
             #------------  TASK ALLOCATION  ----------------#
             notAllocatedTasks = len(self.unallocated_tasks())
@@ -680,13 +848,20 @@ class MultiUAVEnv(ParallelEnv):
                                         S_quality_reward -= 0.1                                                                        
                                         #Remove caps from last allocation
                                         S_quality_reward -= agent.currentCap2Task[agent.tasks[0].typeIdx]
+                                        self.n_reallocations += 1
+                                        # Open→open switch (not Hold): counts toward S_WPS rematch term
+                                        if task.id != 0:
+                                            self.n_task_switches += 1
+                                            agent.commit_until = 0
 
                                         dist_old = np.linalg.norm(agent.position - agent.tasks[0].position)
                                         dist_new = np.linalg.norm(agent.position - task.position)
                                         distance_reward += (dist_old - dist_new) / self.max_coord
                                         #print(f'Srew:{S_quality_reward} | taskType {task.typeIdx} | Acgap {agent.currentCap2Task}' )                                    
                                     else: 
-                                        S_quality_reward += 0.05                                  
+                                        S_quality_reward += 0.05
+                                        if self._pending_reset and self.dynamic_idle_penalty:
+                                            S_quality_reward -= self.dynamic_idle_penalty
 
                                 else:
 
@@ -712,11 +887,16 @@ class MultiUAVEnv(ParallelEnv):
                                     agent.tasks.append(self.task_idle)
 
                                 continue
-                            
-                                                       
+
+                            if not self._is_task_action_valid(agent, task):
+                                action_reward += -1
+                                continue
+                                                            
                             if agent.allocate(task, self.time_steps) :                                                                            
+ 
                                 
                                 #self.tasks_current_quality[task_id] = self.quality_table[agent_index][task_id]                                                                      
+                                self._ensure_allocation_bucket(task.id)
                                 self.allocation_table[task.id].add(agent.name)
                                                                                                      
                                 agentCap = agent.currentCap2Task[task.typeIdx] 
@@ -741,8 +921,14 @@ class MultiUAVEnv(ParallelEnv):
                                 #Agent state as doing task
                                 if agent.state != 1 and agent.state != -1: 
                                     agent.state = 1
-                            #else:
-                                #print("Wrong Allocation")
+
+                                if (
+                                    self.escort_enabled
+                                    and task.type == "Rec"
+                                    and agent.type in ("R1", "R2")
+                                    and agent.name not in self._escort_by_recon
+                                ):
+                                    self._create_escort_for(agent, task)
                                                 
                         if False: #self.multiple_tasks_per_agent and not self.multiple_agents_per_task:
                             
@@ -784,8 +970,10 @@ class MultiUAVEnv(ParallelEnv):
                     if agent.fail_event == self.time_steps:
                         agent.state = -1
                         #agent.tasks = []
-                        agent.desallocateAll(self.time_steps)
-                        self.event_list.append("Reset_Allocation")                    
+                        agent.desallocateAll()
+                        self.event_list.append(["Reset_Allocation", -1])
+                        self.event_list.append(["Agent_Fail", agent.id])
+                        self._pending_reset = True
                         #print("Fail:" , agent.id, agent.fail_event )
                         #print(self.agents_obj[agent.id].tasks)
                         continue
@@ -793,9 +981,13 @@ class MultiUAVEnv(ParallelEnv):
                     movement = np.array([0,0])
                     avoid_vector = np.array([0,0]) 
 
-                    #----------------IDLE-----------------#
-                    if agent.state == 0: 
-                        if len(self.reached_tasks) == self.n_tasks:
+                    #----------------IDLE / RETURN TO BASE-----------------#
+                    if agent.state == 0 and not agent.re_eval:
+                        # Once an agent finishes its mission (no assigned task) it flies
+                        # back to base. It stays available: if the allocator hands it a new
+                        # task, allocate() switches it to state 1 and it diverts to the task.
+                        idle_task = len(agent.tasks) == 0 or agent.tasks[0].id == 0
+                        if idle_task and np.linalg.norm(agent.position - self.bases[0]) > agent.max_speed + 5:
                             agent.state = 3                                     
                 
                     #------------------- HAS TASK ------------------#                                                                                
@@ -894,27 +1086,26 @@ class MultiUAVEnv(ParallelEnv):
                                         #print(f'Done: {task.doneReqs[task.typeIdx]} | {task.orgReqs[task.typeIdx]}')                                      
                                         if task.doneReqs[task.typeIdx] >= task.orgReqs[task.typeIdx]:                                                                                            
 
-                                            self.reached_tasks.add(task.id) 
+                                            if getattr(task, "kind", None) != "Escort":
+                                                self.reached_tasks.add(task.id) 
                                             
-                                            #Reward if just concluded the task
+                                            # Reward if just concluded the task
                                             if task.status != 2:                                            
                                                 quality_reward += task.orgReqs[task.typeIdx] * 2 
                                                 
-                                                self.F_Reward += task.orgReqs[task.typeIdx] * self.final_rew_factor / self.reward_norm_factor #* (1 - self.time_steps / (2 * self.max_time_steps))
-                                                
-                                                task.status = 2   
-                                                #print(f'Concluded Task {task.id} | {task.type} -> Agent: {agent.type}')                                             
+                                                self.F_Reward += task.orgReqs[task.typeIdx] * self.final_rew_factor / self.reward_norm_factor
+                                                if getattr(task, "kind", None) != "Escort":
+                                                    self._wps_mark_window_outcome(task, success=True)
+                                                task.status = 2
+                                                if task.type == "Rec" and agent.type in ("R1", "R2"):
+                                                    self._on_protected_rec_done(agent, success=True)
+                                                if all(self._counts_for_mission_done(t) for t in self.tasks):
+                                                    self.conclusion_time = self.time_steps
                                         else:
                                             quality_reward += agent.currentCap2Task[task.typeIdx]  
-                                        
-                                        # if len(self.reached_tasks) == self.n_tasks:
-                                        #     self.conclusion_time = self.time_steps
-                                        #     agent.state = 3 
-                                        # else:
-                                        #     agent.state = 0    
                                                                                                                            
                                     else:
-                                        movement = agent.doTask(self.agent_directions[i], None, None, current_task.type)                            
+                                        movement = agent.doTask(self.agent_directions[i], None, None, current_task.type)
 
 
                     #----------------RETURNING BASE (NO TASK)--------------------
@@ -952,34 +1143,49 @@ class MultiUAVEnv(ParallelEnv):
                 alloc_reward = 0
             
             self.generate_threat()
-            self.update_threats()   
+            self.update_threats()
+            self.inject_dynamic_arrivals()
+            if self.escort_enabled:
+                self._sync_escorts()
+            self._wps_update_sensing()
+            self._wps_process_reveals()
+            self._wps_expire_windows()
+            self._wps_track_reserve()
+            if self._pending_reset and any(
+                len(a.tasks) > 0 and a.tasks[0].id != 0 for a in self.agents_obj if a.state != -1
+            ):
+                # Agents started responding after a dynamic reset.
+                self._pending_reset = False
                                                                                                                                                                                                        
+            rw = self.reward_weights
             # rewards for all agents are placed in the rewards dictionary to be returned
-            self.rewards = {agent.name : (0.0 * action_reward  +   #Rand +50
-                                          1.0 * distance_reward +  #Rand -4
-                                          1.0 * quality_reward +   #Rand +6
-                                          1.0 * S_quality_reward +   #Rand +6                                                                                    
-                                          0.0 * self.n_tasks * time_reward +      #Rand -9
-                                          0.0 * alloc_reward  +
-                                          0.0 * time_penaulty + 
-                                          0.0 * self.step_reward) / self.reward_norm_factor / self.max_time_steps 
-                                          
-                                          for agent in self.agents_obj} #Rand -28 
+            self.rewards = {
+                agent.name: (
+                    rw["action"] * action_reward
+                    + rw["distance"] * distance_reward
+                    + rw["quality"] * quality_reward
+                    + rw["s_quality"] * S_quality_reward
+                    + rw["time"] * self.n_tasks * time_reward
+                    + rw["alloc"] * alloc_reward
+                    + rw["time_penaulty"] * time_penaulty
+                    + rw["step"] * self.step_reward
+                )
+                / self.reward_norm_factor
+                / self.max_time_steps
+                for agent in self.agents_obj
+            }
                                                                                       
-            #self._cumulative_rewards["agent0"] += self.rewards["agent0"]
-                                                
-            #done = (len(self.reached_tasks) == self.n_tasks or ((self.time_steps >= self.max_time_steps) and (self.max_time_steps > 0)))
-            done = ((self.time_steps >= self.max_time_steps) and (self.max_time_steps > 0))
-            
-            #Only for speed up traning without Dynamic conditions
-            #done = done or (self.allocation_table.count(-1) == 0 and self.time_steps >= 50)
-                                  
-            #self.terminations = { agent.name : (done or (agent.state < 0 )) for agent in self.agents_obj}
-            self.terminations = { agent.name : False for agent in self.agents_obj}
-                        
-            #env_truncation = done#(self.time_steps >= self.max_time_steps) if self.max_time_steps > 0 else done             
-            env_truncation = (self.time_steps >= self.max_time_steps) if self.max_time_steps > 0 else done             
+            # Mission complete ignores persistent Det/Hold/Escort bookkeeping tasks.
+            all_done = len(self.tasks) > 0 and all(self._counts_for_mission_done(t) for t in self.tasks)
+            timed_out = (self.time_steps >= self.max_time_steps) and (self.max_time_steps > 0)
+            done = timed_out or (self.early_terminate and all_done)
 
+            if all_done and self.conclusion_time > self.max_time_steps:
+                self.conclusion_time = self.time_steps
+                                  
+            # True episode success vs time-limit truncation
+            self.terminations = {agent.name: (self.early_terminate and all_done and not timed_out) for agent in self.agents_obj}
+            env_truncation = timed_out
             self.truncations = {agent.name: env_truncation for agent in self.agents_obj}     
             
             self.infos = {agent.name: {} for agent in self.agents_obj}            
@@ -1064,16 +1270,69 @@ class MultiUAVEnv(ParallelEnv):
 
         #print( f'Q:{F_quality}|D:{F_distance}|T:{F_Time}|F:{self.F_Reward}|Rem:{self.allocation_table.count(-1)}' )
 
+        s_wps = self.compute_s_wps()
+        escort_cov = float(
+            self.escort_covered_steps / max(self.escort_required_steps, 1)
+        )
+        s_esc = (
+            float(s_wps)
+            + 20.0 * float(self.protected_rec_completed)
+            - 30.0 * float(self.recon_losses)
+            + 20.0 * escort_cov
+        )
+
         return { 
             "F_time": F_Time ,
             "F_distance": F_distance ,
-            #"load_balancing": load_balancing,
-            #"F_load": 1 / load_balancing_std,
             "F_quality": F_quality,
             "F_Reward": self.F_Reward,
+            "S_WPS": float(s_wps),
+            "S_ESC": float(s_esc),
             "Losses": Losses,
-            "Kills": Kills
+            "Kills": Kills,
+            "makespan": float(self.conclusion_time),
+            "total_distance": float(self.total_distance),
+            "n_reallocations": int(self.n_reallocations),
+            "n_task_switches": int(getattr(self, "n_task_switches", 0)),
+            "n_arrivals": int(self.n_arrivals),
+            "n_tasks_final": int(len(self.tasks)),
+            "n_reached": int(len(self.reached_tasks)),
+            "n_missed_windows": int(self.n_missed_windows),
+            "n_on_time": int(self.n_on_time),
+            "n_windowed_tasks": int(self.n_windowed_tasks),
+            "on_time_rate": float(self.n_on_time / max(self.n_on_time + self.n_missed_windows, 1)),
+            "reserve_idle_fraction": float(
+                self._idle_reserve_steps / max(self.time_steps * max(len(self.agents_obj), 1), 1)
+            ),
+            "escort_coverage_rate": escort_cov,
+            "protected_rec_completed": int(self.protected_rec_completed),
+            "recon_losses": int(self.recon_losses),
+            "escort_losses": int(self.escort_losses),
+            "threats_intercepted": int(self.threats_intercepted),
+            "mutual_support_engagements": int(self.mutual_support_engagements),
+            "protection_breaches": int(self.protection_breaches),
+            "escort_requests": int(self.escort_requests),
+            "escort_completed": int(self.escort_completed),
+            "escort_failed": int(self.escort_failed),
         }
+
+    def compute_s_wps(self) -> float:
+        """Primary WPS score: on-time completions minus misses minus travel / rematch cost."""
+        on_w = float(getattr(self, "on_time_bonus", 12.0) or 12.0)
+        miss_w = float(getattr(self, "miss_penalty", 30.0) or 30.0)
+        # Prefer fixed paper scales from WPS_hard for cross-case comparability
+        on_w = 12.0
+        miss_w = 30.0
+        dist_term = 0.01 * float(self.total_distance) / max(float(self.max_coord), 1.0)
+        rematch = float(getattr(self, "reassign_penalty", 0.0) or 0.0) * float(
+            getattr(self, "n_task_switches", 0)
+        )
+        return (
+            on_w * float(self.n_on_time)
+            - miss_w * float(self.n_missed_windows)
+            - dist_term
+            - rematch
+        )
 
     def _one_hot(self, idx, num_classes):
         one_hot_vector = np.zeros(num_classes)
@@ -1204,7 +1463,6 @@ class MultiUAVEnv(ParallelEnv):
                 
                 if cum_cap == 0:                   
                     task.status = 2 #No capability to DO it
-                    print("No CAP")
                     
                     # Adicionar o alvo para a lista alcançados por não ser mais possível
                     # E não prejudicar algoritmos que alocam errado
@@ -1228,6 +1486,116 @@ class MultiUAVEnv(ParallelEnv):
 
 ####---------------------Dynamic Conditions ----------------------------------###
 
+    def _register_dynamic_task(self, task):
+        """Apply hard window + delayed/local reveal for a newly created pop-up task."""
+        if self.hard_windows and getattr(task, "hard_deadline", None) is None:
+            task.hard_deadline = self.time_steps + self.window_length
+            task.task_window = (self.time_steps, task.hard_deadline)
+            self.n_windowed_tasks += 1
+        # Delayed global reveal, then local sensing can discover earlier for nearby agents
+        if self.threat_delay > 0 or self.sense_radius > 0:
+            reveal_t = self.time_steps + max(self.threat_delay, 0)
+            self.pending_reveals.append((reveal_t, task.id))
+        else:
+            # Instant global knowledge (legacy)
+            for name in self.agent_known_tasks:
+                self.agent_known_tasks[name].add(task.id)
+
+    def _wps_update_sensing(self):
+        if self.sense_radius <= 0:
+            return
+        for agent in self.agents_obj:
+            if agent.state == -1:
+                continue
+            known = self.agent_known_tasks.setdefault(agent.name, set())
+            for task in self.tasks:
+                if task.id == 0 or task.status == 2:
+                    continue
+                if task.id in known:
+                    continue
+                # Only sense dynamic / pending tasks (not already globally known)
+                if getattr(task, "created_at", 0) <= 0 and getattr(task, "hard_deadline", None) is None:
+                    continue
+                dist = float(np.linalg.norm(agent.position - task.position))
+                if dist <= self.sense_radius:
+                    known.add(task.id)
+
+    def _wps_process_reveals(self):
+        if not self.pending_reveals:
+            return
+        # Asymmetric sensing: only local radius discovers tasks (no team-wide reveal).
+        if not self.share_knowledge:
+            self.pending_reveals = [
+                (reveal_t, tid) for reveal_t, tid in self.pending_reveals if self.time_steps < reveal_t
+            ]
+            return
+        remaining = []
+        for reveal_t, tid in self.pending_reveals:
+            if self.time_steps >= reveal_t:
+                for name in self.agent_known_tasks:
+                    self.agent_known_tasks[name].add(tid)
+            else:
+                remaining.append((reveal_t, tid))
+        self.pending_reveals = remaining
+
+    def _wps_mark_window_outcome(self, task, success: bool):
+        """Count on-time vs missed once per hard-windowed task."""
+        if getattr(task, "hard_deadline", None) is None:
+            return
+        if getattr(task, "_wps_outcome_counted", False):
+            return
+        task._wps_outcome_counted = True
+        if success and self.time_steps <= task.hard_deadline:
+            self.n_on_time += 1
+            self.F_Reward += self.on_time_bonus
+        else:
+            self.n_missed_windows += 1
+            self.F_Reward -= self.miss_penalty
+
+    def _wps_expire_windows(self):
+        if not self.hard_windows:
+            return
+        for task in self.tasks:
+            deadline = getattr(task, "hard_deadline", None)
+            if deadline is None or task.status == 2 or task.id == 0:
+                continue
+            if self.time_steps > deadline:
+                task.status = 2
+                task.final_quality = 0.0
+                self._wps_mark_window_outcome(task, success=False)
+                if task.id not in self.reached_tasks:
+                    self.reached_tasks.add(task.id)
+                # Free agents still assigned to this expired task
+                for agent in self.agents_obj:
+                    if agent.tasks and agent.tasks[0].id == task.id:
+                        agent.desallocateAll()
+
+    def _wps_track_reserve(self):
+        live = [a for a in self.agents_obj if a.state != -1]
+        if not live:
+            return
+        idle = sum(1 for a in live if (not a.tasks) or a.tasks[0].id == 0)
+        self._idle_reserve_steps += idle
+
+    def known_tasks_for(self, agent_name=None):
+        """Tasks visible to one agent, or union of team knowledge if agent_name is None."""
+        if agent_name is not None:
+            ids = self.agent_known_tasks.get(agent_name, set())
+            return [t for t in self.tasks if t.id in ids or t.id == 0]
+        # Team union (shared local knowledge for decentralized planners)
+        known = set()
+        for s in self.agent_known_tasks.values():
+            known |= s
+        if not self.sense_radius and not self.threat_delay:
+            return list(self.tasks)
+        return [t for t in self.tasks if t.id in known or t.id == 0]
+
+    def agent_visibility_map(self):
+        """Per-agent known task id sets for visibility-masked assignment."""
+        if not self.sense_radius and not self.threat_delay:
+            return None
+        return {name: set(ids) for name, ids in self.agent_known_tasks.items()}
+
     def generate_threat(self):
         
         for group in self.threats_groups:
@@ -1235,25 +1603,88 @@ class MultiUAVEnv(ParallelEnv):
             if len(group) > 0 and self.time_steps > 40 and self.time_steps % 10 == 0:
                 
                 if self.rndAgentGen.random() < self.threat_generation_probability:
-                    
-                    threat = group.pop(0)
-                    threat.target_agent = self.get_closest_agent(threat.position)                                                                
-                    
-                    relative_task_id = len(self.tasks)
+                    n_spawn = 1
+                    if self.burst_mode:
+                        n_spawn = min(self.burst_size, len(group))
+                    for bi in range(n_spawn):
+                        if not group:
+                            break
+                        threat = group.pop(0)
+                        if self.dual_region_bursts:
+                            # Alternate left/right fronts within a burst
+                            mid = self.area_width * 0.5
+                            wide = max(self.threat_wide, 40.0)
+                            if (self._burst_region_toggle + bi) % 2 == 0:
+                                x = float(self.rndAgentGen.uniform(wide, mid - wide))
+                            else:
+                                x = float(self.rndAgentGen.uniform(mid + wide, self.area_width - wide))
+                            threat.position = np.array([x, float(threat.position[1])])
+                        threat.target_agent = self.get_closest_agent(threat.position)
+                        threat.mission_target_agent = threat.target_agent
 
-                    relative_task = self.TaskFromThreat(relative_task_id, threat)
-                    
-                    self.tasks.append(relative_task)
-                    self.allocation_table.append(set())                    
-                    threat.relative_task = relative_task
+                        relative_task_id = self._alloc_task_id()
 
-                    self.threats.append(threat)
+                        relative_task = self.TaskFromThreat(relative_task_id, threat)
+                        
+                        self.tasks.append(relative_task)
+                        self._ensure_allocation_bucket(relative_task_id)
+                        threat.relative_task = relative_task
 
-                    threat.relative_detect_task.currentReqs[5] -= 1.0
+                        self.threats.append(threat)
 
-                    if self.multiple_tasks_per_agent:
+                        threat.relative_detect_task.currentReqs[5] -= 1.0
+                        self._register_dynamic_task(relative_task)
+                        self.event_list.append(["New_Threat", relative_task.id])
                         self.event_list.append(["Reset_Allocation", relative_task.typeIdx])
+                        self._pending_reset = True
+                    if self.dual_region_bursts and n_spawn > 0:
+                        self._burst_region_toggle = (self._burst_region_toggle + 1) % 2
                    
+
+    def inject_dynamic_arrivals(self):
+        """Online Rec/Att task arrivals for dynamic TA experiments."""
+        if self.arrival_rate <= 0 or self.time_steps < 5:
+            return
+        if self.rndTgtGen.random() >= self.arrival_rate:
+            return
+        if len(self.tasks) >= self.max_tasks - 1:
+            return
+
+        task_type = self.rndTgtGen.choice(["Att", "Rec"])
+        task_id = self._alloc_task_id()
+        selected_mission = self.rndMissionGen.choice(self.mission_areas) if self.mission_areas else None
+        if self.dual_region_bursts:
+            mid = self.area_width * 0.5
+            wide = 40.0
+            if self.rndTgtGen.random() < 0.5:
+                x = float(self.rndTgtGen.uniform(wide, mid - wide))
+            else:
+                x = float(self.rndTgtGen.uniform(mid + wide, self.area_width - wide))
+            y = float(self.rndTgtGen.uniform(self.area_height * 0.2, self.area_height * 0.8))
+            position = np.array([x, y])
+        else:
+            position = self.random_position(
+                self.rndTgtGen, obstacles=self.obstacles, contact_line=True, mission_area=selected_mission
+            )
+        from .DroneEnvComponents import Task
+
+        new_task = Task(
+            task_id,
+            position,
+            task_type,
+            {task_type: 1.0},
+            (self.time_steps, self.max_time_steps),
+            self.sceneData,
+            self.max_time_steps,
+        )
+        new_task.created_at = self.time_steps
+        self.tasks.append(new_task)
+        self._ensure_allocation_bucket(task_id)
+        self.n_arrivals += 1
+        self._register_dynamic_task(new_task)
+        self.event_list.append(["New_Threat", task_id])  # treated as online arrival for replan hooks
+        self.event_list.append(["Reset_Allocation", new_task.typeIdx])
+        self._pending_reset = True
 
     def get_closest_agent(self, position):
         
@@ -1296,9 +1727,9 @@ class MultiUAVEnv(ParallelEnv):
             if threat.status == 0 or threat.target_agent is None:
                 direction = np.array([0,-1])                
                 threat.position = threat.position + threat.max_speed * direction
-            else:          
-                #direction = np.array(threat.target_agent.position) - np.array(threat.position)
-                #direction = direction / np.linalg.norm(direction)
+            else:
+                if self.escort_enabled:
+                    self._retarget_threat_via_escort(threat)
                 direction = EnvUtils.norm_vector(threat.target_agent.position  - threat.position)
                 threat.position = threat.position + threat.max_speed * direction
 
@@ -1308,13 +1739,70 @@ class MultiUAVEnv(ParallelEnv):
 
             if threat.position[1] <= 0:
                 threat.relative_task.status = 2
-                
+                self._wps_mark_window_outcome(threat.relative_task, success=False)
+
+    def _escort_fighters_near(self, protected_agent, radius=None):
+        """Fighters currently on the protected agent's escort task and within radius."""
+        if protected_agent is None:
+            return []
+        escort = self._escort_by_recon.get(protected_agent.name)
+        if escort is None or escort.status == 2:
+            return []
+        r = float(self.escort_radius if radius is None else radius)
+        nearby = []
+        for agent in self.agents_obj:
+            if agent.state == -1 or agent.type not in self.escort_agent_types:
+                continue
+            if not agent.tasks or agent.tasks[0].id != escort.id:
+                continue
+            dist = float(np.linalg.norm(agent.position - protected_agent.position))
+            if dist <= r:
+                nearby.append((dist, agent))
+        nearby.sort(key=lambda x: x[0])
+        return [a for _, a in nearby]
+
+    def _retarget_threat_via_escort(self, threat: Threat):
+        mission = threat.mission_target_agent or threat.target_agent
+        if mission is None or mission.state == -1:
+            return
+        if mission.type not in ("R1", "R2"):
+            return
+        escorts = self._escort_fighters_near(mission, self.escort_intercept_radius)
+        if not escorts:
+            threat.target_agent = mission
+            threat.intercepting_agent = None
+            return
+        primary = escorts[0]
+        threat.target_agent = primary
+        threat.intercepting_agent = primary
 
     def handle_threat_engagement(self, threat: Threat):
-        
-        attDiff = threat.target_agent.currentCap2Task[2] / threat.attack
-        defDiff = threat.target_agent.currentCap2Task[3] / threat.defence
-        engageDiff = threat.target_agent.engage_range / threat.engage_range
+        defenders = []
+        primary = threat.target_agent
+        mission = threat.mission_target_agent or primary
+
+        if self.escort_enabled and mission is not None and mission.type in ("R1", "R2"):
+            defenders = self._escort_fighters_near(mission, self.mutual_support_radius)
+            if defenders:
+                primary = defenders[0]
+                threat.target_agent = primary
+                threat.intercepting_agent = primary
+
+        if primary is None:
+            return
+
+        if len(defenders) >= 2:
+            self.mutual_support_engagements += 1
+            att_sum = sum(float(a.currentCap2Task[2]) for a in defenders)
+            def_sum = sum(float(a.currentCap2Task[3]) for a in defenders)
+            eng_sum = sum(float(a.engage_range) for a in defenders) / len(defenders)
+            attDiff = att_sum / max(threat.attack, 1e-6)
+            defDiff = def_sum / max(threat.defence, 1e-6)
+            engageDiff = eng_sum / max(threat.engage_range, 1e-6)
+        else:
+            attDiff = primary.currentCap2Task[2] / max(threat.attack, 1e-6)
+            defDiff = primary.currentCap2Task[3] / max(threat.defence, 1e-6)
+            engageDiff = primary.engage_range / max(threat.engage_range, 1e-6)
 
         avg_diff = (attDiff + defDiff + engageDiff) / 3                
         neutralize_prob = avg_diff / (avg_diff + 1)  
@@ -1325,41 +1813,48 @@ class MultiUAVEnv(ParallelEnv):
         if rnd < neutralize_prob:        
             
             threat.status = 2
-            #self.threats_groups[threat.threat_group].remove(threat)
             threat.relative_task.status = 2
+            self._wps_mark_window_outcome(threat.relative_task, success=True)
+            self.threats_intercepted += 1
             
-            threat.target_agent.attackCap -= 1
+            primary.attackCap -= 1
             
-            if threat.target_agent.attackCap <= 0:
-                threat.target_agent.currentCap2Task[3] = 0
+            if primary.attackCap <= 0:
+                primary.currentCap2Task[3] = 0
             
-            if threat.target_agent.tasks[0] == threat.relative_task:
-                threat.target_agent.taskDone(threat.relative_task)
+            if primary.tasks and primary.tasks[0] == threat.relative_task:
+                primary.taskDone(threat.relative_task)
             
-            #self.threats.remove(threat)       
             self.step_reward += 1.0
 
-            # print(self.step_reward)                  
-            # Provide reward or update agent state if necessary
         else:            
                                            
             threat.attackCap -= 1  
 
-            threat.target_agent.attackCap -= 1
+            primary.attackCap -= 1
             
-            if threat.target_agent.attackCap <= 0:
-                threat.target_agent.currentCap2Task[3] = 0 
-                threat.target_agent.outOfService()                    
+            if primary.attackCap <= 0:
+                primary.currentCap2Task[3] = 0 
+                was_recon = primary.type in ("R1", "R2")
+                was_escort = primary.type in self.escort_agent_types
+                primary.outOfService()
+                if was_recon:
+                    self.recon_losses += 1
+                    self.protection_breaches += 1
+                    self._retire_escort_for(primary, failed=True)
+                elif was_escort:
+                    self.escort_losses += 1
                 self.step_reward -= 1.0                             
             
             
             if threat.attackCap <= 0:
                 threat.status = 0
                 threat.relative_task.status = 2
+                self._wps_mark_window_outcome(threat.relative_task, success=False)
             else:
                 threat.target_agent = self.get_closest_agent(threat.position)
+                threat.mission_target_agent = threat.target_agent
             
-            # Apply penaulty or update environment state if necessary  
     
     def TaskFromThreat(self, task_id, threat: Threat):
 
@@ -1371,7 +1866,147 @@ class MultiUAVEnv(ParallelEnv):
                         self.max_time_steps,  
                         is_active=True,
                         relative_threat = threat )
+        new_task.created_at = self.time_steps
+        # Strong threats (T1) need two fighters; T2 stays single-slot.
+        if getattr(threat, "threat_type", None) == "T1":
+            new_task.required_agents = 2
+            new_task.eligible_agent_types = set(self.escort_agent_types)
         return new_task
+
+    def _counts_for_mission_done(self, task) -> bool:
+        """Persistent bookkeeping tasks do not block episode completion."""
+        if task.id == 0:
+            return True
+        if getattr(task, "kind", None) == "Escort":
+            return True
+        if task.type in ("Det", "Hold"):
+            return True
+        return task.status == 2
+
+    def _create_escort_for(self, recon_agent, rec_task):
+        if not self.escort_enabled or recon_agent is None:
+            return None
+        if recon_agent.name in self._escort_by_recon:
+            return self._escort_by_recon[recon_agent.name]
+
+        escort = Task(
+            self._alloc_task_id(),
+            np.array(recon_agent.position, dtype=float),
+            "Def",
+            {"Def": float(self.escort_requirement)},
+            (self.time_steps, self.max_time_steps),
+            self.sceneData,
+            self.max_time_steps,
+        )
+        escort.kind = "Escort"
+        escort.protected_agent = recon_agent
+        escort.protected_task = rec_task
+        escort.eligible_agent_types = set(self.escort_agent_types)
+        escort.required_agents = max(2, int(np.ceil(self.escort_requirement)))
+        escort.created_at = self.time_steps
+        self.tasks.append(escort)
+        self._ensure_allocation_bucket(escort.id)
+        self._register_dynamic_task(escort)
+        self._escort_by_recon[recon_agent.name] = escort
+        self.escort_requests += 1
+        self.event_list.append(["Escort_Created", escort.id])
+        self.event_list.append(["Reset_Allocation", escort.typeIdx])
+        self._pending_reset = True
+        return escort
+
+    def _release_escort_agents(self, escort_task):
+        if escort_task is None:
+            return
+        escort_id = int(escort_task.id)
+        for agent in list(self.agents_obj):
+            if agent.state == -1:
+                continue
+            held = [t for t in list(agent.tasks) if t.id == escort_id]
+            for task in held:
+                agent.desAllocate(task)
+            if held:
+                # Clear idle hold so RTB can start on the next idle check
+                if not agent.tasks or agent.tasks[0].id == 0:
+                    agent.tasks = [self.task_idle]
+                    agent.state = 0
+                    agent.commit_until = 0
+                    agent.next_free_time = self.time_steps
+                    agent.next_free_position = agent.position
+
+    def _retire_escort(self, escort_task, failed: bool = False):
+        if escort_task is None or escort_task.status == 2:
+            return
+        self._release_escort_agents(escort_task)
+        escort_task.status = 2
+        recon = escort_task.protected_agent
+        if recon is not None:
+            self._escort_by_recon.pop(getattr(recon, "name", None), None)
+        if failed:
+            self.escort_failed += 1
+        else:
+            self.escort_completed += 1
+        self.event_list.append(["Escort_Retired", escort_task.id])
+
+    def _retire_escort_for(self, recon_agent, failed: bool = False):
+        if recon_agent is None:
+            return
+        escort = self._escort_by_recon.get(recon_agent.name)
+        if escort is not None:
+            self._retire_escort(escort, failed=failed)
+
+    def _on_protected_rec_done(self, recon_agent, success: bool = True):
+        if success:
+            self.protected_rec_completed += 1
+        self._retire_escort_for(recon_agent, failed=not success)
+
+    def _sync_escorts(self):
+        """Update escort positions, coverage metrics, and retire stale escorts."""
+        # Create escorts for recon already on Rec (e.g. after reset/replan)
+        for agent in self.agents_obj:
+            if agent.state == -1 or agent.type not in ("R1", "R2"):
+                continue
+            if not agent.tasks or agent.tasks[0].id == 0:
+                continue
+            cur = agent.tasks[0]
+            if cur.type == "Rec" and cur.status != 2 and agent.name not in self._escort_by_recon:
+                self._create_escort_for(agent, cur)
+
+        # Retire escorts whose protected Rec ended or agent is down / idle
+        for name, escort in list(self._escort_by_recon.items()):
+            recon = escort.protected_agent
+            rec_task = escort.protected_task
+            dead = recon is None or recon.state == -1
+            idle = recon is not None and (
+                not recon.tasks or recon.tasks[0].id == 0 or recon.state in (0, 3)
+            )
+            rec_done = rec_task is not None and rec_task.status == 2
+            wrong_task = (
+                recon is not None
+                and recon.tasks
+                and recon.tasks[0].id != 0
+                and (rec_task is None or recon.tasks[0].id != rec_task.id)
+            )
+            if dead or idle or rec_done or wrong_task:
+                self._retire_escort(escort, failed=dead)
+                continue
+
+            # Follow protected UAV (do not snap assigned escorts onto the target)
+            escort.position = np.array(recon.position, dtype=float)
+            self.escort_required_steps += 1
+            nearby = self._escort_fighters_near(recon, self.escort_radius)
+            if nearby:
+                self.escort_covered_steps += 1
+
+    def compute_s_esc(self) -> float:
+        escort_cov = float(
+            self.escort_covered_steps / max(self.escort_required_steps, 1)
+        )
+        return (
+            float(self.compute_s_wps())
+            + 20.0 * float(self.protected_rec_completed)
+            - 30.0 * float(self.recon_losses)
+            + 20.0 * escort_cov
+        )
           
 
 
@@ -1446,4 +2081,4 @@ class MultiUAVEnv(ParallelEnv):
             
         plt.tight_layout()
         plt.show()
-
+
