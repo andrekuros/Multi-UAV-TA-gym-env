@@ -227,6 +227,7 @@ def run_wps_episode(
         "decision_ms_mean": float(np.mean(decision_ms) if decision_ms else 0.0),
         "algo_replans": float(n_replans),
         "n_task_switches": float(latest.get("n_task_switches", getattr(env, "n_task_switches", 0))),
+        "max_coord": float(getattr(env, "max_coord", 1000.0)),
     }
 
 
@@ -265,6 +266,11 @@ def main():
         "--mlp-commit", default=os.path.join(ROOT, "dqn_Custom", "policy_MLPCommit_WPS_commit.pth")
     )
     parser.add_argument("--out", default=os.path.join(RESULTS, "wps_eval.csv"))
+    parser.add_argument(
+        "--episodes-out",
+        default=None,
+        help="Optional path for per-episode CSV (algorithm,seed,components).",
+    )
     parser.add_argument("--exp", default="wps30")
     parser.add_argument(
         "--algorithms",
@@ -428,6 +434,29 @@ def main():
         w = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
         w.writeheader()
         w.writerows(rows)
+    if args.episodes_out:
+        ep_rows = []
+        for (case, algo), scores in per_ep.items():
+            for seed, s in enumerate(scores):
+                ep_rows.append(
+                    {
+                        "exp": args.exp,
+                        "case": case,
+                        "algorithm": algo,
+                        "seed": seed,
+                        "S_WPS": s["S_WPS"],
+                        "n_on_time": s["n_on_time"],
+                        "n_missed_windows": s["n_missed_windows"],
+                        "total_distance": s["total_distance"],
+                        "max_coord": s.get("max_coord", 1000.0),
+                        "on_time_rate": s["on_time_rate"],
+                    }
+                )
+        with open(args.episodes_out, "w", newline="", encoding="utf-8") as f:
+            w = csv.DictWriter(f, fieldnames=list(ep_rows[0].keys()))
+            w.writeheader()
+            w.writerows(ep_rows)
+        print(f"Episodes -> {args.episodes_out}", flush=True)
     summary = os.path.join(RESULTS, "wps_final_eval_summary.json")
     with open(summary, "w", encoding="utf-8") as f:
         json.dump({"rows": rows}, f, indent=2)

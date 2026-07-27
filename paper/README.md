@@ -1,61 +1,31 @@
-# Paper (Overleaf / GitHub)
+# Paper (Overleaf / GitHub) — IEEE TAES track
 
-This folder is the manuscript for the Multi-UAV-TA WPS hybrid work.
-It lives inside the monorepo [`Multi-UAV-TA-gym-env`](https://github.com/andrekuros/Multi-UAV-TA-gym-env) and is also published as a **standalone repo** via `git subtree` (same files, Overleaf-friendly clone).
+This folder is the manuscript for hybrid cost shaping under WPS / incomplete COP.
+Monorepo: [`Multi-UAV-TA-gym-env`](https://github.com/andrekuros/Multi-UAV-TA-gym-env).  
+Standalone mirror: [`Multi-UAV-TA-paper`](https://github.com/andrekuros/Multi-UAV-TA-paper) via `git subtree`.
 
-## Contents
-- `main.tex` — IEEEtran draft: WPS hybrids (Att-RAH primary claim) plus commit/escort follow-ons
-- `refs.bib` — bibliography
-- `figures/` — plots from `experiments/results/figs/`
+## Target venue
+**IEEE Transactions on Aerospace and Electronic Systems (Regular Paper)**  
+Framing: aerospace multi-UAV mission management under delayed sensing and perishable windows—not attention novelty.
 
-## Standalone paper repo (sync)
+## Locked claim
+On **WPS_hard** (\(N{=}100\)), Att-RAH mean \(\Delta S_{\mathrm{WPS}}\approx +8.7\) vs Local-Hungarian; paired bootstrap 95\% CI **includes zero** (\([-8.1,+26.0]\)).  
+Local-Hungarian remains a strong fair baseline under the evaluated budget.  
+**Not claimed:** significant Att-RAH win over Local-Hungarian; set-attention superiority over matched MLP / urgency.
 
-Remote name in the monorepo: `paper` → `https://github.com/andrekuros/Multi-UAV-TA-paper`
+## TAES readiness checklist
+- [x] Phase 0 — Aerospace / C2 framing
+- [x] Phase 1 — Expanded verified related work
+- [x] Phase 2 — System model + suite table
+- [x] Phase 3 — Repro appendix; commit/escort moved to appendix
+- [x] Phase 4 — Sensitivity appendix + primary table updated to TAES retrain/eval
+- [x] Phase 5–7 — Author/ORCID placeholders, cover letter aligned, claim audit, page estimate ~7–9
 
-From the **monorepo root** (not inside `paper/`):
+## Page estimate
+Body ≈ 2.5k words + 5 figures + 6 tables under IEEEtran two-column → roughly **7–9 pages** before final author bios; target ≤10 for Regular Paper.
 
+## Sync
 ```bash
-# Push paper/ to the standalone repo (after committing in the monorepo)
 git subtree push --prefix=paper paper main
-
-# Pull remote paper edits back into paper/ (e.g. Overleaf → GitHub)
 git subtree pull --prefix=paper paper main --squash
 ```
-
-Cursor keeps the full framework tree; only `paper/` is mirrored to the paper project.
-
-## Compile (Overleaf)
-1. Import from the paper GitHub repo, or upload this folder.
-2. Set compiler to **pdfLaTeX**.
-3. Set main document to `main.tex`.
-4. Recompile (bibliography may need two passes).
-
-## Compile (local)
-```bash
-cd paper
-pdflatex main
-bibtex main
-pdflatex main
-pdflatex main
-```
-
-## Data sources
-
-Experiment CSVs live in the monorepo under `experiments/results/` (`*.csv` is gitignored there).
-
-| Suite | Script | Typical artifacts |
-|-------|--------|-------------------|
-| WPS_hard / WPS_attn | `experiments/wps_eval.py` | `wps_*_eval.csv`, `WPS_*_ANALYSIS.md` |
-| WPS_commit | `wps_eval.py --suite WPS_commit` + `analyze_wps_commit.py` | `wps_commit_eval.csv`, `WPS_COMMIT_ANALYSIS.md` |
-| WPS_escort | `experiments/escort_eval.py --tag att_v2_n100` | `WPS_escort_escort_eval_*.csv`, `WPS_ESCORT_ANALYSIS.md` |
-
-## Claim boundaries (post academic revise)
-
-- **Primary supported claim:** Att-RAH improves \(S_{\mathrm{WPS}}\) over Local-Hungarian on **WPS_hard** (paired bootstrap 95\% CI excludes zero).
-- **Not claimed:** set-attention superiority over matched MLP / urgency on WPS_attn, WPS_commit, or WPS_escort.
-- **Target framing:** hybrid cost shaping under partial observability (RA-L / TAES style), not “Transformers beat Hungarian.”
-- Heuristic metric weights are stated as evaluation scores, not unique objectives.
-
-## Notes before submission
-- Fill author / affiliation block.
-- Checkpoints under `dqn_Custom/` are not committed; retrain with scripts in `experiments/`.

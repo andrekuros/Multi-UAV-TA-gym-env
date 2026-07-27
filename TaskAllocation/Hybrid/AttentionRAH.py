@@ -146,13 +146,17 @@ class AttRAHNet(nn.Module):
         d_model: int = 64,
         nhead: int = 4,
         n_layers: int = 2,
+        task_feat_dim: int = TASK_FEAT_DIM,
+        agent_feat_dim: int = AGENT_FEAT_DIM,
     ):
         super().__init__()
         self.max_tasks = max_tasks
         self.max_agents = max_agents
         self.d_model = d_model
-        self.task_proj = nn.Linear(TASK_FEAT_DIM, d_model)
-        self.agent_proj = nn.Linear(AGENT_FEAT_DIM, d_model)
+        self.task_feat_dim = task_feat_dim
+        self.agent_feat_dim = agent_feat_dim
+        self.task_proj = nn.Linear(task_feat_dim, d_model)
+        self.agent_proj = nn.Linear(agent_feat_dim, d_model)
         self.type_embed = nn.Embedding(2, d_model)  # 0=agent, 1=task
         enc_layer = nn.TransformerEncoderLayer(
             d_model=d_model, nhead=nhead, dim_feedforward=d_model * 2, batch_first=True, dropout=0.1
@@ -218,6 +222,7 @@ class AttentionRAH:
         self.target = AttRAHNet(max_tasks, max_agents).to(self.device)
         self.target.load_state_dict(self.net.state_dict())
         self.optim = torch.optim.Adam(self.net.parameters(), lr=lr)
+        self.lr = lr
         self.eps = 0.2
         self.buffer: List[dict] = []
         self.max_buffer = 40_000
@@ -225,9 +230,19 @@ class AttentionRAH:
         self.n_replans = 0
 
     def _batch_from_tokens(self, tok: dict) -> Tuple[torch.Tensor, ...]:
-        tf = torch.tensor(tok["task_feats"], dtype=torch.float32, device=self.device).unsqueeze(0)
+        tdim = self.net.task_feat_dim
+        adim = self.net.agent_feat_dim
+        tf_np = np.asarray(tok["task_feats"], dtype=np.float32)[..., :tdim]
+        af_np = np.asarray(tok["agent_feats"], dtype=np.float32)[..., :adim]
+        if tf_np.shape[-1] < tdim:
+            pad = np.zeros(tf_np.shape[:-1] + (tdim - tf_np.shape[-1],), dtype=np.float32)
+            tf_np = np.concatenate([tf_np, pad], axis=-1)
+        if af_np.shape[-1] < adim:
+            pad = np.zeros(af_np.shape[:-1] + (adim - af_np.shape[-1],), dtype=np.float32)
+            af_np = np.concatenate([af_np, pad], axis=-1)
+        tf = torch.tensor(tf_np, dtype=torch.float32, device=self.device).unsqueeze(0)
         tm = torch.tensor(tok["task_mask"], dtype=torch.bool, device=self.device).unsqueeze(0)
-        af = torch.tensor(tok["agent_feats"], dtype=torch.float32, device=self.device).unsqueeze(0)
+        af = torch.tensor(af_np, dtype=torch.float32, device=self.device).unsqueeze(0)
         am = torch.tensor(tok["agent_mask"], dtype=torch.bool, device=self.device).unsqueeze(0)
         return tf, tm, af, am
 
@@ -316,9 +331,28 @@ class AttentionRAH:
         )
 
     def load(self, path: str):
-        data = torch.load(path, map_location=self.device)
-        self.net.load_state_dict(data["net"])
-        self.target.load_state_dict(data["net"])
+        data = torch.load(path, map_location=self.device, weights_only=False)
+        state = data["net"]
+        tw = state.get("task_proj.weight")
+        aw = state.get("agent_proj.weight")
+        if tw is not None and aw is not None:
+            tdim, adim = int(tw.shape[1]), int(aw.shape[1])
+            if tdim != self.net.task_feat_dim or adim != self.net.agent_feat_dim:
+                self.net = AttRAHNet(
+                    self.max_tasks,
+                    self.max_agents,
+                    task_feat_dim=tdim,
+                    agent_feat_dim=adim,
+                ).to(self.device)
+                self.target = AttRAHNet(
+                    self.max_tasks,
+                    self.max_agents,
+                    task_feat_dim=tdim,
+                    agent_feat_dim=adim,
+                ).to(self.device)
+                self.optim = torch.optim.Adam(self.net.parameters(), lr=getattr(self, "lr", 1e-3))
+        self.net.load_state_dict(state)
+        self.target.load_state_dict(state)
         self.net.eval()
 
     def plan(self, env, hung, events=None, force: bool = True, force_no_reserve: bool = False, force_no_learned_pri: bool = False):

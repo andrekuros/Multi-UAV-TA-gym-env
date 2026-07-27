@@ -1,5 +1,5 @@
-% Overleaf / GitHub: compile with pdfLaTeX.
-% Requires IEEEtran.cls (Overleaf provides it; or download from IEEE).
+% IEEE TAES regular-paper draft (IEEEtran journal).
+% Compile with pdfLaTeX + BibTeX.
 \documentclass[journal,twocolumn,10pt]{IEEEtran}
 
 \usepackage{amsmath,amssymb,amsfonts}
@@ -14,125 +14,142 @@
 
 \begin{document}
 
-\title{Hybrid Cost Shaping for Multi-UAV Task Allocation under Delayed Sensing and Perishable Tasks}
+\title{Hybrid Cost Shaping for Multi-UAV Task Allocation under Delayed Sensing and Perishable Mission Windows}
 
 \author{
-  % Update author block before submission
+  % Update before submission (ORCID required by TAES)
   Anonymous~Author
-  \thanks{Code, checkpoints, and experiment scripts accompany this manuscript.}
+  \thanks{ORCID: 0000-0000-0000-0000 (replace before submission). Code and experiment scripts accompany this manuscript.}
 }
 
 \maketitle
 
 \begin{abstract}
-Heterogeneous multi-UAV task allocation is commonly solved by bipartite matching when the team observes the full task set and costs reduce to travel versus capability.
-Under \emph{Windowed Pop-up Strike} (WPS) conditions---hard time windows, local and delayed sensing, burst arrivals, and attrition---visibility-masked myopic matching leaves a large gap to an omniscient oracle.
-We study \emph{hybrid} allocators that retain classical assignment as the combinatorial engine while a learned module reshapes its inputs (task priorities and a soft reserve fraction).
-On the primary suite WPS\_hard (\(N{=}100\) paired seeds), Att-RAH improves the evaluation score \(S_{\mathrm{WPS}}\) relative to Local-Hungarian: the paired bootstrap 95\% confidence interval (CI) for the mean difference excludes zero.
-Matched MLP and urgency ablations, and follow-on suites that alter the decision interface (timed commits; coalition escort), do not support an additional claim that set attention outperforms non-attention controls under the same hybrid engine and training budgets.
-All results are simulation-only; Global-Hungarian is reported solely as an information upper bound.
+Aerospace multi-UAV mission management often reduces task allocation to bipartite matching when the team shares a complete common operating picture (COP) and costs are dominated by travel and capability fit.
+Under time-critical strike and reconnaissance conditions with \emph{delayed cueing}, \emph{local sensing}, \emph{hard mission windows}, burst arrivals, and attrition---here termed Windowed Pop-up Strike (WPS)---visibility-masked myopic matching leaves a large gap to an omniscient COP oracle.
+We study hybrid allocators that retain classical assignment as the combinatorial engine while a learned module reshapes edge costs through task priorities and a soft reserve fraction (MLP-RAH / Att-RAH).
+On the primary suite WPS\_hard (\(N{=}100\) paired seeds), Att-RAH attains a higher mean evaluation score \(S_{\mathrm{WPS}}\) than Local-Hungarian (mean \(\Delta\approx +8.7\)), but the paired bootstrap 95\% confidence interval (CI) includes zero (CI \([-8.1,+26.0]\)).
+Local-Hungarian remains competitive with learned hybrids under the evaluated training budget, while Cap-Greedy and CBBA-Replan underperform it under the same visibility mask.
+Matched non-attention controls and interface extensions (timed commits; coalition escort) do not support an additional claim that set attention outperforms MLP or urgency baselines under the same hybrid engine.
+Results are simulation-only; Global-Hungarian is an information upper bound, not an operational competitor.
 \end{abstract}
 
 \begin{IEEEkeywords}
-Multi-UAV systems, task allocation, Hungarian algorithm, hybrid learning, partial observability, time windows
+Unmanned aerial vehicles, task allocation, Hungarian algorithm, hybrid learning, partial observability, time windows, mission management
 \end{IEEEkeywords}
 
 \section{Introduction}
-Multi-robot task allocation (MRTA) is often cast as assignment between agents and tasks~\cite{kuhn1955hungarian,gerkey2004formal,korsah2013comprehensive}.
-When sensing is global and objectives are dominated by distance and capability fit, periodic Hungarian matching and market-based methods such as the consensus-based bundle algorithm (CBBA)~\cite{choi2009cbba,dias2006market} are strong baselines.
-In that regime, replacing the combinatorial core with end-to-end reinforcement learning (RL) has not consistently produced gains over classical assignment.
+Multi-UAV cooperative missions for intelligence, surveillance, reconnaissance (ISR), and time-critical strike require repeated assignment of heterogeneous air vehicles to spatially distributed tasks~\cite{poudel2022survey,shima2006multiple}.
+When sensing is global and objectives are myopic travel-versus-capability costs, the Hungarian algorithm~\cite{kuhn1955hungarian} and market-based methods such as the consensus-based bundle algorithm (CBBA)~\cite{choi2009cbba,dias2006market} are strong baselines.
+Trajectory-level mixed-integer formulations further couple routing and timing under idealized information~\cite{richards2002aircraft}.
+In that regime, replacing the combinatorial core with end-to-end reinforcement learning (RL) has not consistently outperformed classical assignment.
 
-This paper studies a setting in which complete-information myopic matching is a poor inductive bias:
+Aerospace command-and-control (C2) settings often violate those assumptions:
 \begin{itemize}
-  \item \textbf{Hard windows:} pop-up attack, reconnaissance, and intercept tasks expire; misses are penalized.
-  \item \textbf{Local / delayed sensing:} tasks are not globally known; each UAV discovers them within a sensing radius or after a delay.
-  \item \textbf{Burst arrivals:} correlated pop-ups punish greedy over-commitment of the fleet.
+  \item \textbf{Hard mission windows:} pop-up attack, reconnaissance, and intercept tasks expire; misses degrade mission value.
+  \item \textbf{Incomplete COP:} tasks are disclosed through local sensing radius and cueing delay rather than instantaneous team broadcast.
+  \item \textbf{Burst arrivals and attrition:} correlated pop-ups and vehicle loss punish greedy over-commitment.
 \end{itemize}
 We refer to this family as \textbf{WPS} (Windowed Pop-up Strike).
-The fair classical competitor is \textbf{Local-Hungarian}: Hungarian matching on open tasks with edges restricted to each agent's known-task set.
-\textbf{Global-Hungarian} ignores sensing limits and is reported only as an information oracle.
+The fair classical competitor is \textbf{Local-Hungarian}: Hungarian matching restricted to each UAV's known-task set (incomplete COP).
+\textbf{Global-Hungarian} ignores sensing limits and is reported only as an omniscient-COP oracle.
 
-\paragraph{Locked claim.}
-We show that a hybrid allocator (Att-RAH) that reshapes Local-Hungarian costs with learned priorities improves mean \(S_{\mathrm{WPS}}\) over Local-Hungarian on WPS\_hard under paired bootstrap 95\% CIs; set-attention-specific superiority over matched MLP or urgency controls is \emph{not} established on the evaluated suites.
+\paragraph{Contribution statement.}
+We evaluate hybrid allocators that reshape Local-Hungarian costs under incomplete COP on WPS\_hard: Att-RAH yields a positive mean \(\Delta S_{\mathrm{WPS}}\) versus Local-Hungarian whose paired bootstrap 95\% CI includes zero under the evaluated budget; set-attention-specific superiority over matched MLP or urgency controls is \emph{not} established.
 
 \paragraph{Contributions.}
 \begin{enumerate}
-  \item WPS scenario family and evaluation scores \(S_{\mathrm{WPS}}\) / \(S_{\mathrm{ESC}}\) emphasizing perishable and escort outcomes.
-  \item Hybrid priority-and-reserve modules (MLP-RAH, Att-RAH) coupled to visibility-masked Hungarian matching, with ablations that isolate reserve and learned priority.
-  \item Paired-seed evaluation (\(N{=}100\)) with bootstrap CIs on WPS\_hard (primary) and condensed stress / interface suites (WPS\_attn, WPS\_commit, WPS\_escort).
+  \item An aerospace-oriented WPS scenario family and evaluation scores \(S_{\mathrm{WPS}}\)/\(S_{\mathrm{ESC}}\) emphasizing perishable and escort outcomes under incomplete COP.
+  \item Hybrid priority-and-reserve modules (MLP-RAH, Att-RAH) coupled to visibility-masked Hungarian matching, with ablations isolating reserve and learned priority.
+  \item Paired-seed evaluation (\(N{=}100\)) with bootstrap CIs on WPS\_hard (primary), showing that Local-Hungarian remains a strong fair baseline against hybrids under the evaluated budget, with stress and interface extensions in the appendices.
 \end{enumerate}
 
 \section{Related Work}
-\textbf{Classical allocation.}
-The Hungarian algorithm~\cite{kuhn1955hungarian} remains a standard bipartite solver.
-Market-based and auction methods, including CBBA~\cite{choi2009cbba}, support distributed multi-robot assignment~\cite{dias2006market}.
-Performance-impact (PI) heuristics extend bundle construction by measuring insertion effects on an agent's schedule~\cite{zhao2016pi}.
-Taxonomies of MRTA clarify single-task versus multi-task robots and instantaneous versus time-extended assignment~\cite{gerkey2004formal,korsah2013comprehensive}.
+\textbf{MRTA taxonomies and classical solvers.}
+Gerkey and Matari{\'c}~\cite{gerkey2004formal} and Korsah \emph{et al.}~\cite{korsah2013comprehensive} organize multi-robot task allocation (MRTA) by single- versus multi-task robots and instantaneous versus time-extended assignment.
+The Hungarian algorithm~\cite{kuhn1955hungarian} remains a standard bipartite engine.
 Unlike open-information benchmarks, our Local baselines enforce the same visibility mask as the learned hybrids.
 
-\textbf{Learning for task allocation.}
-End-to-end policies that select discrete assignments (including attention over task embeddings~\cite{vaswani2017attention}) must solve both scoring and combinatorial feasibility.
-When costs are dense and matching structure is available, pure RL often underperforms classical solvers.
-Our earlier TBTA experiments used multi-head DQNs over task tokens in a PettingZoo environment~\cite{terry2021pettingzoo}; they motivate keeping Hungarian as the assignment engine rather than replacing it.
+\textbf{Market-based and UAV mission assignment.}
+Market methods, including CBBA~\cite{choi2009cbba}, support distributed multi-UAV assignment~\cite{dias2006market,poudel2022survey}.
+Extensions address time-sensitive replanning~\cite{chen2021cbba} and schedule-impact scoring (performance impact, PI)~\cite{zhao2016pi}.
+Genetic and optimization-based UAV assignment formulations target cooperating uninhabited vehicles under coupling constraints~\cite{shima2006multiple}.
+Recent aerospace work studies communication-aware and learning-augmented swarm allocation~\cite{xiong2026cata}.
+We retain CBBA/PI as Local baselines but evaluate them under the same incomplete-COP mask as Hungarian hybrids.
 
-\textbf{Hybrids.}
-Learning to rank or shape costs for a classical optimizer is a recurring pattern in operations research and robotics.
-We adopt that pattern under partial observability and hard deadlines: the network outputs continuous priorities (and optionally commit locks or pair scores), while feasibility and conflict resolution remain classical.
+\textbf{Planning under timing and information constraints.}
+Mixed-integer trajectory planning illustrates the cost of enforcing collision and timing constraints when models are centralized~\cite{richards2002aircraft}.
+Our focus is discrete assignment under delayed disclosure rather than continuous trajectory optimization.
 
-\section{Problem Setting}
+\textbf{Learning and hybrids.}
+End-to-end policies that select discrete assignments, including attention over tokens~\cite{vaswani2017attention}, must jointly solve scoring and combinatorial feasibility.
+When matching structure is available, hybrids that learn scores for a classical solver are a recurring pattern.
+We adopt that pattern under partial observability: networks output priorities (or locks/pair scores), while conflict resolution remains classical.
+Prior TBTA experiments in a PettingZoo environment~\cite{terry2021pettingzoo} motivate keeping Hungarian as the assignment engine.
+
+\section{System Model and WPS Scenarios}
 \subsection{Agents, tasks, and information}
 Let \(\mathcal{A}_t\) be the set of live UAVs and \(\mathcal{T}_t\) the set of open tasks at discrete time \(t\).
 Each agent \(a\in\mathcal{A}_t\) maintains a known-task set \(\mathcal{K}_{a,t}\subseteq\mathcal{T}_t\) updated by sensing radius \(R_{\mathrm{sense}}\) and threat-disclosure delay \(d\).
-A \emph{local} allocator may assign \(a\) only to tasks in \(\mathcal{K}_{a,t}\).
-Heterogeneous types (fighter/recon variants) constrain capability; intercept and escort tasks may require multiple agents.
+A \emph{local} allocator may assign \(a\) only to tasks in \(\mathcal{K}_{a,t}\) (incomplete COP).
+Heterogeneous fighter/recon types constrain capability; intercept and escort tasks may require multiple agents.
 
-\subsection{WPS dynamics}
+\subsection{Mission dynamics}
 Episodes combine static strike/recon missions with dynamic threats that spawn intercepts and online arrivals.
 Configurable parameters include \(R_{\mathrm{sense}}\), \(d\), window length \(W\), burst size, fail rate, and evaluation weights.
-Suites used in this paper:
-\begin{itemize}
-  \item \textbf{WPS\_hard} (primary): tight windows, strong delay, bursts.
-  \item \textbf{WPS\_easy} / \textbf{WPS\_burst}: softer and harder variants for transfer checks.
-  \item \textbf{WPS\_attn}: larger fleet, dual-region bursts, no team knowledge sharing.
-  \item \textbf{WPS\_commit}: dual-front setting with timed commits and a rematch penalty.
-  \item \textbf{WPS\_escort}: escort coalitions protecting recon UAVs; score \(S_{\mathrm{ESC}}\).
-\end{itemize}
+Table~\ref{tab:suites} summarizes locked suites.
+WPS\_hard is the primary confirmatory suite; WPS\_attn stresses multi-front asymmetry; WPS\_commit and WPS\_escort are interface extensions (Appendix~\ref{app:ext}).
+
+\begin{table}[t]
+\centering
+\caption{WPS suite parameters (primary: WPS\_hard).}
+\label{tab:suites}
+\setlength{\tabcolsep}{2.5pt}
+\begin{tabular}{lcccc}
+\toprule
+Suite & Fleet & \(R_{\mathrm{sense}}\) & \(d\) & \(W\) \\
+\midrule
+WPS\_easy & 8 UAV & 250 & 8 & 40 \\
+WPS\_hard & 8 UAV & 120 & 15 & 25 \\
+WPS\_burst & 8 UAV & 150 & 12 & 20 \\
+WPS\_attn & 12 UAV & 90 & 18 & 22 \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \section{Methods}
 \subsection{Baselines}
-Local-Cap-Greedy, Local-CBBA-Replan, and Local-Hungarian share the visibility mask.
-Global-Hungarian (and Global-Coalition on escort) omit the mask (oracle).
-Escort experiments also include Local-PI-Coalition~\cite{zhao2016pi} and Local-CBBA-Coalition under multi-slot residual matching.
+Local-Cap-Greedy, Local-CBBA-Replan~\cite{choi2009cbba,chen2021cbba}, and Local-Hungarian share the visibility mask and comparable replan triggers.
+Global-Hungarian omits the mask (oracle).
+Escort experiments additionally use Local-PI-Coalition~\cite{zhao2016pi} and Local-CBBA-Coalition under multi-slot residual matching (Appendix~\ref{app:ext}).
 
 \subsection{MLP-RAH and Att-RAH}
-Both modules map the current team--task state to per-task priorities \(w_t\in[0,1]\) and a reserve fraction \(\rho\in[0,1]\).
-Hungarian edge costs on known pairs use
+Both modules map the current team--task state to per-task priorities \(w\in[0,1]^{|\mathcal{T}_t|}\) and a reserve fraction \(\rho\in[0,1]\).
+Hungarian edge costs on known pairs \((a,t)\) with \(t\in\mathcal{K}_{a,t}\) use
 \begin{equation}
 c(a,t)=\mathrm{dist}(a,t)-\alpha\,\mathrm{cap}(a,t)-\beta\,w_t-\gamma\,\mathrm{urgency}(t),
 \label{eq:cost}
 \end{equation}
 with unknown edges removed.
-The \(\lceil\rho |\mathcal{A}_t|\rceil\) farthest agents may be held idle (soft reserve).
+Up to \(\lceil\rho |\mathcal{A}_t|\rceil\) farthest agents may be held idle (soft reserve).
+Default blend coefficients follow the implementation defaults (\(\alpha,\beta,\gamma\) fixed across compared hybrids).
 
-\textbf{MLP-RAH} encodes a fixed-length global feature vector with a multilayer perceptron.
+\textbf{MLP-RAH} encodes a fixed-length global feature vector with a two-hidden-layer MLP (width 128).
 \textbf{Att-RAH} builds agent and task tokens (position, type, urgency, scarcity, remaining demand, idle/capability flags), pads to at most 16 agents and 32 tasks, and applies a 2-layer Transformer encoder~\cite{vaswani2017attention} (\(d_{\mathrm{model}}{=}64\), 4 heads, feed-forward width \(128\), dropout \(0.1\)).
 Priorities are read from task tokens; \(\rho\) from a pooled summary.
 
 \textbf{Ablations.}
 \emph{Att no-reserve} forces \(\rho{=}0\).
-\emph{Att no-priority} replaces the learned \(w_t\) with engineered urgency/scarcity features while retaining the same allocator.
+\emph{Att no-priority} replaces learned \(w_t\) with engineered urgency/scarcity while retaining the same allocator.
 
-\subsection{Training (RAH)}
+\subsection{Training}
 Policies are trained on WPS\_hard for 280 episodes (Adam, learning rate \(10^{-3}\)).
-The step reward is the change in \(S_{\mathrm{WPS}}\); checkpoints are selected by validation \(S_{\mathrm{WPS}}\) every 40 episodes (12 eval episodes).
+The step reward is \(\Delta S_{\mathrm{WPS}}\).
+The replay buffer stores transitions of predicted value, \(\rho\), and priorities; updates minimize mean-squared temporal-difference and supervised regression losses (batch size 64, discount \(\gamma{=}0.95\), target network sync every 40 updates; buffer cap \(4{\times}10^{4}\)).
+Checkpoints are selected by validation \(S_{\mathrm{WPS}}\) every 40 episodes (12 eval episodes).
 Exploration uses \(\varepsilon\)-annealing from \(0.45\) to \(0.05\).
 Inference uses periodic replanning (interval 20) plus event triggers (new threat, agent failure, reset).
-
-\subsection{Interface variants (secondary)}
-\textbf{Commit} (WPS\_commit): the module outputs priorities and per-agent commit locks; Local-Hungarian assigns only free agents.
-\textbf{Coalition} (WPS\_escort): the module scores agent--task pairs for multi-slot escort tasks; coalition Hungarian consumes soft scores.
-Matched MLP and hand-crafted urgency controls share the same interface.
-These variants test whether changing the decision interface yields attention-specific gains; they are not part of the primary claim.
+Further details appear in Appendix~\ref{app:repro}.
 
 \section{Evaluation Metrics}
 We treat \(S_{\mathrm{WPS}}\) as an \emph{evaluation score} encoding preference for on-time completions over misses, with a small travel regularizer aligned to WPS\_hard weights:
@@ -147,8 +164,7 @@ S_{\mathrm{WPS}}
 \label{eq:swps}
 \end{equation}
 On-time rate and missed-window count are co-primary operational metrics.
-On WPS\_commit, rematch cost is included in the reported score.
-For escort,
+For escort missions,
 \begin{equation}
 S_{\mathrm{ESC}}
 =
@@ -162,22 +178,23 @@ S_{\mathrm{WPS}}
 \label{eq:sesc}
 \end{equation}
 where \(\mathrm{escort\_coverage}\) is the fraction of escort-required steps with a fighter near the protected recon UAV.
-Weights are heuristic; we do not claim uniqueness of the weighting.
-A legacy completion mass score is recorded only as a secondary diagnostic.
+Weights are heuristic; sensitivity under alternate weightings is reported in Appendix~\ref{app:sens}.
+A legacy completion-mass score is recorded only as a secondary diagnostic.
 
 \section{Experiments}
 \subsection{Protocol}
 Unless noted, each method--suite pair uses \(N{=}100\) episodes with seeds \(0,\ldots,99\).
 For comparisons to Local-Hungarian we report the paired mean difference and a percentile bootstrap 95\% CI (2000 resamples).
-Multiple algorithms are reported for context; the primary confirmatory contrast is Att-RAH versus Local-Hungarian on WPS\_hard.
-We do not adjust for multiplicity across secondary suites.
+The primary confirmatory contrast is Att-RAH versus Local-Hungarian on WPS\_hard.
+Secondary suites are exploratory and not multiplicity-adjusted.
 
 \subsection{Primary results (WPS\_hard)}
 Table~\ref{tab:hard} summarizes means and CIs for \(\Delta S_{\mathrm{WPS}}\) versus Local-Hungarian.
-Att-RAH attains mean \(S_{\mathrm{WPS}}=-125.5\pm80\) with CI \([+0.7,+26.6]\) for the paired difference, which excludes zero.
-MLP-RAH is directionally similar but its CI includes zero (\([-5.7,+21.4]\)).
+Att-RAH attains mean \(S_{\mathrm{WPS}}=-194.1\pm99\); the paired mean difference versus Local-Hungarian is \(\widehat{\Delta}\approx +8.7\) with CI \([-8.1,+26.0]\), which includes zero.
+Att-RAH-no-reserve has the best hybrid mean (\(-189.5\pm96\)) but likewise a CI including zero.
+MLP-RAH does not improve on Local-Hungarian (CI \([-20,+11]\)).
 Cap-Greedy and CBBA-Replan underperform Local-Hungarian under the same mask.
-The gap from Att-RAH to Global-Hungarian remains large (\(\approx 45\) points), consistent with information asymmetry rather than solver failure alone.
+The gap from Att-RAH to Global-Hungarian remains large (\(\approx 63\) points), consistent with information asymmetry rather than solver failure alone.
 
 \begin{table}[t]
 \centering
@@ -188,14 +205,14 @@ The gap from Att-RAH to Global-Hungarian remains large (\(\approx 45\) points), 
 \toprule
 Method & \(S_{\mathrm{WPS}}\) & on-time & miss & \(\Delta S\) 95\% CI \\
 \midrule
-Cap-Greedy & $-370.9\pm96$ & 0.24 & 14.2 & $[-253,-211]$ \\
-CBBA-Replan & $-198.7\pm98$ & 0.46 & 10.0 & $[-77,-43]$ \\
-Local-Hung. & $-139.2\pm77$ & 0.54 & 8.8 & --- \\
-MLP-RAH & $-131.4\pm81$ & 0.55 & 8.6 & $[-5.7,+21.4]$ \\
-\textbf{Att-RAH} & $\mathbf{-125.5\pm80}$ & \textbf{0.56} & \textbf{8.4} & $\mathbf{[+0.7,+26.6]}$ \\
-Att no-res. & $-124.0\pm73$ & 0.56 & 8.4 & $[+3.6,+27.7]$ \\
-Att no-pri. & $-125.0\pm85$ & 0.56 & 8.4 & $[+0.7,+28.1]$ \\
-Global (oracle) & $-81.0\pm91$ & 0.62 & 7.4 & $[+43,+74]$ \\
+Cap-Greedy & $-373.1\pm108$ & 0.28 & 14.8 & $[-195,-146]$ \\
+CBBA-Replan & $-294.0\pm116$ & 0.37 & 12.7 & $[-112,-71]$ \\
+Local-Hung. & $-202.8\pm97$ & 0.48 & 10.7 & --- \\
+MLP-RAH & $-207.5\pm91$ & 0.48 & 10.8 & $[-20,+11]$ \\
+Att-RAH & $-194.1\pm99$ & 0.50 & 10.6 & $[-8.1,+26.0]$ \\
+Att no-res. & $-189.5\pm96$ & 0.50 & 10.4 & $[-6.7,+31.6]$ \\
+Att no-pri. & $-202.2\pm93$ & 0.48 & 10.8 & $[-18,+19]$ \\
+Global (oracle) & $-130.8\pm118$ & 0.58 & 9.3 & $[+52,+91]$ \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -203,27 +220,26 @@ Global (oracle) & $-81.0\pm91$ & 0.62 & 7.4 & $[+43,+74]$ \\
 \begin{figure}[t]
 \centering
 \includegraphics[width=\columnwidth]{figures/fig_wps_swps.png}
-\caption{Mean \(S_{\mathrm{WPS}}\) across WPS suites (\(N{=}100\) episodes per method).}
+\caption{Mean \(S_{\mathrm{WPS}}\) on WPS\_hard (\(N{=}100\) episodes per method).}
 \label{fig:swps}
 \end{figure}
 
 \begin{figure}[t]
 \centering
 \includegraphics[width=\columnwidth]{figures/fig_wps_ontime.png}
-\caption{On-time completion rate across suites (\(N{=}100\)).}
+\caption{On-time completion rate on WPS\_hard (\(N{=}100\)).}
 \label{fig:ontime}
 \end{figure}
 
 \subsection{Ablations and cross-suite checks}
-Removing reserve does not reduce mean \(S_{\mathrm{WPS}}\) on WPS\_hard (Table~\ref{tab:hard}), so reserve is not the driver of the Local-Hungarian gap.
-The no-priority ablation, which retains urgency/scarcity features, also yields a CI excluding zero, indicating that engineered features carry much of the hybrid signal.
-On WPS\_easy, Local-Hungarian attains the best mean \(S_{\mathrm{WPS}}\) (\(24.4\)); hybrids do not improve it when delay is mild.
-On WPS\_burst, Att-RAH is comparable to Local-Hungarian.
+Removing reserve does not harm mean \(S_{\mathrm{WPS}}\) on WPS\_hard (Table~\ref{tab:hard}); Att-RAH-no-reserve is numerically best among hybrids, so reserve is not required for the directional Att-RAH lift.
+The no-priority ablation is near Local-Hungarian (CI includes zero), indicating that engineered urgency/scarcity alone does not explain Att-RAH's mean gap under this campaign.
+On WPS\_easy and WPS\_burst (prior exploratory campaigns), Local-Hungarian remains competitive when delay is mild, and hybrids are not consistently superior under burst stress.
 
 \begin{figure}[t]
 \centering
 \includegraphics[width=\columnwidth]{figures/fig_wps_ablation.png}
-\caption{Ablation summary on WPS\_hard: reserve is weak; hybrids remain below the oracle.}
+\caption{Ablation summary on WPS\_hard: reserve is optional; hybrids remain below the oracle and near Local-Hungarian.}
 \label{fig:ablation}
 \end{figure}
 
@@ -234,7 +250,7 @@ On WPS\_burst, Att-RAH is comparable to Local-Hungarian.
 \label{fig:gap}
 \end{figure}
 
-\subsection{Stress and interface suites (secondary)}
+\subsection{Stress suite (WPS\_attn)}
 Table~\ref{tab:attn} reports WPS\_attn.
 Paired CIs for Att-RAH versus Local-Hungarian, MLP-RAH, and the no-priority ablation all include zero.
 The oracle gap grows to \(\approx 150\) points, indicating that information---not encoder depth---dominates under priority reshaping.
@@ -266,8 +282,43 @@ Global (oracle) & $-166.7\pm83$ & 0.56 & 11.5 & $[+125,+174]$ \\
 \label{fig:attn}
 \end{figure}
 
-On WPS\_commit (Table~\ref{tab:commit}), Att-Commit, MLP-Commit, and Urgency-Commit show no significant pairwise separation on \(S_{\mathrm{WPS}}\) (CIs versus MLP and Urgency include zero).
-Timed commits alone therefore do not produce an attention-specific gain under this protocol.
+\section{Discussion and Limitations}
+On WPS\_hard, hybrid cost shaping yields a directional but non-significant mean improvement of Att-RAH over Local-Hungarian under paired bootstrap CIs.
+Local-Hungarian remains a strong fair baseline: Cap-Greedy and CBBA-Replan are substantially worse under the same mask, and learned hybrids do not reliably exceed it under the evaluated budget.
+The large remaining gap to Global-Hungarian points to incomplete COP---not classical matching failure---as the dominant bottleneck.
+On harder asymmetry (WPS\_attn) and alternate interfaces (Appendix~\ref{app:ext}), matched non-attention controls are not outperformed; on escort, an MLP pair scorer surpasses the attention encoder under the evaluated budget.
+
+\textbf{Limitations.}
+Results are limited to discrete-time simulation without flight or hardware-in-the-loop validation.
+\(S_{\mathrm{WPS}}\) and \(S_{\mathrm{ESC}}\) use heuristic weights; Appendix~\ref{app:sens} shows that Att-RAH versus Local-Hungarian CIs still include zero under miss-weight \(\pm 20\%\) and a zero distance term.
+Training budgets and architectures are fixed (Att-RAH checkpoint selected by validation \(S_{\mathrm{WPS}}\) within a 280-episode budget).
+Secondary suites are exploratory and not multiplicity-adjusted.
+Communication channel impairments are not modeled beyond knowledge masking.
+
+\section{Conclusion}
+Under WPS\_hard, Att-RAH does not significantly improve \(S_{\mathrm{WPS}}\) over visibility-masked Local-Hungarian under paired bootstrap 95\% CIs (mean \(\Delta\approx +8.7\), CI includes zero).
+Set attention does not, by itself, outperform matched MLP or urgency controls on the stress and interface suites studied here.
+For aerospace mission management, the practical implication is to retain classical assignment under incomplete COP as the core solver, and to treat learned cost shaping as an optional module that must demonstrate paired gains against that fair baseline.
+
+\section*{Acknowledgments}
+Omitted for anonymous review.
+
+\appendix
+\section{Reproducibility notes}
+\label{app:repro}
+\textbf{Environment.}
+PettingZoo parallel API~\cite{terry2021pettingzoo}; WPS flags disable early termination so late pop-ups remain in horizon.
+\textbf{Fairness.}
+All Local methods use the same \(\mathcal{K}_{a,t}\) mask and comparable event-driven replanning.
+\textbf{Code.}
+Experiment scripts and scenario registry accompany the manuscript; checkpoints are regenerated by published train scripts.
+
+\section{Interface extensions}
+\label{app:ext}
+Timed commits (WPS\_commit) and coalition escort (WPS\_escort) change the decision interface while keeping classical conflict resolution.
+Tables~\ref{tab:commit}--\ref{tab:escort} summarize means.
+Att-Commit, MLP-Commit, and Urgency-Commit show no significant pairwise separation on \(S_{\mathrm{WPS}}\) (CIs versus MLP and Urgency include zero).
+On escort (replan interval 12), MLP-Coalition achieves the best learned mean \(S_{\mathrm{ESC}}\); Att-Coalition is significantly worse than the matched MLP and does not significantly exceed Local-CBBA-Coalition.
 
 \begin{table}[t]
 \centering
@@ -286,11 +337,6 @@ Global (oracle) & $-252.1\pm107$ & 0.56 & 11.5 \\
 \bottomrule
 \end{tabular}
 \end{table}
-
-On WPS\_escort (Table~\ref{tab:escort}; replan interval 12), MLP-Coalition achieves the best learned mean \(S_{\mathrm{ESC}}\) (\(-283.9\)).
-Att-Coalition (\(-369.8\)) is significantly worse than the matched MLP (paired CI for Att$-$MLP excludes zero).
-Att-Coalition improves on Urgency-Coalition and Local-PI-Coalition but does not significantly exceed Local-CBBA-Coalition.
-Thus an attention-specific escort claim is not supported.
 
 \begin{table}[t]
 \centering
@@ -312,24 +358,28 @@ MLP-Coalition & $-283.9\pm144$ \\
 \end{tabular}
 \end{table}
 
-\section{Discussion and Limitations}
-The primary evidence supports hybrid cost shaping---not set attention as such---on WPS\_hard against Local-Hungarian.
-The positive Att-RAH CI is narrow at the lower end (\(+0.7\)), and the no-priority ablation is competitive, so urgency/scarcity features likely explain much of the gain.
-On harder asymmetry (WPS\_attn) and alternate interfaces (commit, escort), matched non-attention controls are not outperformed; on escort, the MLP pair scorer surpasses the attention encoder under the evaluated budget.
+\section{Metric weight sensitivity}
+\label{app:sens}
+We recompute \(S_{\mathrm{WPS}}\) under alternate weights \((b_{\mathrm{on}},p_{\mathrm{miss}},c_{\mathrm{dist}})\) from per-episode components (\texttt{n\_on\_time}, \texttt{n\_missed\_windows}, \texttt{total\_distance}, \texttt{max\_coord}) using \texttt{experiments/wps\_metric\_sensitivity.py}.
+Table~\ref{tab:sens} reports paired Att-RAH versus Local-Hungarian differences on WPS\_hard (\(N{=}100\)) for the default weights in~\eqref{eq:swps}, miss weight \(\pm 20\%\), and a zero distance coefficient.
+In all four variants the paired bootstrap 95\% CI includes zero, so the non-significant primary contrast is not an artifact of the default miss or distance coefficients alone.
 
-\textbf{Limitations.}
-Results are limited to discrete-time simulation; there is no flight or hardware-in-the-loop validation.
-\(S_{\mathrm{WPS}}\) and \(S_{\mathrm{ESC}}\) use heuristic weights.
-Training budgets and architectures are fixed; larger models or longer training might change secondary outcomes but were not explored exhaustively.
-Secondary suites are exploratory and not multiplicity-adjusted.
-
-\section{Conclusion}
-Under WPS\_hard, Att-RAH improves \(S_{\mathrm{WPS}}\) over visibility-masked Local-Hungarian with a paired bootstrap 95\% CI excluding zero.
-Set attention does not, by itself, outperform matched MLP or urgency controls on the stress and interface suites studied here.
-The practical implication is to treat classical assignment under local sensing as the core solver, and to evaluate learned modules by whether they improve that fair baseline---not by encoder depth alone.
-
-\section*{Acknowledgments}
-Omitted for anonymous review.
+\begin{table}[t]
+\centering
+\caption{WPS\_hard metric-weight sensitivity. Paired mean \(\Delta S_{\mathrm{WPS}}\) (Att-RAH $-$ Local-Hungarian) and bootstrap 95\% CI (\(N{=}100\)).}
+\label{tab:sens}
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lccc}
+\toprule
+Variant & \((b,p,c)\) & mean \(\Delta\) & 95\% CI \\
+\midrule
+Default & \((12,30,0.01)\) & $+8.7$ & $[-8.1,+26.0]$ \\
+Miss $-20\%$ & \((12,24,0.01)\) & $+7.8$ & $[-6.5,+22.3]$ \\
+Miss $+20\%$ & \((12,36,0.01)\) & $+9.6$ & $[-10.1,+29.6]$ \\
+No distance & \((12,30,0)\) & $+8.7$ & $[-8.1,+26.0]$ \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \bibliographystyle{IEEEtran}
 \bibliography{refs}
