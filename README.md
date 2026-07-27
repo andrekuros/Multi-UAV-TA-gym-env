@@ -120,6 +120,13 @@ Play/pause, scrubbing, event timeline, sensing/assignment overlays, JSON downloa
 
 IEEE-style draft: [`paper/main.tex`](paper/main.tex). See [`paper/README.md`](paper/README.md) for compile steps and claim boundaries.
 
+Standalone (Overleaf-friendly) mirror: [andrekuros/Multi-UAV-TA-paper](https://github.com/andrekuros/Multi-UAV-TA-paper) — synced from `paper/` via `git subtree` (Cursor keeps this full monorepo):
+
+```bash
+git subtree push --prefix=paper paper main   # after committing paper changes here
+git subtree pull --prefix=paper paper main --squash
+```
+
 ## AI development
 
 See [`AI_DEVELOPMENT_GUIDE.md`](AI_DEVELOPMENT_GUIDE.md) for architectural rules when extending the env, Rust core, or hybrids.
