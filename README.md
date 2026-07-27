@@ -1,81 +1,129 @@
 # Multi-UAV-TA Framework (v02.0)
 
-Multi-UAV-TA is an open-source framework that implements a custom environment for training and evaluating algorithms (including Multi-Agent Reinforcement Learning - MARL) in Multi-UAV (Unmanned Aerial Vehicle) Target Assignment scenarios. 
-
-The environment is designed to simulate multiple UAVs working together to assign, track, and engage targets in real-time. It is a valuable resource for researchers and engineers working on UAV coordination, multi-agent systems, and aerial surveillance applications.
-
-**Version 02.0 Major Updates**:
-- **High-Performance Rust Core**: Mathematical and physics bottlenecks (like Line of Sight and Obstacle Avoidance) have been rewritten in compiled Rust (`core_sim`) using `PyO3`, achieving massive speedups for training.
-- **Strict Headless Training Support**: `pygame` has been completely stripped from the core simulation loop. The PettingZoo environment is now natively headless, making it extremely efficient for RL frameworks like `tianshou` or `ray[rllib]`.
-- **Decoupled 3D Web Visualization**: A new FastAPI backend (`server/`) streams live simulation data via WebSockets to a React + Vite + Three Fiber frontend (`frontend/`), allowing browser-based, beautiful 3D monitoring without blocking the simulation threads.
+Open-source PettingZoo environment and hybrid task-allocation stack for heterogeneous multi-UAV Target Assignment under delayed sensing, hard time windows, and coalition escort dynamics.
 
 ## Architecture
 
-1. **Environment (`mUAV_TA/DroneEnv.py`)**: A PettingZoo Parallel API environment handling the Multi-Agent state, steps, and rewards.
-2. **Rust Core (`core_sim/`)**: A compiled Rust library wrapping physics logic. Called synchronously from the Python environment.
-3. **API Backend (`server/api.py`)**: A FastAPI WebSocket server that instantiates the environment and streams state to the frontend.
-4. **3D Frontend (`frontend/`)**: A modern React-Three-Fiber visualization dashboard.
+```
+mUAV_TA/          PettingZoo ParallelEnv (headless; S_WPS / S_ESC metrics)
+core_sim/         Rust (PyO3) physics: LoS, distances, obstacle avoidance
+TaskAllocation/   Classical + hybrid allocators
+experiments/      Scenario registry, train/eval, figures, replay JSON
+server/ + frontend/   FastAPI WebSocket + React/Three Fiber 3D dashboard
+```
+
+1. **Environment** (`mUAV_TA/DroneEnv.py`) — multi-agent state, steps, rewards, WPS/escort metrics.
+2. **Rust core** (`core_sim/`) — compiled geometry; called synchronously from Python.
+3. **Allocators** (`TaskAllocation/`) — Hungarian, CBBA, PI, Cap-Greedy, and hybrids (Att-RAH, Att-Commit, Att-Coalition).
+4. **Experiments** (`experiments/`) — canonical scenarios in `paper_scenarios.py`; train/eval scripts.
+5. **Visualization** (`server/`, `frontend/`) — decoupled replay dashboard (does not block training).
+
+Legacy entry points (`main.py`, `Training/`, `Evaluations/`) remain for older TBTA/UCF workflows; prefer `experiments/` for new work.
 
 ## Installation
 
-### 1. Python Environment Setup
-We recommend using a virtual environment (Python 3.10+):
+### 1. Python environment
 ```bash
 python -m venv .venv
-source .venv/bin/activate  # On Windows use: .venv\Scripts\activate
+# Windows: .venv\Scripts\activate
+# Linux/macOS: source .venv/bin/activate
+pip install gymnasium pettingzoo tianshou torch numpy fastapi uvicorn scipy
 ```
 
-Install the required RL and Gym dependencies:
-```bash
-pip install gymnasium pettingzoo tianshou torch numpy
-```
-
-### 2. Build the Rust Core
-You need the Rust toolchain installed (`cargo`). Then, build the Python bindings using `maturin`:
+### 2. Rust core
 ```bash
 pip install maturin
-cd core_sim
-maturin develop --release
-cd ..
+cd core_sim && maturin develop --release && cd ..
 ```
 
-### 3. Frontend Setup
-Make sure you have Node.js installed.
+### 3. Frontend (optional, for 3D viz)
 ```bash
-cd frontend
-npm install
+cd frontend && npm install && cd ..
 ```
 
-## Running the 3D Visualization
+## Scenarios
 
-The dashboard plays a deterministic WPS_commit log with dual-region bursts,
-online arrivals, local sensing, delayed knowledge, hard windows, UAV failures,
-commit locks, replanning, and the S_WPS metrics.
+Canonical registry: [`experiments/paper_scenarios.py`](experiments/paper_scenarios.py).
 
-Generate (or regenerate) the example replay:
+| Suite | Purpose |
+|-------|---------|
+| Static / D1–D3 | Legacy UCF-style strike, attrition, pop-up threats |
+| `WPS_easy` / `WPS_hard` / `WPS_burst` | Windowed Pop-up Strike (primary paper claim on `WPS_hard`) |
+| `WPS_attn` | Multi-front attention stress (no knowledge sharing) |
+| `WPS_commit` | Dual-front + timed commits + rematch penalty |
+| `WPS_escort` | Coalition escort: protect Rec UAVs; multi-fighter slots |
+
+Env presets: `WPS_ENV_FLAGS` (full horizon, time windows on).
+
+**Primary metrics:** `S_WPS` (on-time / miss / distance); escort uses `S_ESC` = `S_WPS` + protected-rec bonus − recon-loss penalty + coverage term.
+
+## Hybrid methods
+
+All hybrids keep a classical assignment engine; learning only reshapes inputs.
+
+| Method | Module | Interface |
+|--------|--------|-----------|
+| Att-RAH / MLP-RAH | `AttentionRAH.py`, `ReserveAwareHybrid.py` | Task priorities + soft reserve → Local-Hungarian |
+| Att-Commit / MLP-Commit / Urgency-Commit | `AttentionCommit.py` | Priorities + per-agent commit locks → Hungarian on free agents |
+| Att-Coalition / MLP-Coalition / Urgency-Coalition | `AttentionEscort.py` (v2) | Local tokens → cross-attention pair logits → coalition Hungarian |
+
+Import Attention\* classes from their modules (not `Hybrid/__init__.py`).
+
+**Classical baselines:** Local/Global Hungarian, Cap-Greedy, CBBA-Replan; for escort also Coalition-Hungarian, Local-CBBA-Coalition, Local-PI-Coalition.
+
+## Train / eval quick-start
+
+Checkpoints write to `dqn_Custom/` (gitignored). Result CSVs under `experiments/results/` are generated locally (`*.csv` gitignored).
+
 ```bash
-.venv\Scripts\python.exe experiments\generate_simulation_replay.py --seed 0
+# Att-RAH on WPS_hard
+python experiments/train_att_rah.py --episodes 400 --case WPS_hard
+python experiments/wps_eval.py --suite WPS_hard --episodes 100
+
+# Att-Commit on WPS_commit
+python experiments/train_att_commit.py --episodes 280 --case WPS_commit
+python experiments/wps_eval.py --suite WPS_commit --episodes 100 \
+  --algorithms "Local-Hungarian,Urgency-Commit,MLP-Commit,Att-Commit,Global-Hungarian"
+
+# Att-Coalition v2 on WPS_escort
+python experiments/train_escort.py --episodes 400 --case WPS_escort
+python experiments/train_escort.py --mlp --episodes 400 --case WPS_escort
+python experiments/escort_eval.py --episodes 100 --tag att_v2_n100
 ```
 
-Then use two terminals.
+Optional Att-Coalition hyperparam search: `python experiments/search_att_escort.py`.
 
-**Terminal 1: Start the API Backend**
+Smoke tests: `python experiments/test_escort.py`.
+
+## 3D visualization
+
+The API prefers `experiments/results/wps_escort_replay.json`, then `wps_commit_replay.json`.
+
 ```bash
-.venv\Scripts\activate
-python server\api.py
+python experiments/generate_simulation_replay.py --scenario WPS_escort --seed 0
+# or: --scenario WPS_commit
 ```
-*Runs on `http://localhost:8000`*
 
-**Terminal 2: Start the Web Dashboard**
+**Terminal 1 — API** (`http://localhost:8000`):
 ```bash
-cd frontend
-npm run dev
+python server/api.py
 ```
-*Visit the localhost URL provided by Vite in your browser.*
 
-The dashboard supports play/pause, scrubbing, speed control, an event timeline,
-assignment and sensing overlays, and JSON-log download. The generated log is
-stored at `experiments/results/wps_commit_replay.json`.
+**Terminal 2 — dashboard:**
+```bash
+cd frontend && npm run dev
+```
 
-## AI Development Guidelines
-If you are using AI coding assistants to develop this framework further, please refer to the `AI_DEVELOPMENT_GUIDE.md` for architectural context and instructions.
+Play/pause, scrubbing, event timeline, sensing/assignment overlays, JSON download.
+
+## Paper
+
+IEEE-style draft: [`paper/main.tex`](paper/main.tex). See [`paper/README.md`](paper/README.md) for compile steps and claim boundaries.
+
+## AI development
+
+See [`AI_DEVELOPMENT_GUIDE.md`](AI_DEVELOPMENT_GUIDE.md) for architectural rules when extending the env, Rust core, or hybrids.
+
+## Legacy TBTA track
+
+[`RL_EXPERIMENT_PLAN.md`](RL_EXPERIMENT_PLAN.md) documents the older shared-DQN / `F_Reward` / UCF scaling experiments. Prefer the WPS hybrid pipeline above for publication work.

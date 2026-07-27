@@ -1,16 +1,43 @@
-# React + Vite
+# Multi-UAV-TA 3D Dashboard
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+React + Vite + Three Fiber frontend for replaying deterministic WPS simulation logs streamed by the FastAPI backend.
 
-Currently, two official plugins are available:
+## Prerequisites
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- Node.js 18+
+- Python `.venv` with the repo installed and `core_sim` built
+- A replay JSON under `experiments/results/` (API prefers `wps_escort_replay.json`, then `wps_commit_replay.json`)
 
-## React Compiler
+## Generate a replay
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+From the repo root:
 
-## Expanding the Oxlint configuration
+```bash
+python experiments/generate_simulation_replay.py --scenario WPS_escort --seed 0
+# or: --scenario WPS_commit
+```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+## Run
+
+**Terminal 1 — API** (`http://localhost:8000`):
+
+```bash
+python server/api.py
+```
+
+**Terminal 2 — Vite:**
+
+```bash
+cd frontend
+npm install   # first time
+npm run dev
+```
+
+Open the URL printed by Vite. Controls: play/pause, scrub, speed, event timeline, sensing/assignment overlays, download JSON.
+
+## Project layout
+
+- `src/App.jsx` — scene, HUD, WebSocket / REST client
+- Backend payload schema is defined in `server/api.py`
+
+This is not a generic Vite template; keep UI changes aligned with the Multi-UAV-TA replay schema.

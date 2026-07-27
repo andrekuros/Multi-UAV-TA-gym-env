@@ -1,5 +1,7 @@
 # RL Improvement Experiment Plan
 
+> **Legacy track.** This document describes the older TBTA / shared-DQN / `F_Reward` experiments on UCF scaling suites. The primary publication path is **WPS + hybrid allocators** (`experiments/paper_scenarios.py`, Att-RAH / Att-Commit / Att-Coalition). See [README.md](README.md) and [paper/main.tex](paper/main.tex).
+
 **Goal:** Beat Swarm-GAP / CBBA on mean `F_Reward` on the UCF eval suite (`scal_None`, `scal_Agents`, `scal_Tasks`), staying on **TBTA / shared DQN**.
 
 **Baseline (committed CSVs):** Swarm-GAP ≈ 500, CBBA ≈ 497, TBTA ≈ 423 on `scal_None`; TBTA collapses further on agent/task scaling.
