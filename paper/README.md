@@ -1,12 +1,31 @@
 # Paper (Overleaf / GitHub)
 
+This folder is the manuscript for the Multi-UAV-TA WPS hybrid work.
+It lives inside the monorepo [`Multi-UAV-TA-gym-env`](https://github.com/andrekuros/Multi-UAV-TA-gym-env) and is also published as a **standalone repo** via `git subtree` (same files, Overleaf-friendly clone).
+
 ## Contents
 - `main.tex` — IEEEtran draft: WPS hybrids (Att-RAH primary claim) plus commit/escort follow-ons
 - `refs.bib` — bibliography
 - `figures/` — plots from `experiments/results/figs/`
 
+## Standalone paper repo (sync)
+
+Remote name in the monorepo: `paper` → `https://github.com/andrekuros/Multi-UAV-TA-paper`
+
+From the **monorepo root** (not inside `paper/`):
+
+```bash
+# Push paper/ to the standalone repo (after committing in the monorepo)
+git subtree push --prefix=paper paper main
+
+# Pull remote paper edits back into paper/ (e.g. Overleaf → GitHub)
+git subtree pull --prefix=paper paper main --squash
+```
+
+Cursor keeps the full framework tree; only `paper/` is mirrored to the paper project.
+
 ## Compile (Overleaf)
-1. Upload the entire `paper/` folder to a new Overleaf project.
+1. Import from the paper GitHub repo, or upload this folder.
 2. Set compiler to **pdfLaTeX**.
 3. Set main document to `main.tex`.
 4. Recompile (bibliography may need two passes).
@@ -22,7 +41,7 @@ pdflatex main
 
 ## Data sources
 
-Generate CSVs locally (`*.csv` is gitignored). Analysis markdown is written next to them under `experiments/results/`.
+Experiment CSVs live in the monorepo under `experiments/results/` (`*.csv` is gitignored there).
 
 | Suite | Script | Typical artifacts |
 |-------|--------|-------------------|
