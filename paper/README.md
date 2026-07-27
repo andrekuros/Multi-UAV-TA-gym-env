@@ -49,15 +49,12 @@ Experiment CSVs live in the monorepo under `experiments/results/` (`*.csv` is gi
 | WPS_commit | `wps_eval.py --suite WPS_commit` + `analyze_wps_commit.py` | `wps_commit_eval.csv`, `WPS_COMMIT_ANALYSIS.md` |
 | WPS_escort | `experiments/escort_eval.py --tag att_v2_n100` | `WPS_escort_escort_eval_*.csv`, `WPS_ESCORT_ANALYSIS.md` |
 
-## Claim boundaries
+## Claim boundaries (post academic revise)
 
-- **Supported:** Att-RAH improves \(S_{\mathrm{WPS}}\) over Local-Hungarian on **WPS_hard** (paired bootstrap CI excludes zero).
-- **Negative / inconclusive for attention-specific gains:**
-  - **WPS_attn** — Att-RAH does not separate from MLP or urgency ablations.
-  - **WPS_commit** — Att-Commit ≈ MLP-Commit ≈ Urgency-Commit (CIs vs MLP/Urgency include zero).
-  - **WPS_escort** — MLP-Coalition outperforms Att-Coalition; Att does not significantly beat CBBA.
-
-Do not frame the paper as “Transformers beat Hungarian” or “attention wins escort.”
+- **Primary supported claim:** Att-RAH improves \(S_{\mathrm{WPS}}\) over Local-Hungarian on **WPS_hard** (paired bootstrap 95\% CI excludes zero).
+- **Not claimed:** set-attention superiority over matched MLP / urgency on WPS_attn, WPS_commit, or WPS_escort.
+- **Target framing:** hybrid cost shaping under partial observability (RA-L / TAES style), not “Transformers beat Hungarian.”
+- Heuristic metric weights are stated as evaluation scores, not unique objectives.
 
 ## Notes before submission
 - Fill author / affiliation block.
