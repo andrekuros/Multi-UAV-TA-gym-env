@@ -28,8 +28,9 @@
 Aerospace multi-UAV mission management often reduces task allocation to bipartite matching when the team shares a complete common operating picture (COP) and costs are dominated by travel and capability fit.
 Under time-critical strike and reconnaissance conditions with \emph{delayed cueing}, \emph{local sensing}, \emph{hard mission windows}, burst arrivals, and attrition---here termed Windowed Pop-up Strike (WPS)---visibility-masked myopic matching leaves a large gap to an omniscient COP oracle.
 We study hybrids that retain Local-Hungarian while shaping \emph{visibility-masked agent--task edge scores} with matched attention and MLP context encoders (Att-ContextPair / MLP-ContextPair), plus an urgency-pair control.
-On the multi-front stress suite WPS\_attn (\(N{=}100\)), Urgency-Pair, MLP-ContextPair, and Att-ContextPair all improve mean \(S_{\mathrm{WPS}}\) over Local-Hungarian (paired bootstrap 95\% CIs exclude zero); MLP-ContextPair attains the best learned mean.
-A matched Att-versus-MLP contrast does \emph{not} favor attention (MLP is significantly better).
+On the multi-front stress suite WPS\_attn (\(N{=}100\)), Urgency-Pair, MLP-ContextPair, and Att-ContextPair all improve mean \(S_{\mathrm{WPS}}\) over Local-Hungarian (paired bootstrap 95\% CIs exclude zero).
+Across three training seeds and two input feature sets, the matched Att-versus-MLP contrast is indistinguishable from zero in every cell, and neither learned encoder separates from the zero-parameter urgency control.
+Removing hand-engineered team aggregates from the encoder inputs does not create an attention advantage; it mainly reduces seed variance.
 On WPS\_hard, simpler Att-Pair / MLP-Pair shaping does not significantly beat Local-Hungarian.
 Results are simulation-only; Global-Hungarian remains an information upper bound.
 \end{abstract}
@@ -55,13 +56,13 @@ The fair classical competitor is \textbf{Local-Hungarian}: Hungarian matching re
 \textbf{Global-Hungarian} ignores sensing limits and is reported only as an omniscient-COP oracle.
 
 \paragraph{Contribution statement.}
-We show that visibility-masked edge-cost shaping for Local-Hungarian improves mean \(S_{\mathrm{WPS}}\) over Local-Hungarian on WPS\_attn under paired bootstrap 95\% CIs (Urgency-Pair / MLP-ContextPair / Att-ContextPair); a matched attention encoder does \emph{not} outperform the MLP context control, so the gain is not attention-specific.
+We show that visibility-masked edge-cost shaping for Local-Hungarian improves mean \(S_{\mathrm{WPS}}\) over Local-Hungarian on WPS\_attn under paired bootstrap 95\% CIs (Urgency-Pair / MLP-ContextPair / Att-ContextPair), and that under matched capacity, matched optimization, and three training seeds the gain is attributable to edge shaping rather than to attention: neither learned encoder separates from the other, nor from an engineered urgency control.
 
 \paragraph{Contributions.}
 \begin{enumerate}
   \item An aerospace-oriented WPS scenario family and scores \(S_{\mathrm{WPS}}\)/\(S_{\mathrm{ESC}}\) under incomplete COP, with on-time and miss reported as secondary mission tradeoffs alongside the primary scalar \(S_{\mathrm{WPS}}\).
   \item Hybrid context$\rightarrow$edge$\rightarrow$Hungarian modules (Att-ContextPair, MLP-ContextPair, Urgency-Pair) trained by mask-aware imitation of Global-Hungarian, with Att-Pair / commit / escort interfaces as related ablations.
-  \item Paired-seed evaluation (\(N{=}100\)): edge shaping beats Local on WPS\_attn; attention-specific superiority over MLP is not supported; WPS\_hard remains a hard Local baseline for simpler pair heads.
+  \item Paired-seed evaluation (\(N{=}100\)) over three training seeds and a raw-versus-engineered input ablation: edge shaping beats Local on WPS\_attn, attention-specific superiority over MLP is not supported in any cell, and WPS\_hard remains a hard Local baseline for simpler pair heads.
 \end{enumerate}
 
 \section{Related Work}
@@ -144,7 +145,9 @@ Both consume the same agent/task tokens plus an 8-D situation summary (urgency c
 \textbf{Att-ContextPair} uses self- and cross-attention with a context-biased pair head~\cite{vaswani2017attention}.
 \textbf{MLP-ContextPair} is a capacity-matched MLP on concatenated edge features and the same summary.
 \textbf{Urgency-Pair} uses engineered urgency/scarcity/distance residuals (no learning).
-Training: Phase~A imitates Global-Hungarian on \emph{visible} edges (600 episodes on WPS\_attn); Phase~B RL fine-tune is admitted only if Phase~A beats Local on \(N{=}100\) (gate); deployed checkpoints are best-of IL/RL by confirmatory eval.
+To test whether attention \emph{discovers} relational context rather than reading it off engineered inputs, we also train a \textbf{raw} variant of both encoders in which every team aggregate is deleted from the inputs: task scarcity, known-by count, nearest-specialist distance and region identifier are removed from the task tokens, the known-urgent count is removed from the agent tokens, and the situation summary is reduced to the mission clock.
+Both encoders then see only per-entity attributes and must infer contention themselves.
+Training: Phase~A imitates Global-Hungarian on \emph{visible} edges (900 episodes on WPS\_attn); Phase~B RL fine-tune is admitted only if Phase~A beats Local on \(N{=}100\) (gate); deployed checkpoints are best-of IL/RL by confirmatory eval.
 Simpler Att-Pair / MLP-Pair heads without the explicit context summary are reported on WPS\_hard as a related campaign.
 
 \subsection{Timed commits (Att-Commit)}
@@ -157,7 +160,9 @@ For WPS\_escort, Att-Coalition / MLP-Coalition / Urgency-Coalition score agent--
 Classical escort baselines include Coalition-Hungarian, Local-CBBA-Coalition, and Local-PI-Coalition~\cite{zhao2016pi}.
 
 \subsection{Training}
-ContextPair on WPS\_attn: 600 imitation episodes then gated RL (350 episodes) with Adam; validation every 40 episodes on Local-policy \(S_{\mathrm{WPS}}\).
+ContextPair on WPS\_attn: 900 imitation episodes then gated RL (350 episodes) with Adam; validation every 40 episodes on Local-policy \(S_{\mathrm{WPS}}\).
+Imitation uses mini-batches of 8 replan states with linear learning-rate warmup over the first 50 updates, identical for both encoders; an earlier single-state update rule is reported in Sec.~\ref{sec:optconfound} because it materially changed the Att-versus-MLP conclusion.
+Each encoder--feature-set cell is trained with three seeds (0--2) and evaluated independently.
 WPS\_hard Att-Pair / MLP-Pair: shorter IL$\rightarrow$RL as previously reported.
 Inference uses periodic replanning (interval 20) plus event triggers.
 Further details appear in Appendix~\ref{app:repro}.
@@ -202,8 +207,8 @@ WPS\_hard pair-head results are reported as a related suite.
 \subsection{Primary results (WPS\_attn)}
 Table~\ref{tab:attn} summarizes the ContextPair campaign (best-of IL/RL; Att and MLP use IL checkpoints).
 Urgency-Pair, MLP-ContextPair, and Att-ContextPair all improve \(S_{\mathrm{WPS}}\) over Local-Hungarian with CIs excluding zero; on-time rises and misses fall in parallel (secondary tradeoffs).
-MLP-ContextPair has the best learned mean (\(\widehat{\Delta}\approx +53.5\)); Att-ContextPair is significant versus Local but significantly worse than MLP on a paired Att$-$MLP contrast (mean \(\approx -20\), CI excluding zero).
-Global-Hungarian remains \(\approx 196\) points above Local.
+Global-Hungarian remains \(\approx 196\) points above Local, which bounds what edge shaping alone can recover.
+Neither learned encoder separates from Urgency-Pair: pooling three training seeds, the largest learned-minus-urgency contrast is \(+12.2\) (CI \([-6.4,+30.6]\)).
 
 \begin{table}[t]
 \centering
@@ -219,6 +224,40 @@ Urgency-Pair & $-431.0\pm123$ & 0.32 & 17.6 & $[+22.0,+61.3]$ \\
 Att-ContextPair & $-429.6\pm138$ & 0.32 & 17.6 & $[+20.9,+64.3]$ \\
 MLP-ContextPair & $-419.3\pm123$ & 0.33 & 17.3 & $[+31.4,+75.1]$ \\
 Global (oracle) & $-277.1\pm135$ & 0.46 & 14.1 & $[+170,+223]$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Attention versus MLP under matched controls}
+\label{sec:optconfound}
+Table~\ref{tab:seeds} resolves the architecture question over three training seeds and both input feature sets.
+The paired Att$-$MLP contrast has a 95\% CI containing zero in all six cells, and the pooled contrasts (\(-6.4\) raw, \(+6.7\) engineered) are likewise indistinguishable from zero.
+The point estimate changes sign between feature sets and between seeds within the engineered set, which is the expected behavior of an effect that is small relative to training noise rather than an architectural property.
+
+Two controls make this reading concrete.
+First, an earlier version of this study updated the imitation loss on one replan state at a time; under that rule the same comparison produced \(\widehat{\Delta}_{\mathrm{Att-MLP}}\approx-20\) with a CI excluding zero, i.e.\ an apparently significant MLP advantage.
+Replacing single-state updates with mini-batches and warmup---a change to the optimizer alone, with both architectures, both feature sets, and all evaluation seeds held fixed---removed that effect.
+We therefore retract it: it measured an optimization confound that penalized the Transformer, not a property of set attention.
+Second, deleting the engineered team aggregates leaves attention statistically unchanged (\(-3.6\), CI \([-27.4,+18.8]\) on seed 0), consistent with the encoder recovering equivalent information from the raw tokens; the visible effect of the deletion is on stability, with across-seed standard deviation falling from \(8.9\)/\(11.7\) to \(2.7\)/\(2.1\) for Att/MLP.
+
+\begin{table}[t]
+\centering
+\caption{WPS\_attn Att-versus-MLP over three training seeds (\(N{=}100\) evaluation episodes each). Left: mean \(S_{\mathrm{WPS}}\) per training seed. Right: paired Att$-$MLP difference with bootstrap 95\% CI. No cell excludes zero.}
+\label{tab:seeds}
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{llccc}
+\toprule
+Inputs & Encoder & seed 0 & seed 1 & seed 2 \\
+\midrule
+\multirow{3}{*}{Raw}
+ & Att & $-427.9$ & $-422.6$ & $-425.0$ \\
+ & MLP & $-420.6$ & $-416.5$ & $-419.3$ \\
+ & Att$-$MLP & $-7.3$ & $-6.1$ & $-5.7$ \\
+\midrule
+\multirow{3}{*}{Engineered}
+ & Att & $-424.3$ & $-412.1$ & $-429.5$ \\
+ & MLP & $-442.1$ & $-420.4$ & $-423.6$ \\
+ & Att$-$MLP & $+17.8$ & $+8.3$ & $-5.9$ \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -260,7 +299,7 @@ Global (oracle) & $-130.8\pm118$ & 0.58 & 9.3 & $[+52,+91]$ \\
 \end{figure}
 
 \subsection{Ablations and cross-suite checks}
-On WPS\_attn, attention does not beat the matched MLP context encoder (Table~\ref{tab:attn}).
+On WPS\_attn, attention neither beats nor loses to the matched MLP context encoder once optimization is held fixed and seeds are varied (Table~\ref{tab:seeds}), and removing engineered relational inputs does not change that.
 On WPS\_hard, simpler pair heads without the context summary do not significantly beat Local-Hungarian (Table~\ref{tab:hard}).
 Commit/escort interface extensions likewise do not establish attention-specific gains (Appendix~\ref{app:ext}).
 
@@ -273,21 +312,28 @@ Commit/escort interface extensions likewise do not establish attention-specific 
 
 \section{Discussion and Limitations}
 On WPS\_attn, visibility-masked edge-cost shaping improves \(S_{\mathrm{WPS}}\) and secondary on-time/miss metrics over Local-Hungarian under paired bootstrap CIs.
-The gain is shared by Urgency-Pair and MLP-ContextPair; Att-ContextPair beats Local but loses to MLP, so the result supports \emph{hybrid cost shaping}, not set attention as such.
+The gain is shared by the engineered Urgency-Pair control and by both learned encoders, and no pairwise contrast among the three excludes zero, so the result supports \emph{hybrid cost shaping} rather than set attention or learning as such.
 On WPS\_hard, myopic Local-Hungarian remains competitive against simpler pair heads.
 The large Global oracle gap indicates incomplete COP still dominates encoder choice.
+
+The retracted Att$-$MLP effect of Sec.~\ref{sec:optconfound} carries a methodological lesson beyond this study.
+Architecture comparisons in learned allocation are frequently reported at a single training seed with a shared optimizer configuration, and Transformers and MLPs do not respond identically to batch size or warmup.
+Here an optimizer detail produced a significant architecture claim in the wrong direction, of a magnitude comparable to the genuine effect of edge shaping itself.
+Matched optimization and multiple seeds should be treated as prerequisites for such claims, not refinements.
 
 \textbf{Limitations.}
 Results are limited to discrete-time simulation without flight or hardware-in-the-loop validation.
 \(S_{\mathrm{WPS}}\) is a scalarization of mission tradeoffs (on-time, miss, distance); Appendix~\ref{app:sens} reports weight sensitivity.
 Training budgets are fixed; RL did not improve confirmatory Att/MLP scores over imitation.
+Three training seeds bound but do not eliminate seed sensitivity, and checkpoints are selected by best validation score, which biases individual cells upward; the Att$-$MLP contrasts are affected symmetrically.
+Attention is evaluated at the scale of this suite (12 agents, tens of open tasks); asymptotic advantages at larger team sizes are untested.
 Secondary suites are not multiplicity-adjusted.
 Communication impairments beyond knowledge masking are not modeled.
 
 \section{Conclusion}
-Under WPS\_attn, context-aware edge shaping for Local-Hungarian significantly improves \(S_{\mathrm{WPS}}\) over visibility-masked Local-Hungarian; a matched attention encoder does not outperform MLP.
+Under WPS\_attn, context-aware edge shaping for Local-Hungarian significantly improves \(S_{\mathrm{WPS}}\) over visibility-masked Local-Hungarian, but the improvement is not attributable to attention: across three seeds and two input feature sets, a matched attention encoder is indistinguishable from an MLP control and from an engineered urgency rule.
 Under WPS\_hard, simpler Att-Pair / MLP-Pair shaping does not significantly beat Local-Hungarian.
-For aerospace mission management, retain classical assignment under incomplete COP and require paired gains---including matched non-attention controls---before claiming attention advantages.
+For aerospace mission management, retain classical assignment under incomplete COP and require paired gains---under matched optimization, matched non-attention controls, and multiple training seeds---before claiming attention advantages.
 
 \section*{Acknowledgments}
 Omitted for anonymous review.

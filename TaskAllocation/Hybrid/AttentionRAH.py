@@ -13,6 +13,18 @@ import torch.nn.functional as F
 TASK_FEAT_DIM = 13
 AGENT_FEAT_DIM = 12
 
+# Raw mode drops every feature that aggregates team/global state (task scarcity,
+# known_by_count, nearest-specialist distance, region id, agent n_known_urgent) so the
+# encoder must infer contention itself instead of reading it off an engineered input.
+RAW_TASK_FEAT_DIM = 9
+RAW_AGENT_FEAT_DIM = 11
+
+
+def feat_dims(raw: bool = False):
+    if raw:
+        return RAW_TASK_FEAT_DIM, RAW_AGENT_FEAT_DIM
+    return TASK_FEAT_DIM, AGENT_FEAT_DIM
+
 
 def _urgency(task, time_step: int) -> float:
     dl = getattr(task, "hard_deadline", None)
@@ -35,14 +47,18 @@ def _known_by_count(task, vis) -> float:
     return float(sum(1 for s in vis.values() if task.id in s))
 
 
-def build_att_tokens(env, max_tasks: int = 32, max_agents: int = 16):
+def build_att_tokens(env, max_tasks: int = 32, max_agents: int = 16, raw: bool = False):
     """
     Build padded task/agent token matrices + masks for Attention-RAH.
 
     Enriched features for WPS_attn: known_by_count, nearest_specialist_dist, region_id,
     agent n_known_urgent, is_specialist (F2).
+
+    With raw=True only per-entity attributes are emitted (no team aggregates), so that
+    Att vs MLP measures whether the encoder discovers relational context on its own.
     """
     max_coord = float(getattr(env, "max_coord", 1000.0) or 1000.0)
+    horizon = max(getattr(env, "max_time_steps", 150), 1)
     mid_x = float(getattr(env, "area_width", max_coord)) * 0.5
     vis = env.agent_visibility_map()
     live = env.get_live_agents()
@@ -54,7 +70,8 @@ def build_att_tokens(env, max_tasks: int = 32, max_agents: int = 16):
         if t.id != 0 and t.status != 2 and t.allocatedReqs[t.typeIdx] < t.currentReqs[t.typeIdx]
     ]
 
-    task_feats = np.zeros((max_tasks, TASK_FEAT_DIM), dtype=np.float32)
+    task_dim, agent_dim = feat_dims(raw)
+    task_feats = np.zeros((max_tasks, task_dim), dtype=np.float32)
     task_mask = np.ones(max_tasks, dtype=bool)  # True = ignore (padding)
     task_ids: List[int] = []
     n_urgent = 0
@@ -73,25 +90,40 @@ def build_att_tokens(env, max_tasks: int = 32, max_agents: int = 16):
         else:
             d_spec = max_coord
         region = 0.0 if float(t.position[0]) < mid_x else 1.0
-        task_feats[i] = [
-            float(t.position[0]) / max_coord,
-            float(t.position[1]) / max_coord,
-            float(getattr(t, "typeIdx", 0)) / 8.0,
-            1.0 if ttype == "Att" else 0.0,
-            1.0 if ttype == "Rec" else 0.0,
-            1.0 if ttype == "Int" else 0.0,
-            urg,
-            scar,
-            min(rem / 4.0, 1.0),
-            is_dynamic,
-            min(n_know / max(n_agents, 1), 1.0),
-            min(d_spec / max_coord, 1.0),
-            region,
-        ]
+        if raw:
+            dl = getattr(t, "hard_deadline", None)
+            t_left = 1.0 if dl is None else min(max(dl - env.time_steps, 0) / horizon, 1.0)
+            task_feats[i] = [
+                float(t.position[0]) / max_coord,
+                float(t.position[1]) / max_coord,
+                float(getattr(t, "typeIdx", 0)) / 8.0,
+                1.0 if ttype == "Att" else 0.0,
+                1.0 if ttype == "Rec" else 0.0,
+                1.0 if ttype == "Int" else 0.0,
+                t_left,
+                min(rem / 4.0, 1.0),
+                is_dynamic,
+            ]
+        else:
+            task_feats[i] = [
+                float(t.position[0]) / max_coord,
+                float(t.position[1]) / max_coord,
+                float(getattr(t, "typeIdx", 0)) / 8.0,
+                1.0 if ttype == "Att" else 0.0,
+                1.0 if ttype == "Rec" else 0.0,
+                1.0 if ttype == "Int" else 0.0,
+                urg,
+                scar,
+                min(rem / 4.0, 1.0),
+                is_dynamic,
+                min(n_know / max(n_agents, 1), 1.0),
+                min(d_spec / max_coord, 1.0),
+                region,
+            ]
         task_mask[i] = False
         task_ids.append(t.id)
 
-    agent_feats = np.zeros((max_agents, AGENT_FEAT_DIM), dtype=np.float32)
+    agent_feats = np.zeros((max_agents, agent_dim), dtype=np.float32)
     agent_mask = np.ones(max_agents, dtype=bool)
     for i, a in enumerate(live[:max_agents]):
         caps = getattr(a, "currentCap2Task", None)
@@ -107,7 +139,7 @@ def build_att_tokens(env, max_tasks: int = 32, max_agents: int = 16):
                 continue
             if _urgency(t, env.time_steps) >= (1.0 - 12.0 / 40.0) and getattr(t, "hard_deadline", None) is not None:
                 n_known_urgent += 1
-        agent_feats[i] = [
+        base = [
             float(a.position[0]) / max_coord,
             float(a.position[1]) / max_coord,
             1.0 if atype.startswith("F") else 0.0,
@@ -117,10 +149,15 @@ def build_att_tokens(env, max_tasks: int = 32, max_agents: int = 16):
             min(cap_def / 2.0, 1.0),
             min(cap_rec / 2.0, 1.0),
             float(getattr(a, "state", 0)) / 5.0,
-            float(env.time_steps) / max(getattr(env, "max_time_steps", 150), 1),
-            min(n_known_urgent / 8.0, 1.0),
-            1.0 if atype == "F2" else 0.0,
+            float(env.time_steps) / horizon,
         ]
+        if raw:
+            agent_feats[i] = base + [1.0 if atype == "F2" else 0.0]
+        else:
+            agent_feats[i] = base + [
+                min(n_known_urgent / 8.0, 1.0),
+                1.0 if atype == "F2" else 0.0,
+            ]
         agent_mask[i] = False
 
     return {

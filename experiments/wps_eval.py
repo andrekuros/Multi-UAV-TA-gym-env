@@ -313,6 +313,11 @@ def main():
         "--mlp-ctx",
         default=os.path.join(ROOT, "dqn_Custom", "policy_MLPContextPair_WPS_attn.pth"),
     )
+    parser.add_argument(
+        "--raw",
+        action="store_true",
+        help="Default ContextPair checkpoints to the *Raw feature-ablation variants",
+    )
     parser.add_argument("--out", default=os.path.join(RESULTS, "wps_eval.csv"))
     parser.add_argument(
         "--episodes-out",
@@ -328,6 +333,11 @@ def main():
         ),
     )
     args = parser.parse_args()
+
+    if args.raw:
+        for opt, tag in (("att_ctx", "AttContextPairRaw"), ("mlp_ctx", "MLPContextPairRaw")):
+            if getattr(args, opt) == parser.get_default(opt):
+                setattr(args, opt, os.path.join(ROOT, "dqn_Custom", f"policy_{tag}_WPS_attn.pth"))
 
     if args.suite == "WPS_hard":
         cases = ["WPS_hard"]

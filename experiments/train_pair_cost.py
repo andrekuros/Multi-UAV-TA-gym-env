@@ -92,7 +92,13 @@ def eval_local_swps(cfg, policy: PairCostHybrid, n: int = 12) -> float:
     return float(np.mean(scores))
 
 
-def run_il_episode(env, policy: PairCostHybrid, hung_local: HungarianAllocator, hung_global: HungarianAllocator):
+def run_il_episode(
+    env,
+    policy: PairCostHybrid,
+    hung_local: HungarianAllocator,
+    hung_global: HungarianAllocator,
+    il_batch: int = 16,
+):
     observation, info = env.reset()
     done = {a: False for a in env.agents}
     trunc = {a: False for a in env.agents}
@@ -112,7 +118,9 @@ def run_il_episode(env, policy: PairCostHybrid, hung_local: HungarianAllocator, 
             tok = policy.build_tokens(env)
             expert_mask = _expert_mask(tok, expert)
             if expert_mask.sum() > 0 and tok["edge_valid"].sum() > 0:
-                losses.append(policy.imitation_loss(tok, expert_mask))
+                loss = policy.imitation_step(tok, expert_mask, batch_size=il_batch)
+                if loss is not None:
+                    losses.append(loss)
             # Rollout uses Global expert actions so the episode stays on-policy for the teacher
             actions = _apply_assign(env, expert)
         observation, reward, done, trunc, info = env.step(actions)
@@ -157,6 +165,8 @@ def make_policy(args):
         nhead=args.nhead,
         n_layers=args.n_layers,
         lr=args.lr,
+        raw_features=args.raw,
+        il_warmup=args.il_warmup,
     )
 
 
@@ -182,6 +192,14 @@ def main():
     parser.add_argument("--nhead", type=int, default=4)
     parser.add_argument("--n-layers", type=int, default=2)
     parser.add_argument("--lr", type=float, default=1e-3)
+    parser.add_argument(
+        "--raw",
+        action="store_true",
+        help="Raw-feature ablation: drop engineered team aggregates from tokens and context",
+    )
+    parser.add_argument("--il-batch", type=int, default=16)
+    parser.add_argument("--il-warmup", type=int, default=50)
+    parser.add_argument("--suffix", default="", help="Appended to the checkpoint tag")
     args = parser.parse_args()
 
     np.random.seed(args.seed)
@@ -191,11 +209,11 @@ def main():
 
     if args.context:
         tag = "MLPContextPair" if args.mlp else "AttContextPair"
-        if args.case == "WPS_hard" and args.phase == "il":
-            # plan default for context claim
-            pass
     else:
         tag = "MLPPair" if args.mlp else "AttPair"
+    if args.raw:
+        tag += "Raw"
+    tag += args.suffix
     phase_tag = args.phase
     out = args.out or os.path.join(OUT_DIR, f"policy_{tag}_{args.case}_{phase_tag}.pth")
     os.makedirs(OUT_DIR, exist_ok=True)
@@ -223,7 +241,7 @@ def main():
         if args.phase == "il":
             hung_l = HungarianAllocator(replan_interval=20, max_coord=env.max_coord)
             hung_g = HungarianAllocator(replan_interval=20, max_coord=env.max_coord)
-            loss = run_il_episode(env, policy, hung_l, hung_g)
+            loss = run_il_episode(env, policy, hung_l, hung_g, il_batch=args.il_batch)
             if ep % 20 == 0:
                 print(f"[{tag}/IL] ep={ep}/{args.episodes} loss={loss:.4f}", flush=True)
         else:
@@ -237,6 +255,8 @@ def main():
                 )
 
         if ep % args.eval_every == 0 or ep == args.episodes:
+            if args.phase == "il":
+                policy.imitation_flush()
             mean_s = eval_local_swps(cfg, policy, n=args.eval_eps)
             print(f"  EVAL Local-policy S_WPS={mean_s:.1f}", flush=True)
             if mean_s > best_score:

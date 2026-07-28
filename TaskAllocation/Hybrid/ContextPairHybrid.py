@@ -21,10 +21,21 @@ from TaskAllocation.Hybrid.PairCostHybrid import (
 )
 
 CONTEXT_DIM = 8
+# Raw mode keeps only mission clock: every other summary entry is a hand-computed
+# aggregate (urgent count, front split, imbalance) that the encoder should infer itself.
+RAW_CONTEXT_DIM = 1
 
 
-def build_context_summary(env, tok: dict) -> np.ndarray:
+def context_dim(raw: bool = False) -> int:
+    return RAW_CONTEXT_DIM if raw else CONTEXT_DIM
+
+
+def build_context_summary(env, tok: dict, raw: bool = False) -> np.ndarray:
     """Cheap team/situation vector (same for Att and MLP)."""
+    if raw:
+        return np.asarray(
+            [float(env.time_steps) / max(getattr(env, "max_time_steps", 150), 1)], dtype=np.float32
+        )
     max_coord = float(getattr(env, "max_coord", 1000.0) or 1000.0)
     mid_x = float(getattr(env, "area_width", max_coord)) * 0.5
     live = tok["live"]
@@ -59,9 +70,11 @@ def build_context_summary(env, tok: dict) -> np.ndarray:
     return ctx
 
 
-def build_context_pair_tokens(env, max_tasks=DEFAULT_MAX_TASKS, max_agents=DEFAULT_MAX_AGENTS) -> dict:
-    tok = build_pair_tokens(env, max_tasks=max_tasks, max_agents=max_agents)
-    tok["context"] = build_context_summary(env, tok)
+def build_context_pair_tokens(
+    env, max_tasks=DEFAULT_MAX_TASKS, max_agents=DEFAULT_MAX_AGENTS, raw: bool = False
+) -> dict:
+    tok = build_pair_tokens(env, max_tasks=max_tasks, max_agents=max_agents, raw=raw)
+    tok["context"] = build_context_summary(env, tok, raw=raw)
     return tok
 
 
@@ -207,26 +220,24 @@ class ContextPairHybrid(PairCostHybrid):
         kwargs["use_attention"] = use_attention
         super().__init__(**kwargs)
         Net = AttContextPairNet if use_attention else MLPContextPairNet
-        self.net = Net(
+        net_kwargs = dict(
             max_tasks=self.max_tasks,
             max_agents=self.max_agents,
             d_model=self.d_model,
             nhead=self.nhead,
             n_layers=self.n_layers,
-        ).to(self.device)
-        self.target = Net(
-            max_tasks=self.max_tasks,
-            max_agents=self.max_agents,
-            d_model=self.d_model,
-            nhead=self.nhead,
-            n_layers=self.n_layers,
-        ).to(self.device)
+            task_feat_dim=self.task_feat_dim,
+            agent_feat_dim=self.agent_feat_dim,
+            context_dim=context_dim(self.raw_features),
+        )
+        self.net = Net(**net_kwargs).to(self.device)
+        self.target = Net(**net_kwargs).to(self.device)
         self.target.load_state_dict(self.net.state_dict())
         self.optim = torch.optim.Adam(self.net.parameters(), lr=self.lr)
         self.kind = "AttContextPair" if use_attention else "MLPContextPair"
 
     def build_tokens(self, env) -> dict:
-        return build_context_pair_tokens(env, self.max_tasks, self.max_agents)
+        return build_context_pair_tokens(env, self.max_tasks, self.max_agents, raw=self.raw_features)
 
     def _tensors(self, tok: dict) -> Tuple[torch.Tensor, ...]:
         tf = torch.tensor(tok["task_feats"], dtype=torch.float32, device=self.device).unsqueeze(0)
@@ -248,26 +259,14 @@ class ContextPairHybrid(PairCostHybrid):
         scores = np.tanh(logits_np + noise) * self.score_clamp * edge_valid
         return scores.astype(np.float32), noise, logits_np.astype(np.float32)
 
-    def imitation_loss(self, tok: dict, expert_mask: np.ndarray) -> float:
-        import torch.nn.functional as F
+    IL_KEYS = PairCostHybrid.IL_KEYS + ("context",)
 
-        self.net.train()
-        logits, _ = self.net(*self._tensors(tok))
-        edge_valid = torch.tensor(tok["edge_valid"], dtype=torch.float32, device=self.device).unsqueeze(0)
-        target = torch.tensor(expert_mask, dtype=torch.float32, device=self.device).unsqueeze(0)
-        logits = logits.clamp(-8.0, 8.0)
-        bce = F.binary_cross_entropy_with_logits(logits, target, reduction="none")
-        denom = edge_valid.sum().clamp(min=1.0)
-        pos = (target * edge_valid).sum().clamp(min=1.0)
-        neg = ((1.0 - target) * edge_valid).sum().clamp(min=1.0)
-        w = edge_valid * (target * (neg / pos) + (1.0 - target))
-        loss = (bce * w).sum() / denom
-        self.optim.zero_grad()
-        loss.backward()
-        nn.utils.clip_grad_norm_(self.net.parameters(), 5.0)
-        self.optim.step()
-        self.n_updates += 1
-        return float(loss.item())
+    def _batch_tensors(self, toks):
+        tf, tm, af, am = super()._batch_tensors(toks)
+        ctx = torch.tensor(
+            np.stack([t["context"] for t in toks]), dtype=torch.float32, device=self.device
+        )
+        return tf, tm, af, am, ctx
 
     def push(self, tok, scores, noise, logits, selected, reward, next_tok, done):
         keep = ("task_feats", "task_mask", "agent_feats", "agent_mask", "edge_valid", "context")
@@ -361,6 +360,7 @@ class ContextPairHybrid(PairCostHybrid):
                 "n_layers": self.n_layers,
                 "lr": self.lr,
                 "score_clamp": self.score_clamp,
+                "raw_features": self.raw_features,
                 "kind": self.kind,
             },
             path,
@@ -379,6 +379,7 @@ class ContextPairHybrid(PairCostHybrid):
             lr=float(ckpt.get("lr", self.lr)),
             device=self.device,
             score_clamp=float(ckpt.get("score_clamp", self.score_clamp)),
+            raw_features=bool(ckpt.get("raw_features", False)),
         )
         self.net.load_state_dict(ckpt["state_dict"])
         self.target.load_state_dict(ckpt["state_dict"])

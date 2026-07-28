@@ -20,6 +20,7 @@ from TaskAllocation.Hybrid.AttentionRAH import (
     _scarcity,
     _urgency,
     build_att_tokens,
+    feat_dims,
 )
 
 DEFAULT_MAX_TASKS = 32
@@ -28,10 +29,10 @@ SCORE_CLAMP = 0.35  # keep base dist/cap/urg dominant early
 
 
 def build_pair_tokens(
-    env, max_tasks: int = DEFAULT_MAX_TASKS, max_agents: int = DEFAULT_MAX_AGENTS
+    env, max_tasks: int = DEFAULT_MAX_TASKS, max_agents: int = DEFAULT_MAX_AGENTS, raw: bool = False
 ) -> dict:
     """WPS tokens (Att-RAH features) plus bipartite edge_valid visibility mask."""
-    tok = build_att_tokens(env, max_tasks=max_tasks, max_agents=max_agents)
+    tok = build_att_tokens(env, max_tasks=max_tasks, max_agents=max_agents, raw=raw)
     live = tok["live"]
     kept = tok["open_tasks"][:max_tasks]
     vis = tok["vis"]
@@ -211,9 +212,16 @@ class PairCostHybrid:
         gamma: float = 0.95,
         device: Optional[str] = None,
         score_clamp: float = SCORE_CLAMP,
+        raw_features: bool = False,
+        il_warmup: int = 50,
     ):
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
         self.use_attention = use_attention
+        self.raw_features = raw_features
+        self.task_feat_dim, self.agent_feat_dim = feat_dims(raw_features)
+        self.il_warmup = il_warmup
+        self.n_il_updates = 0
+        self._il_batch: List[Tuple[dict, np.ndarray]] = []
         self.max_tasks = max_tasks
         self.max_agents = max_agents
         self.d_model = d_model
@@ -231,25 +239,22 @@ class PairCostHybrid:
         self.buffer: List[dict] = []
         self.max_buffer = 40_000
         Net = AttPairNet if use_attention else MLPPairNet
-        self.net = Net(
+        net_kwargs = dict(
             max_tasks=max_tasks,
             max_agents=max_agents,
             d_model=d_model,
             nhead=nhead,
             n_layers=n_layers,
-        ).to(self.device)
-        self.target = Net(
-            max_tasks=max_tasks,
-            max_agents=max_agents,
-            d_model=d_model,
-            nhead=nhead,
-            n_layers=n_layers,
-        ).to(self.device)
+            task_feat_dim=self.task_feat_dim,
+            agent_feat_dim=self.agent_feat_dim,
+        )
+        self.net = Net(**net_kwargs).to(self.device)
+        self.target = Net(**net_kwargs).to(self.device)
         self.target.load_state_dict(self.net.state_dict())
         self.optim = torch.optim.Adam(self.net.parameters(), lr=lr)
 
     def build_tokens(self, env) -> dict:
-        return build_pair_tokens(env, self.max_tasks, self.max_agents)
+        return build_pair_tokens(env, self.max_tasks, self.max_agents, raw=self.raw_features)
 
     def _tensors(self, tok: dict):
         tf = torch.tensor(tok["task_feats"], dtype=torch.float32, device=self.device).unsqueeze(0)
@@ -322,28 +327,66 @@ class PairCostHybrid:
         selected = self._selected_mask(tok, result)
         return result, tok, scores, noise, logits, selected
 
-    def imitation_loss(self, tok: dict, expert_mask: np.ndarray) -> float:
-        """BCE on visible edges: push up expert assignments, down other valid edges."""
+    IL_KEYS = ("task_feats", "task_mask", "agent_feats", "agent_mask", "edge_valid")
+
+    def _batch_tensors(self, toks: List[dict]):
+        def stack(key, dtype=torch.float32):
+            return torch.tensor(
+                np.stack([t[key] for t in toks]), dtype=dtype, device=self.device
+            )
+
+        return stack("task_feats"), stack("task_mask", torch.bool), stack("agent_feats"), stack(
+            "agent_mask", torch.bool
+        )
+
+    def _il_update(self, toks: List[dict], masks: List[np.ndarray]) -> float:
+        """Batched BCE on visible edges: up expert assignments, down other valid edges."""
         self.net.train()
-        tf, tm, af, am = self._tensors(tok)
-        logits, _ = self.net(tf, tm, af, am)
-        edge_valid = torch.tensor(tok["edge_valid"], dtype=torch.float32, device=self.device).unsqueeze(0)
-        target = torch.tensor(expert_mask, dtype=torch.float32, device=self.device).unsqueeze(0)
-        # only supervise valid edges
+        logits, _ = self.net(*self._batch_tensors(toks))
+        edge_valid = torch.tensor(
+            np.stack([t["edge_valid"] for t in toks]), dtype=torch.float32, device=self.device
+        )
+        target = torch.tensor(np.stack(masks), dtype=torch.float32, device=self.device)
         logits = logits.clamp(-8.0, 8.0)
         bce = F.binary_cross_entropy_with_logits(logits, target, reduction="none")
-        denom = edge_valid.sum().clamp(min=1.0)
-        # weight positives higher (sparse expert edges)
-        pos = (target * edge_valid).sum().clamp(min=1.0)
-        neg = ((1.0 - target) * edge_valid).sum().clamp(min=1.0)
-        w = edge_valid * (target * (neg / pos) + (1.0 - target))
-        loss = (bce * w).sum() / denom
+        # positives are sparse, so reweight per sample before averaging over the batch
+        pos = (target * edge_valid).sum(dim=(1, 2)).clamp(min=1.0)
+        neg = ((1.0 - target) * edge_valid).sum(dim=(1, 2)).clamp(min=1.0)
+        ratio = (neg / pos).view(-1, 1, 1)
+        w = edge_valid * (target * ratio + (1.0 - target))
+        denom = edge_valid.sum(dim=(1, 2)).clamp(min=1.0)
+        loss = ((bce * w).sum(dim=(1, 2)) / denom).mean()
+
+        self.n_il_updates += 1
+        scale = min(1.0, self.n_il_updates / max(self.il_warmup, 1))
+        for g in self.optim.param_groups:
+            g["lr"] = self.lr * scale
         self.optim.zero_grad()
         loss.backward()
         nn.utils.clip_grad_norm_(self.net.parameters(), 5.0)
         self.optim.step()
         self.n_updates += 1
         return float(loss.item())
+
+    def imitation_step(self, tok: dict, expert_mask: np.ndarray, batch_size: int = 16):
+        """Queue a sample; run one batched step once `batch_size` samples accumulated."""
+        self._il_batch.append(
+            ({k: tok[k].copy() for k in self.IL_KEYS if k in tok}, np.asarray(expert_mask, dtype=np.float32))
+        )
+        if len(self._il_batch) >= batch_size:
+            return self.imitation_flush()
+        return None
+
+    def imitation_flush(self):
+        if not self._il_batch:
+            return None
+        toks = [b[0] for b in self._il_batch]
+        masks = [b[1] for b in self._il_batch]
+        self._il_batch = []
+        return self._il_update(toks, masks)
+
+    def imitation_loss(self, tok: dict, expert_mask: np.ndarray) -> float:
+        return self._il_update([tok], [np.asarray(expert_mask, dtype=np.float32)])
 
     def push(self, tok, scores, noise, logits, selected, reward, next_tok, done):
         keep = ("task_feats", "task_mask", "agent_feats", "agent_mask", "edge_valid")
@@ -435,6 +478,7 @@ class PairCostHybrid:
                 "n_layers": self.n_layers,
                 "lr": self.lr,
                 "score_clamp": self.score_clamp,
+                "raw_features": self.raw_features,
                 "kind": "PairCostHybrid",
             },
             path,
@@ -448,11 +492,13 @@ class PairCostHybrid:
         d_model = int(ckpt.get("d_model", self.d_model))
         nhead = int(ckpt.get("nhead", self.nhead))
         n_layers = int(ckpt.get("n_layers", self.n_layers))
+        raw_features = bool(ckpt.get("raw_features", False))
         if (
             use_attention != self.use_attention
             or max_tasks != self.max_tasks
             or max_agents != self.max_agents
             or d_model != self.d_model
+            or raw_features != self.raw_features
         ):
             self.__init__(
                 use_attention=use_attention,
@@ -464,6 +510,7 @@ class PairCostHybrid:
                 lr=float(ckpt.get("lr", self.lr)),
                 device=self.device,
                 score_clamp=float(ckpt.get("score_clamp", self.score_clamp)),
+                raw_features=raw_features,
             )
         self.net.load_state_dict(ckpt["state_dict"])
         self.target.load_state_dict(ckpt["state_dict"])
