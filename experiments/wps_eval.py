@@ -23,6 +23,8 @@ if ROOT not in sys.path:
 from TaskAllocation.BehaviourBased.CapabilityGreedy import CapabilityGreedy
 from TaskAllocation.Hybrid.AttentionCommit import AttentionCommit, UrgencyCommit
 from TaskAllocation.Hybrid.AttentionRAH import AttentionRAH
+from TaskAllocation.Hybrid.PairCostHybrid import PairCostHybrid, UrgencyPair
+from TaskAllocation.Hybrid.ContextPairHybrid import ContextPairHybrid
 from TaskAllocation.Hybrid.ReserveAwareHybrid import ReserveAwareHybrid, build_rah_state
 from TaskAllocation.MarketBased.CBBA_Replan import CBBAReplan
 from TaskAllocation.OptimizationBased.HungarianAllocator import HungarianAllocator
@@ -62,6 +64,11 @@ def run_wps_episode(
     att_commit: Optional[AttentionCommit] = None,
     mlp_commit: Optional[AttentionCommit] = None,
     urg_commit: Optional[UrgencyCommit] = None,
+    att_pair: Optional[PairCostHybrid] = None,
+    mlp_pair: Optional[PairCostHybrid] = None,
+    urg_pair: Optional[UrgencyPair] = None,
+    att_ctx: Optional[ContextPairHybrid] = None,
+    mlp_ctx: Optional[ContextPairHybrid] = None,
 ) -> Dict[str, float]:
     spec = CASE_SPECS[case_id]
     flags = dict(WPS_ENV_FLAGS)
@@ -208,6 +215,33 @@ def run_wps_episode(
                 result, _, _, _ = urg_commit.plan(env, hung, events=events, force=True)
                 n_replans = urg_commit.n_replans
                 actions = _apply_assign(env, result)
+        elif algorithm == "Att-Pair":
+            if _should_replan(env, events) and att_pair is not None:
+                result, *_ = att_pair.plan(env, hung, events=events, explore=False, force=True)
+                n_replans = att_pair.n_replans
+                actions = _apply_assign(env, result)
+        elif algorithm == "MLP-Pair":
+            if _should_replan(env, events) and mlp_pair is not None:
+                result, *_ = mlp_pair.plan(env, hung, events=events, explore=False, force=True)
+                n_replans = mlp_pair.n_replans
+                actions = _apply_assign(env, result)
+        elif algorithm == "Urgency-Pair":
+            if urg_pair is None:
+                urg_pair = UrgencyPair()
+            if _should_replan(env, events):
+                result, _, _ = urg_pair.plan(env, hung, events=events, force=True)
+                n_replans = urg_pair.n_replans
+                actions = _apply_assign(env, result)
+        elif algorithm == "Att-ContextPair":
+            if _should_replan(env, events) and att_ctx is not None:
+                result, *_ = att_ctx.plan(env, hung, events=events, explore=False, force=True)
+                n_replans = att_ctx.n_replans
+                actions = _apply_assign(env, result)
+        elif algorithm == "MLP-ContextPair":
+            if _should_replan(env, events) and mlp_ctx is not None:
+                result, *_ = mlp_ctx.plan(env, hung, events=events, explore=False, force=True)
+                n_replans = mlp_ctx.n_replans
+                actions = _apply_assign(env, result)
 
         decision_ms.append((time.perf_counter() - t0) * 1000.0)
         observation, reward, done, trunc, info = env.step(actions)
@@ -265,6 +299,20 @@ def main():
     parser.add_argument(
         "--mlp-commit", default=os.path.join(ROOT, "dqn_Custom", "policy_MLPCommit_WPS_commit.pth")
     )
+    parser.add_argument(
+        "--att-pair", default=os.path.join(ROOT, "dqn_Custom", "policy_AttPair_WPS_hard.pth")
+    )
+    parser.add_argument(
+        "--mlp-pair", default=os.path.join(ROOT, "dqn_Custom", "policy_MLPPair_WPS_hard.pth")
+    )
+    parser.add_argument(
+        "--att-ctx",
+        default=os.path.join(ROOT, "dqn_Custom", "policy_AttContextPair_WPS_attn.pth"),
+    )
+    parser.add_argument(
+        "--mlp-ctx",
+        default=os.path.join(ROOT, "dqn_Custom", "policy_MLPContextPair_WPS_attn.pth"),
+    )
     parser.add_argument("--out", default=os.path.join(RESULTS, "wps_eval.csv"))
     parser.add_argument(
         "--episodes-out",
@@ -297,6 +345,11 @@ def main():
     att_rah = None
     att_commit = None
     mlp_commit = None
+    att_pair = None
+    mlp_pair = None
+    att_ctx = None
+    mlp_ctx = None
+    urg_pair = UrgencyPair()
     urg_commit = UrgencyCommit()
     mlp_names = {"RAH", "MLP-RAH", "RAH-no-reserve"}
     att_names = {"Att-RAH", "Att-RAH-no-reserve", "Att-RAH-no-priority"}
@@ -332,6 +385,34 @@ def main():
         else:
             print(f"No MLP-Commit checkpoint at {args.mlp_commit}; skipping.", flush=True)
             algos = [a for a in algos if a != "MLP-Commit"]
+    if "Att-Pair" in algos:
+        if os.path.exists(args.att_pair):
+            att_pair = PairCostHybrid(use_attention=True)
+            att_pair.load(args.att_pair)
+        else:
+            print(f"No Att-Pair checkpoint at {args.att_pair}; skipping.", flush=True)
+            algos = [a for a in algos if a != "Att-Pair"]
+    if "MLP-Pair" in algos:
+        if os.path.exists(args.mlp_pair):
+            mlp_pair = PairCostHybrid(use_attention=False)
+            mlp_pair.load(args.mlp_pair)
+        else:
+            print(f"No MLP-Pair checkpoint at {args.mlp_pair}; skipping.", flush=True)
+            algos = [a for a in algos if a != "MLP-Pair"]
+    if "Att-ContextPair" in algos:
+        if os.path.exists(args.att_ctx):
+            att_ctx = ContextPairHybrid(use_attention=True)
+            att_ctx.load(args.att_ctx)
+        else:
+            print(f"No Att-ContextPair checkpoint at {args.att_ctx}; skipping.", flush=True)
+            algos = [a for a in algos if a != "Att-ContextPair"]
+    if "MLP-ContextPair" in algos:
+        if os.path.exists(args.mlp_ctx):
+            mlp_ctx = ContextPairHybrid(use_attention=False)
+            mlp_ctx.load(args.mlp_ctx)
+        else:
+            print(f"No MLP-ContextPair checkpoint at {args.mlp_ctx}; skipping.", flush=True)
+            algos = [a for a in algos if a != "MLP-ContextPair"]
 
     os.makedirs(RESULTS, exist_ok=True)
     write_header = not os.path.exists(args.out) or os.path.getsize(args.out) == 0
@@ -354,6 +435,11 @@ def main():
                         att_commit=att_commit,
                         mlp_commit=mlp_commit,
                         urg_commit=urg_commit,
+                        att_pair=att_pair,
+                        mlp_pair=mlp_pair,
+                        urg_pair=urg_pair,
+                        att_ctx=att_ctx,
+                        mlp_ctx=mlp_ctx,
                     )
                 )
             elapsed = time.time() - t0

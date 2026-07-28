@@ -96,7 +96,12 @@ def main():
         seed = int(float(r.get("seed", r.get("episode", 0))))
         by_algo_seed[algo][seed] = r
 
-    att_name = next((a for a in by_algo_seed if "Att-RAH" in a or a == "Att-RAH"), None)
+    att_name = next(
+        (a for a in by_algo_seed if a in ("Att-RAH", "Att-Pair") or "Att-RAH" in a or a.startswith("Att-Pair")),
+        None,
+    )
+    if att_name is None:
+        att_name = next((a for a in by_algo_seed if a.startswith("Att-") and "Commit" not in a and "Coalition" not in a), None)
     loc_name = next((a for a in by_algo_seed if "Local-Hung" in a or a == "Local-Hungarian"), None)
     if not att_name or not loc_name:
         print("Could not find Att-RAH / Local-Hungarian in CSV algorithms:", list(by_algo_seed))

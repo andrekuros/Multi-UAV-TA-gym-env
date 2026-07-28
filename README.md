@@ -48,7 +48,7 @@ Canonical registry: [`experiments/paper_scenarios.py`](experiments/paper_scenari
 | Suite | Purpose |
 |-------|---------|
 | Static / D1–D3 | Legacy UCF-style strike, attrition, pop-up threats |
-| `WPS_easy` / `WPS_hard` / `WPS_burst` | Windowed Pop-up Strike (primary paper claim on `WPS_hard`) |
+| `WPS_easy` / `WPS_hard` / `WPS_burst` | Windowed Pop-up Strike (primary confirmatory suite: `WPS_hard`) |
 | `WPS_attn` | Multi-front attention stress (no knowledge sharing) |
 | `WPS_commit` | Dual-front + timed commits + rematch penalty |
 | `WPS_escort` | Coalition escort: protect Rec UAVs; multi-fighter slots |
@@ -57,17 +57,20 @@ Env presets: `WPS_ENV_FLAGS` (full horizon, time windows on).
 
 **Primary metrics:** `S_WPS` (on-time / miss / distance); escort uses `S_ESC` = `S_WPS` + protected-rec bonus − recon-loss penalty + coverage term.
 
+**Claim boundaries (see `paper/README.md`):** on `WPS_hard` (\(N{=}100\)), Att-Pair / MLP-Pair / Urgency-Pair do not significantly beat Local-Hungarian; `WPS_commit` / `WPS_escort` do not support attention-specific gains vs matched MLP or market baselines.
+
 ## Hybrid methods
 
 All hybrids keep a classical assignment engine; learning only reshapes inputs.
 
 | Method | Module | Interface |
 |--------|--------|-----------|
-| Att-RAH / MLP-RAH | `AttentionRAH.py`, `ReserveAwareHybrid.py` | Task priorities + soft reserve → Local-Hungarian |
+| Att-Pair / MLP-Pair / Urgency-Pair | `PairCostHybrid.py` | Visibility-masked edge scores → Local-Hungarian (primary WPS_hard) |
+| Att-RAH / MLP-RAH | `AttentionRAH.py`, `ReserveAwareHybrid.py` | Task priorities + soft reserve → Local-Hungarian (legacy) |
 | Att-Commit / MLP-Commit / Urgency-Commit | `AttentionCommit.py` | Priorities + per-agent commit locks → Hungarian on free agents |
 | Att-Coalition / MLP-Coalition / Urgency-Coalition | `AttentionEscort.py` (v2) | Local tokens → cross-attention pair logits → coalition Hungarian |
 
-Import Attention\* classes from their modules (not `Hybrid/__init__.py`).
+Import Attention\* / PairCost classes from their modules (not `Hybrid/__init__.py`).
 
 **Classical baselines:** Local/Global Hungarian, Cap-Greedy, CBBA-Replan; for escort also Coalition-Hungarian, Local-CBBA-Coalition, Local-PI-Coalition.
 
@@ -76,7 +79,15 @@ Import Attention\* classes from their modules (not `Hybrid/__init__.py`).
 Checkpoints write to `dqn_Custom/` (gitignored). Result CSVs under `experiments/results/` are generated locally (`*.csv` gitignored).
 
 ```bash
-# Att-RAH on WPS_hard
+# Pair-cost hybrid on WPS_hard (primary)
+python experiments/train_pair_cost.py --phase il --episodes 240 --case WPS_hard
+python experiments/train_pair_cost.py --phase il --mlp --episodes 240 --case WPS_hard
+python experiments/train_pair_cost.py --phase rl --episodes 200 --case WPS_hard
+python experiments/train_pair_cost.py --phase rl --mlp --episodes 200 --case WPS_hard
+python experiments/wps_eval.py --suite WPS_hard --episodes 100 \
+  --algorithms "Local-Hungarian,Urgency-Pair,MLP-Pair,Att-Pair,Global-Hungarian"
+
+# Legacy Att-RAH on WPS_hard
 python experiments/train_att_rah.py --episodes 400 --case WPS_hard
 python experiments/wps_eval.py --suite WPS_hard --episodes 100
 
@@ -94,6 +105,16 @@ python experiments/escort_eval.py --episodes 100 --tag att_v2_n100
 Optional Att-Coalition hyperparam search: `python experiments/search_att_escort.py`.
 
 Smoke tests: `python experiments/test_escort.py`.
+
+Metric-weight sensitivity (offline, from episode CSVs):
+
+```bash
+python experiments/wps_eval.py --suite WPS_hard --episodes 100 \
+  --algorithms "Local-Hungarian,Att-RAH" --att-rah dqn_Custom/policy_AttRAH_WPS_hard_taes.pth \
+  --episodes-out experiments/results/wps_final_eval_episodes.csv
+python experiments/wps_metric_sensitivity.py \
+  --csv experiments/results/wps_final_eval_episodes.csv
+```
 
 ## 3D visualization
 

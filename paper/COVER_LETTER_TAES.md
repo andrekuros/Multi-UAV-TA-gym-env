@@ -8,9 +8,9 @@ Dear Editor,
 
 Please consider our Regular Paper on hybrid multi-UAV task allocation for aerospace mission management under incomplete common operating picture (COP).
 
-**Primary finding.** On the WPS_hard suite (N=100 paired seeds), Att-RAH yields a positive mean ΔS_WPS versus visibility-masked Local-Hungarian (≈+8.7), but the paired bootstrap 95% CI includes zero. Local-Hungarian remains competitive with learned hybrids under the evaluated budget; Cap-Greedy and CBBA underperform Local-Hungarian under the same mask.
+**Primary finding.** On WPS_attn (N=100), visibility-masked edge shaping (Urgency-Pair / MLP-ContextPair / Att-ContextPair) improves S_WPS over Local-Hungarian (CIs exclude zero). MLP-ContextPair is best among learned methods; attention does not outperform the matched MLP.
 
-**Non-claims.** We do not claim that set attention outperforms matched MLP or urgency controls under the same hybrid assignment engine, nor that hybrids significantly beat Local-Hungarian under the reported training budget. Global-Hungarian is reported only as an information upper bound.
+**Non-claims.** We do not claim set-attention superiority. On WPS_hard, simpler Att-Pair / MLP-Pair do not significantly beat Local-Hungarian.
 
 **Suggested technical area.** Autonomous / intelligent aerospace systems; multi-UAV cooperative mission management.
 

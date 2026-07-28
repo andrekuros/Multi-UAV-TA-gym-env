@@ -41,3 +41,8 @@ Open the URL printed by Vite. Controls: play/pause, scrub, speed, event timeline
 - Backend payload schema is defined in `server/api.py`
 
 This is not a generic Vite template; keep UI changes aligned with the Multi-UAV-TA replay schema.
+
+## Related docs
+
+- Repo overview / train-eval: [`../README.md`](../README.md)
+- Architecture rules: [`../AI_DEVELOPMENT_GUIDE.md`](../AI_DEVELOPMENT_GUIDE.md)

@@ -42,6 +42,7 @@ Import Attention classes from their files ( `Hybrid/__init__.py` does not export
 
 | Class | Path | Decision interface |
 |-------|------|--------------------|
+| `PairCostHybrid` / `UrgencyPair` | `TaskAllocation/Hybrid/PairCostHybrid.py` | Visibility-masked edge scores → Local-Hungarian |
 | `AttentionRAH` | `TaskAllocation/Hybrid/AttentionRAH.py` | Priorities + reserve ρ → Local-Hungarian |
 | `AttentionCommit` / `UrgencyCommit` | `AttentionCommit.py` | Priorities + timed commits → Hungarian on free agents |
 | `AttentionEscort` / `UrgencyCoalition` | `AttentionEscort.py` | Pair logits → coalition Hungarian (v2 actor-critic) |
@@ -52,7 +53,7 @@ Import Attention classes from their files ( `Hybrid/__init__.py` does not export
 - Checkpoints include `version: 2` and arch hyperparams; v1 `.pth` files are incompatible.
 - Train: `experiments/train_escort.py`; eval: `experiments/escort_eval.py`; smoke: `experiments/test_escort.py`.
 
-**Claim discipline:** Do not claim “attention beats X” unless paired bootstrap CIs exclude zero on the stated suite and metric. WPS_hard supports Att-RAH vs Local-Hungarian; WPS_commit and WPS_escort did not support attention-specific gains vs MLP/CBBA.
+**Claim discipline:** Do not claim “method A beats X” unless paired bootstrap CIs exclude zero on the stated suite and metric. Under the WPS_hard pair-cost campaign, Att-Pair / MLP-Pair / Urgency-Pair vs Local-Hungarian are non-significant (CIs include zero). WPS_commit and WPS_escort did not support attention-specific gains vs matched MLP / urgency / CBBA.
 
 ## 5. Extending the environment
 

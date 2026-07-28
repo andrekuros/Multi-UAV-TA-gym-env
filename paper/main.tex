@@ -27,11 +27,11 @@
 \begin{abstract}
 Aerospace multi-UAV mission management often reduces task allocation to bipartite matching when the team shares a complete common operating picture (COP) and costs are dominated by travel and capability fit.
 Under time-critical strike and reconnaissance conditions with \emph{delayed cueing}, \emph{local sensing}, \emph{hard mission windows}, burst arrivals, and attrition---here termed Windowed Pop-up Strike (WPS)---visibility-masked myopic matching leaves a large gap to an omniscient COP oracle.
-We study hybrid allocators that retain classical assignment as the combinatorial engine while a learned module reshapes edge costs through task priorities and a soft reserve fraction (MLP-RAH / Att-RAH).
-On the primary suite WPS\_hard (\(N{=}100\) paired seeds), Att-RAH attains a higher mean evaluation score \(S_{\mathrm{WPS}}\) than Local-Hungarian (mean \(\Delta\approx +8.7\)), but the paired bootstrap 95\% confidence interval (CI) includes zero (CI \([-8.1,+26.0]\)).
-Local-Hungarian remains competitive with learned hybrids under the evaluated training budget, while Cap-Greedy and CBBA-Replan underperform it under the same visibility mask.
-Matched non-attention controls and interface extensions (timed commits; coalition escort) do not support an additional claim that set attention outperforms MLP or urgency baselines under the same hybrid engine.
-Results are simulation-only; Global-Hungarian is an information upper bound, not an operational competitor.
+We study hybrids that retain Local-Hungarian while shaping \emph{visibility-masked agent--task edge scores} with matched attention and MLP context encoders (Att-ContextPair / MLP-ContextPair), plus an urgency-pair control.
+On the multi-front stress suite WPS\_attn (\(N{=}100\)), Urgency-Pair, MLP-ContextPair, and Att-ContextPair all improve mean \(S_{\mathrm{WPS}}\) over Local-Hungarian (paired bootstrap 95\% CIs exclude zero); MLP-ContextPair attains the best learned mean.
+A matched Att-versus-MLP contrast does \emph{not} favor attention (MLP is significantly better).
+On WPS\_hard, simpler Att-Pair / MLP-Pair shaping does not significantly beat Local-Hungarian.
+Results are simulation-only; Global-Hungarian remains an information upper bound.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -55,13 +55,13 @@ The fair classical competitor is \textbf{Local-Hungarian}: Hungarian matching re
 \textbf{Global-Hungarian} ignores sensing limits and is reported only as an omniscient-COP oracle.
 
 \paragraph{Contribution statement.}
-We evaluate hybrid allocators that reshape Local-Hungarian costs under incomplete COP on WPS\_hard: Att-RAH yields a positive mean \(\Delta S_{\mathrm{WPS}}\) versus Local-Hungarian whose paired bootstrap 95\% CI includes zero under the evaluated budget; set-attention-specific superiority over matched MLP or urgency controls is \emph{not} established.
+We show that visibility-masked edge-cost shaping for Local-Hungarian improves mean \(S_{\mathrm{WPS}}\) over Local-Hungarian on WPS\_attn under paired bootstrap 95\% CIs (Urgency-Pair / MLP-ContextPair / Att-ContextPair); a matched attention encoder does \emph{not} outperform the MLP context control, so the gain is not attention-specific.
 
 \paragraph{Contributions.}
 \begin{enumerate}
-  \item An aerospace-oriented WPS scenario family and evaluation scores \(S_{\mathrm{WPS}}\)/\(S_{\mathrm{ESC}}\) emphasizing perishable and escort outcomes under incomplete COP.
-  \item Hybrid priority-and-reserve modules (MLP-RAH, Att-RAH) coupled to visibility-masked Hungarian matching, with ablations isolating reserve and learned priority.
-  \item Paired-seed evaluation (\(N{=}100\)) with bootstrap CIs on WPS\_hard (primary), showing that Local-Hungarian remains a strong fair baseline against hybrids under the evaluated budget, with stress and interface extensions in the appendices.
+  \item An aerospace-oriented WPS scenario family and scores \(S_{\mathrm{WPS}}\)/\(S_{\mathrm{ESC}}\) under incomplete COP, with on-time and miss reported as secondary mission tradeoffs alongside the primary scalar \(S_{\mathrm{WPS}}\).
+  \item Hybrid context$\rightarrow$edge$\rightarrow$Hungarian modules (Att-ContextPair, MLP-ContextPair, Urgency-Pair) trained by mask-aware imitation of Global-Hungarian, with Att-Pair / commit / escort interfaces as related ablations.
+  \item Paired-seed evaluation (\(N{=}100\)): edge shaping beats Local on WPS\_attn; attention-specific superiority over MLP is not supported; WPS\_hard remains a hard Local baseline for simpler pair heads.
 \end{enumerate}
 
 \section{Related Work}
@@ -99,6 +99,10 @@ Episodes combine static strike/recon missions with dynamic threats that spawn in
 Configurable parameters include \(R_{\mathrm{sense}}\), \(d\), window length \(W\), burst size, fail rate, and evaluation weights.
 Table~\ref{tab:suites} summarizes locked suites.
 WPS\_hard is the primary confirmatory suite; WPS\_attn stresses multi-front asymmetry; WPS\_commit and WPS\_escort are interface extensions (Appendix~\ref{app:ext}).
+\begin{itemize}
+  \item \textbf{WPS\_commit:} dual-front arrivals, timed \texttt{commit\_horizon}, and rematch penalty folded into \(S_{\mathrm{WPS}}\).
+  \item \textbf{WPS\_escort:} moving escort tasks, multi-fighter residual slots, and escort score \(S_{\mathrm{ESC}}\) (Section~V).
+\end{itemize}
 
 \begin{table}[t]
 \centering
@@ -123,32 +127,39 @@ Local-Cap-Greedy, Local-CBBA-Replan~\cite{choi2009cbba,chen2021cbba}, and Local-
 Global-Hungarian omits the mask (oracle).
 Escort experiments additionally use Local-PI-Coalition~\cite{zhao2016pi} and Local-CBBA-Coalition under multi-slot residual matching (Appendix~\ref{app:ext}).
 
-\subsection{MLP-RAH and Att-RAH}
-Both modules map the current team--task state to per-task priorities \(w\in[0,1]^{|\mathcal{T}_t|}\) and a reserve fraction \(\rho\in[0,1]\).
-Hungarian edge costs on known pairs \((a,t)\) with \(t\in\mathcal{K}_{a,t}\) use
+\subsection{MLP-RAH and Att-RAH (task-priority interface)}
+As a legacy interface, MLP-RAH / Att-RAH map state to per-task priorities \(w\in[0,1]^{|\mathcal{T}_t|}\) and reserve \(\rho\), reshaping
 \begin{equation}
-c(a,t)=\mathrm{dist}(a,t)-\alpha\,\mathrm{cap}(a,t)-\beta\,w_t-\gamma\,\mathrm{urgency}(t),
+c(a,t)=\mathrm{dist}(a,t)-\alpha\,\mathrm{cap}(a,t)-\beta\,w_t-\gamma\,\mathrm{urgency}(t)
 \label{eq:cost}
 \end{equation}
-with unknown edges removed.
-Up to \(\lceil\rho |\mathcal{A}_t|\rceil\) farthest agents may be held idle (soft reserve).
-Default blend coefficients follow the implementation defaults (\(\alpha,\beta,\gamma\) fixed across compared hybrids).
+on known pairs only.
+Att-RAH uses a 2-layer Transformer encoder over agent/task tokens; MLP-RAH uses a flat MLP.
+We retain this interface as an ablation; the primary WPS\_hard campaign below uses bipartite edge scores.
 
-\textbf{MLP-RAH} encodes a fixed-length global feature vector with a two-hidden-layer MLP (width 128).
-\textbf{Att-RAH} builds agent and task tokens (position, type, urgency, scarcity, remaining demand, idle/capability flags), pads to at most 16 agents and 32 tasks, and applies a 2-layer Transformer encoder~\cite{vaswani2017attention} (\(d_{\mathrm{model}}{=}64\), 4 heads, feed-forward width \(128\), dropout \(0.1\)).
-Priorities are read from task tokens; \(\rho\) from a pooled summary.
+\subsection{Pair-cost hybrids (primary interface)}
+Att-ContextPair and MLP-ContextPair output scores \(s(a,t)\) on visibility-valid edges and inject
+\(c'(a,t)=c_{\mathrm{base}}(a,t)-s(a,t)\) into Local-Hungarian (\(|s|\le 0.35\)).
+Both consume the same agent/task tokens plus an 8-D situation summary (urgency count, dual-front imbalance, free/fighter fractions, time).
+\textbf{Att-ContextPair} uses self- and cross-attention with a context-biased pair head~\cite{vaswani2017attention}.
+\textbf{MLP-ContextPair} is a capacity-matched MLP on concatenated edge features and the same summary.
+\textbf{Urgency-Pair} uses engineered urgency/scarcity/distance residuals (no learning).
+Training: Phase~A imitates Global-Hungarian on \emph{visible} edges (600 episodes on WPS\_attn); Phase~B RL fine-tune is admitted only if Phase~A beats Local on \(N{=}100\) (gate); deployed checkpoints are best-of IL/RL by confirmatory eval.
+Simpler Att-Pair / MLP-Pair heads without the explicit context summary are reported on WPS\_hard as a related campaign.
 
-\textbf{Ablations.}
-\emph{Att no-reserve} forces \(\rho{=}0\).
-\emph{Att no-priority} replaces learned \(w_t\) with engineered urgency/scarcity while retaining the same allocator.
+\subsection{Timed commits (Att-Commit)}
+Att-Commit, MLP-Commit, and Urgency-Commit output task priorities and per-agent commit locks.
+Locked agents keep their assignment until the commit horizon expires; Local-Hungarian runs only on free agents under the same visibility mask.
+Training and evaluation use WPS\_commit (Appendix~\ref{app:ext}).
+
+\subsection{Coalition escort (Att-Coalition)}
+For WPS\_escort, Att-Coalition / MLP-Coalition / Urgency-Coalition score agent--task pairs for coalition (multi-slot residual) Hungarian matching, analogous to Att-Pair but with escort features.
+Classical escort baselines include Coalition-Hungarian, Local-CBBA-Coalition, and Local-PI-Coalition~\cite{zhao2016pi}.
 
 \subsection{Training}
-Policies are trained on WPS\_hard for 280 episodes (Adam, learning rate \(10^{-3}\)).
-The step reward is \(\Delta S_{\mathrm{WPS}}\).
-The replay buffer stores transitions of predicted value, \(\rho\), and priorities; updates minimize mean-squared temporal-difference and supervised regression losses (batch size 64, discount \(\gamma{=}0.95\), target network sync every 40 updates; buffer cap \(4{\times}10^{4}\)).
-Checkpoints are selected by validation \(S_{\mathrm{WPS}}\) every 40 episodes (12 eval episodes).
-Exploration uses \(\varepsilon\)-annealing from \(0.45\) to \(0.05\).
-Inference uses periodic replanning (interval 20) plus event triggers (new threat, agent failure, reset).
+ContextPair on WPS\_attn: 600 imitation episodes then gated RL (350 episodes) with Adam; validation every 40 episodes on Local-policy \(S_{\mathrm{WPS}}\).
+WPS\_hard Att-Pair / MLP-Pair: shorter IL$\rightarrow$RL as previously reported.
+Inference uses periodic replanning (interval 20) plus event triggers.
 Further details appear in Appendix~\ref{app:repro}.
 
 \section{Evaluation Metrics}
@@ -185,33 +196,50 @@ A legacy completion-mass score is recorded only as a secondary diagnostic.
 \subsection{Protocol}
 Unless noted, each method--suite pair uses \(N{=}100\) episodes with seeds \(0,\ldots,99\).
 For comparisons to Local-Hungarian we report the paired mean difference and a percentile bootstrap 95\% CI (2000 resamples).
-The primary confirmatory contrast is Att-RAH versus Local-Hungarian on WPS\_hard.
-Secondary suites are exploratory and not multiplicity-adjusted.
+The primary confirmatory contrast is ContextPair / Urgency-Pair versus Local-Hungarian on WPS\_attn.
+WPS\_hard pair-head results are reported as a related suite.
 
-\subsection{Primary results (WPS\_hard)}
-Table~\ref{tab:hard} summarizes means and CIs for \(\Delta S_{\mathrm{WPS}}\) versus Local-Hungarian.
-Att-RAH attains mean \(S_{\mathrm{WPS}}=-194.1\pm99\); the paired mean difference versus Local-Hungarian is \(\widehat{\Delta}\approx +8.7\) with CI \([-8.1,+26.0]\), which includes zero.
-Att-RAH-no-reserve has the best hybrid mean (\(-189.5\pm96\)) but likewise a CI including zero.
-MLP-RAH does not improve on Local-Hungarian (CI \([-20,+11]\)).
-Cap-Greedy and CBBA-Replan underperform Local-Hungarian under the same mask.
-The gap from Att-RAH to Global-Hungarian remains large (\(\approx 63\) points), consistent with information asymmetry rather than solver failure alone.
+\subsection{Primary results (WPS\_attn)}
+Table~\ref{tab:attn} summarizes the ContextPair campaign (best-of IL/RL; Att and MLP use IL checkpoints).
+Urgency-Pair, MLP-ContextPair, and Att-ContextPair all improve \(S_{\mathrm{WPS}}\) over Local-Hungarian with CIs excluding zero; on-time rises and misses fall in parallel (secondary tradeoffs).
+MLP-ContextPair has the best learned mean (\(\widehat{\Delta}\approx +53.5\)); Att-ContextPair is significant versus Local but significantly worse than MLP on a paired Att$-$MLP contrast (mean \(\approx -20\), CI excluding zero).
+Global-Hungarian remains \(\approx 196\) points above Local.
 
 \begin{table}[t]
 \centering
-\caption{WPS\_hard (\(N{=}100\)). Mean \(\pm\) std. Paired \(\Delta S_{\mathrm{WPS}}\) 95\% CI vs Local-Hungarian.}
+\caption{WPS\_attn ContextPair campaign (\(N{=}100\)). Mean \(\pm\) std. Paired \(\Delta S_{\mathrm{WPS}}\) 95\% CI vs Local-Hungarian.}
+\label{tab:attn}
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lcccc}
+\toprule
+Method & \(S_{\mathrm{WPS}}\) & on-time & miss & \(\Delta S\) 95\% CI \\
+\midrule
+Local-Hung. & $-472.8\pm127$ & 0.28 & 18.6 & --- \\
+Urgency-Pair & $-431.0\pm123$ & 0.32 & 17.6 & $[+22.0,+61.3]$ \\
+Att-ContextPair & $-429.6\pm138$ & 0.32 & 17.6 & $[+20.9,+64.3]$ \\
+MLP-ContextPair & $-419.3\pm123$ & 0.33 & 17.3 & $[+31.4,+75.1]$ \\
+Global (oracle) & $-277.1\pm135$ & 0.46 & 14.1 & $[+170,+223]$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Related suite (WPS\_hard)}
+Table~\ref{tab:hard} reports simpler Att-Pair / MLP-Pair heads on WPS\_hard: all CIs versus Local-Hungarian include zero.
+Thus edge shaping helps under multi-front stress (WPS\_attn) but is not automatic on WPS\_hard.
+
+\begin{table}[t]
+\centering
+\caption{WPS\_hard pair-cost campaign (\(N{=}100\)). Paired \(\Delta S_{\mathrm{WPS}}\) 95\% CI vs Local-Hungarian.}
 \label{tab:hard}
 \setlength{\tabcolsep}{3pt}
 \begin{tabular}{lcccc}
 \toprule
 Method & \(S_{\mathrm{WPS}}\) & on-time & miss & \(\Delta S\) 95\% CI \\
 \midrule
-Cap-Greedy & $-373.1\pm108$ & 0.28 & 14.8 & $[-195,-146]$ \\
-CBBA-Replan & $-294.0\pm116$ & 0.37 & 12.7 & $[-112,-71]$ \\
 Local-Hung. & $-202.8\pm97$ & 0.48 & 10.7 & --- \\
-MLP-RAH & $-207.5\pm91$ & 0.48 & 10.8 & $[-20,+11]$ \\
-Att-RAH & $-194.1\pm99$ & 0.50 & 10.6 & $[-8.1,+26.0]$ \\
-Att no-res. & $-189.5\pm96$ & 0.50 & 10.4 & $[-6.7,+31.6]$ \\
-Att no-pri. & $-202.2\pm93$ & 0.48 & 10.8 & $[-18,+19]$ \\
+Att-Pair & $-216.7\pm96$ & 0.48 & 11.3 & $[-31.1,+4.2]$ \\
+MLP-Pair & $-203.0\pm111$ & 0.49 & 10.7 & $[-19.0,+17.5]$ \\
+Urgency-Pair & $-200.9\pm96$ & 0.49 & 10.8 & $[-17.0,+19.4]$ \\
 Global (oracle) & $-130.8\pm118$ & 0.58 & 9.3 & $[+52,+91]$ \\
 \bottomrule
 \end{tabular}
@@ -232,73 +260,34 @@ Global (oracle) & $-130.8\pm118$ & 0.58 & 9.3 & $[+52,+91]$ \\
 \end{figure}
 
 \subsection{Ablations and cross-suite checks}
-Removing reserve does not harm mean \(S_{\mathrm{WPS}}\) on WPS\_hard (Table~\ref{tab:hard}); Att-RAH-no-reserve is numerically best among hybrids, so reserve is not required for the directional Att-RAH lift.
-The no-priority ablation is near Local-Hungarian (CI includes zero), indicating that engineered urgency/scarcity alone does not explain Att-RAH's mean gap under this campaign.
-On WPS\_easy and WPS\_burst (prior exploratory campaigns), Local-Hungarian remains competitive when delay is mild, and hybrids are not consistently superior under burst stress.
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=\columnwidth]{figures/fig_wps_ablation.png}
-\caption{Ablation summary on WPS\_hard: reserve is optional; hybrids remain below the oracle and near Local-Hungarian.}
-\label{fig:ablation}
-\end{figure}
+On WPS\_attn, attention does not beat the matched MLP context encoder (Table~\ref{tab:attn}).
+On WPS\_hard, simpler pair heads without the context summary do not significantly beat Local-Hungarian (Table~\ref{tab:hard}).
+Commit/escort interface extensions likewise do not establish attention-specific gains (Appendix~\ref{app:ext}).
 
 \begin{figure}[t]
 \centering
 \includegraphics[width=\columnwidth]{figures/fig_wps_oracle_gap.png}
-\caption{Gap to Global-Hungarian on \(S_{\mathrm{WPS}}\) (WPS\_hard, \(N{=}100\)).}
+\caption{Gap to Global-Hungarian on \(S_{\mathrm{WPS}}\) remains large under incomplete COP.}
 \label{fig:gap}
 \end{figure}
 
-\subsection{Stress suite (WPS\_attn)}
-Table~\ref{tab:attn} reports WPS\_attn.
-Paired CIs for Att-RAH versus Local-Hungarian, MLP-RAH, and the no-priority ablation all include zero.
-The oracle gap grows to \(\approx 150\) points, indicating that information---not encoder depth---dominates under priority reshaping.
-
-\begin{table}[t]
-\centering
-\caption{WPS\_attn (\(N{=}100\)). Paired \(\Delta S_{\mathrm{WPS}}\) 95\% CI vs Local-Hungarian.}
-\label{tab:attn}
-\setlength{\tabcolsep}{3pt}
-\begin{tabular}{lcccc}
-\toprule
-Method & \(S_{\mathrm{WPS}}\) & on-time & miss & \(\Delta S\) 95\% CI \\
-\midrule
-CBBA-Replan & $-413.6\pm116$ & 0.33 & 17.2 & $[-123,-74]$ \\
-Local-Hung. & $-316.1\pm124$ & 0.43 & 15.0 & --- \\
-MLP-RAH & $-313.8\pm110$ & 0.43 & 14.9 & $[-21,+25]$ \\
-Att-RAH & $-316.5\pm122$ & 0.42 & 15.0 & $[-23,+23]$ \\
-Att no-res. & $-313.1\pm126$ & 0.43 & 14.9 & $[-17,+23]$ \\
-Att no-pri. & $-309.9\pm119$ & 0.43 & 14.8 & $[-7,+21]$ \\
-Global (oracle) & $-166.7\pm83$ & 0.56 & 11.5 & $[+125,+174]$ \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=\columnwidth]{figures/fig_wps_attn_swps.png}
-\caption{WPS\_attn \(S_{\mathrm{WPS}}\) (\(N{=}100\)): hybrids remain near Local-Hungarian; Global-Hungarian is substantially higher.}
-\label{fig:attn}
-\end{figure}
-
 \section{Discussion and Limitations}
-On WPS\_hard, hybrid cost shaping yields a directional but non-significant mean improvement of Att-RAH over Local-Hungarian under paired bootstrap CIs.
-Local-Hungarian remains a strong fair baseline: Cap-Greedy and CBBA-Replan are substantially worse under the same mask, and learned hybrids do not reliably exceed it under the evaluated budget.
-The large remaining gap to Global-Hungarian points to incomplete COP---not classical matching failure---as the dominant bottleneck.
-On harder asymmetry (WPS\_attn) and alternate interfaces (Appendix~\ref{app:ext}), matched non-attention controls are not outperformed; on escort, an MLP pair scorer surpasses the attention encoder under the evaluated budget.
+On WPS\_attn, visibility-masked edge-cost shaping improves \(S_{\mathrm{WPS}}\) and secondary on-time/miss metrics over Local-Hungarian under paired bootstrap CIs.
+The gain is shared by Urgency-Pair and MLP-ContextPair; Att-ContextPair beats Local but loses to MLP, so the result supports \emph{hybrid cost shaping}, not set attention as such.
+On WPS\_hard, myopic Local-Hungarian remains competitive against simpler pair heads.
+The large Global oracle gap indicates incomplete COP still dominates encoder choice.
 
 \textbf{Limitations.}
 Results are limited to discrete-time simulation without flight or hardware-in-the-loop validation.
-\(S_{\mathrm{WPS}}\) and \(S_{\mathrm{ESC}}\) use heuristic weights; Appendix~\ref{app:sens} shows that Att-RAH versus Local-Hungarian CIs still include zero under miss-weight \(\pm 20\%\) and a zero distance term.
-Training budgets and architectures are fixed (Att-RAH checkpoint selected by validation \(S_{\mathrm{WPS}}\) within a 280-episode budget).
-Secondary suites are exploratory and not multiplicity-adjusted.
-Communication channel impairments are not modeled beyond knowledge masking.
+\(S_{\mathrm{WPS}}\) is a scalarization of mission tradeoffs (on-time, miss, distance); Appendix~\ref{app:sens} reports weight sensitivity.
+Training budgets are fixed; RL did not improve confirmatory Att/MLP scores over imitation.
+Secondary suites are not multiplicity-adjusted.
+Communication impairments beyond knowledge masking are not modeled.
 
 \section{Conclusion}
-Under WPS\_hard, Att-RAH does not significantly improve \(S_{\mathrm{WPS}}\) over visibility-masked Local-Hungarian under paired bootstrap 95\% CIs (mean \(\Delta\approx +8.7\), CI includes zero).
-Set attention does not, by itself, outperform matched MLP or urgency controls on the stress and interface suites studied here.
-For aerospace mission management, the practical implication is to retain classical assignment under incomplete COP as the core solver, and to treat learned cost shaping as an optional module that must demonstrate paired gains against that fair baseline.
+Under WPS\_attn, context-aware edge shaping for Local-Hungarian significantly improves \(S_{\mathrm{WPS}}\) over visibility-masked Local-Hungarian; a matched attention encoder does not outperform MLP.
+Under WPS\_hard, simpler Att-Pair / MLP-Pair shaping does not significantly beat Local-Hungarian.
+For aerospace mission management, retain classical assignment under incomplete COP and require paired gains---including matched non-attention controls---before claiming attention advantages.
 
 \section*{Acknowledgments}
 Omitted for anonymous review.
@@ -360,23 +349,23 @@ MLP-Coalition & $-283.9\pm144$ \\
 
 \section{Metric weight sensitivity}
 \label{app:sens}
-We recompute \(S_{\mathrm{WPS}}\) under alternate weights \((b_{\mathrm{on}},p_{\mathrm{miss}},c_{\mathrm{dist}})\) from per-episode components (\texttt{n\_on\_time}, \texttt{n\_missed\_windows}, \texttt{total\_distance}, \texttt{max\_coord}) using \texttt{experiments/wps\_metric\_sensitivity.py}.
-Table~\ref{tab:sens} reports paired Att-RAH versus Local-Hungarian differences on WPS\_hard (\(N{=}100\)) for the default weights in~\eqref{eq:swps}, miss weight \(\pm 20\%\), and a zero distance coefficient.
-In all four variants the paired bootstrap 95\% CI includes zero, so the non-significant primary contrast is not an artifact of the default miss or distance coefficients alone.
+We recompute \(S_{\mathrm{WPS}}\) under alternate weights from per-episode components using \texttt{experiments/wps\_metric\_sensitivity.py}.
+Table~\ref{tab:sens} reports paired Att-Pair versus Local-Hungarian differences on WPS\_hard (\(N{=}100\)).
+In all variants the paired bootstrap 95\% CI includes zero (Att-Pair mean remains worse), so the null primary contrast is not an artifact of the default miss or distance coefficients alone.
 
 \begin{table}[t]
 \centering
-\caption{WPS\_hard metric-weight sensitivity. Paired mean \(\Delta S_{\mathrm{WPS}}\) (Att-RAH $-$ Local-Hungarian) and bootstrap 95\% CI (\(N{=}100\)).}
+\caption{WPS\_hard metric-weight sensitivity. Paired mean \(\Delta S_{\mathrm{WPS}}\) (Att-Pair $-$ Local-Hungarian) and bootstrap 95\% CI (\(N{=}100\)).}
 \label{tab:sens}
 \setlength{\tabcolsep}{3pt}
 \begin{tabular}{lccc}
 \toprule
 Variant & \((b,p,c)\) & mean \(\Delta\) & 95\% CI \\
 \midrule
-Default & \((12,30,0.01)\) & $+8.7$ & $[-8.1,+26.0]$ \\
-Miss $-20\%$ & \((12,24,0.01)\) & $+7.8$ & $[-6.5,+22.3]$ \\
-Miss $+20\%$ & \((12,36,0.01)\) & $+9.6$ & $[-10.1,+29.6]$ \\
-No distance & \((12,30,0)\) & $+8.7$ & $[-8.1,+26.0]$ \\
+Default & \((12,30,0.01)\) & $-13.9$ & $[-31.1,+4.2]$ \\
+Miss $-20\%$ & \((12,24,0.01)\) & $-10.4$ & $[-24.9,+4.6]$ \\
+Miss $+20\%$ & \((12,36,0.01)\) & $-17.4$ & $[-37.7,+3.6]$ \\
+No distance & \((12,30,0)\) & $-13.9$ & $[-31.1,+4.2]$ \\
 \bottomrule
 \end{tabular}
 \end{table}
