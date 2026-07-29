@@ -25,8 +25,10 @@ from TaskAllocation.Hybrid.AttentionCommit import AttentionCommit, UrgencyCommit
 from TaskAllocation.Hybrid.AttentionRAH import AttentionRAH
 from TaskAllocation.Hybrid.PairCostHybrid import PairCostHybrid, UrgencyPair
 from TaskAllocation.Hybrid.ContextPairHybrid import ContextPairHybrid
+from TaskAllocation.Hybrid.GNNPairHybrid import GNNContextPairHybrid
 from TaskAllocation.Hybrid.ReserveAwareHybrid import ReserveAwareHybrid, build_rah_state
 from TaskAllocation.MarketBased.CBBA_Replan import CBBAReplan
+from TaskAllocation.MarketBased.PerformanceImpact import PerformanceImpact
 from TaskAllocation.OptimizationBased.HungarianAllocator import HungarianAllocator
 from experiments.paper_eval import make_config, _open_tasks, _events
 from experiments.paper_scenarios import CASE_SPECS, WPS_ENV_FLAGS
@@ -35,11 +37,27 @@ from mUAV_TA.DroneEnv import MultiUAVEnv
 RESULTS = os.path.join(ROOT, "experiments", "results")
 
 
+def _flatten_pairs(result):
+    """Normalize CBBA/PI (name, [tasks]) and Hungarian (name, task) to flat pairs."""
+    pairs = []
+    for item in result or []:
+        if not item:
+            continue
+        name, payload = item[0], item[1]
+        if isinstance(payload, list):
+            for task in payload:
+                pairs.append((name, task))
+        else:
+            pairs.append((name, payload))
+    return pairs
+
+
 def _apply_assign(env, pairs):
     actions = {}
-    for agent_name, task in pairs:
+    for agent_name, task in _flatten_pairs(pairs):
         if env.last_tasks_info and task in env.last_tasks_info:
-            actions[agent_name] = env.last_tasks_info.index(task)
+            if agent_name not in actions:
+                actions[agent_name] = env.last_tasks_info.index(task)
     return actions
 
 
@@ -69,6 +87,7 @@ def run_wps_episode(
     urg_pair: Optional[UrgencyPair] = None,
     att_ctx: Optional[ContextPairHybrid] = None,
     mlp_ctx: Optional[ContextPairHybrid] = None,
+    gnn_ctx: Optional[GNNContextPairHybrid] = None,
 ) -> Dict[str, float]:
     spec = CASE_SPECS[case_id]
     flags = dict(WPS_ENV_FLAGS)
@@ -84,6 +103,7 @@ def run_wps_episode(
     hung = HungarianAllocator(replan_interval=20, max_coord=env.max_coord)
     hung_oracle = HungarianAllocator(replan_interval=20, max_coord=env.max_coord)
     cbba_r = CBBAReplan(env.agents_obj, env.tasks, env.max_coord, seed=seed, replan_interval=20)
+    pi = PerformanceImpact(max_coord=env.max_coord, seed=seed, replan_interval=20)
     cap_g = CapabilityGreedy()
     n_replans = 0
     decision_ms = []
@@ -112,30 +132,31 @@ def run_wps_episode(
             n_replans = hung.n_replans
             actions = _apply_assign(env, result)
         elif algorithm == "Local-CBBA-Replan":
-            known = env.known_tasks_for(None)
-            open_k = [
-                t
-                for t in known
-                if t.id != 0 and t.status != 2 and t.allocatedReqs[t.typeIdx] < t.currentReqs[t.typeIdx]
-            ]
-            vis = env.agent_visibility_map() or {}
+            open_k = _open_tasks(env)
             result = cbba_r.allocate_tasks(
-                env.get_live_agents(), open_k, time_step=env.time_steps, events=events
+                env.get_live_agents(),
+                open_k,
+                time_step=env.time_steps,
+                events=events,
+                agent_known_ids=env.agent_visibility_map(),
+                max_tasks_per_agent=1,
             )
             if result:
                 n_replans = cbba_r.n_replans
-                for action in result:
-                    agent_name = action[0]
-                    known_ids = vis.get(agent_name) if vis else None
-                    idxs = []
-                    for act in action[1]:
-                        if act not in env.last_tasks_info:
-                            continue
-                        if known_ids is not None and act.id not in known_ids:
-                            continue
-                        idxs.append(env.last_tasks_info.index(act))
-                    if idxs:
-                        actions[agent_name] = idxs
+            actions = _apply_assign(env, result)
+        elif algorithm == "Local-PI":
+            open_k = _open_tasks(env)
+            result = pi.allocate_tasks(
+                env.get_live_agents(),
+                open_k,
+                time_step=env.time_steps,
+                events=events,
+                agent_known_ids=env.agent_visibility_map(),
+                max_tasks_per_agent=1,
+            )
+            if result:
+                n_replans = pi.n_replans
+            actions = _apply_assign(env, result)
         elif algorithm == "Local-Cap-Greedy":
             open_k = _open_tasks(env)
             vis = env.agent_visibility_map()
@@ -242,6 +263,11 @@ def run_wps_episode(
                 result, *_ = mlp_ctx.plan(env, hung, events=events, explore=False, force=True)
                 n_replans = mlp_ctx.n_replans
                 actions = _apply_assign(env, result)
+        elif algorithm == "GNN-ContextPair":
+            if _should_replan(env, events) and gnn_ctx is not None:
+                result, *_ = gnn_ctx.plan(env, hung, events=events, explore=False, force=True)
+                n_replans = gnn_ctx.n_replans
+                actions = _apply_assign(env, result)
 
         decision_ms.append((time.perf_counter() - t0) * 1000.0)
         observation, reward, done, trunc, info = env.step(actions)
@@ -288,9 +314,20 @@ def main():
     parser.add_argument(
         "--suite",
         default="WPS",
-        choices=["WPS", "WPS_hard", "WPS_attn", "WPS_commit", "all_wps"],
+        choices=[
+            "WPS",
+            "WPS_hard",
+            "WPS_attn",
+            "WPS_attn_L",
+            "WPS_attn_XL",
+            "WPS_scale",
+            "WPS_commit",
+            "all_wps",
+        ],
     )
     parser.add_argument("--episodes", type=int, default=30)
+    parser.add_argument("--max-agents", type=int, default=None, help="Token pad for Urgency/Pair (default 16; use 48 for scale)")
+    parser.add_argument("--max-tasks", type=int, default=None, help="Token pad for Urgency/Pair (default 32; use 64 for scale)")
     parser.add_argument("--rah", default=os.path.join(ROOT, "dqn_Custom", "policy_RAH_WPS_hard.pth"))
     parser.add_argument("--att-rah", default=os.path.join(ROOT, "dqn_Custom", "policy_AttRAH_WPS_hard.pth"))
     parser.add_argument(
@@ -314,6 +351,10 @@ def main():
         default=os.path.join(ROOT, "dqn_Custom", "policy_MLPContextPair_WPS_attn.pth"),
     )
     parser.add_argument(
+        "--gnn-ctx",
+        default=os.path.join(ROOT, "dqn_Custom", "policy_GNNContextPairRawGnn_WPS_attn.pth"),
+    )
+    parser.add_argument(
         "--raw",
         action="store_true",
         help="Default ContextPair checkpoints to the *Raw feature-ablation variants",
@@ -335,7 +376,11 @@ def main():
     args = parser.parse_args()
 
     if args.raw:
-        for opt, tag in (("att_ctx", "AttContextPairRaw"), ("mlp_ctx", "MLPContextPairRaw")):
+        for opt, tag in (
+            ("att_ctx", "AttContextPairRaw"),
+            ("mlp_ctx", "MLPContextPairRaw"),
+            ("gnn_ctx", "GNNContextPairRawGnn"),
+        ):
             if getattr(args, opt) == parser.get_default(opt):
                 setattr(args, opt, os.path.join(ROOT, "dqn_Custom", f"policy_{tag}_WPS_attn.pth"))
 
@@ -343,12 +388,27 @@ def main():
         cases = ["WPS_hard"]
     elif args.suite == "WPS_attn":
         cases = ["WPS_attn"]
+    elif args.suite == "WPS_attn_L":
+        cases = ["WPS_attn_L"]
+    elif args.suite == "WPS_attn_XL":
+        cases = ["WPS_attn_XL"]
+    elif args.suite == "WPS_scale":
+        cases = ["WPS_attn", "WPS_attn_L", "WPS_attn_XL"]
     elif args.suite == "WPS_commit":
         cases = ["WPS_commit"]
     elif args.suite == "all_wps":
         cases = ["WPS_easy", "WPS_hard", "WPS_burst", "WPS_attn", "WPS_commit"]
     else:
         cases = ["WPS_easy", "WPS_hard"]
+
+    pad_agents = int(args.max_agents) if args.max_agents else 16
+    pad_tasks = int(args.max_tasks) if args.max_tasks else 32
+    # Scaled WPS_attn clones need pads that cover the live fleet
+    if args.suite in ("WPS_attn_L", "WPS_attn_XL", "WPS_scale") or any(
+        c in ("WPS_attn_L", "WPS_attn_XL") for c in cases
+    ):
+        pad_agents = max(pad_agents, 48)
+        pad_tasks = max(pad_tasks, 64)
 
     algos = [a.strip() for a in args.algorithms.split(",") if a.strip()]
     rah = None
@@ -359,7 +419,8 @@ def main():
     mlp_pair = None
     att_ctx = None
     mlp_ctx = None
-    urg_pair = UrgencyPair()
+    gnn_ctx = None
+    urg_pair = UrgencyPair(max_tasks=pad_tasks, max_agents=pad_agents)
     urg_commit = UrgencyCommit()
     mlp_names = {"RAH", "MLP-RAH", "RAH-no-reserve"}
     att_names = {"Att-RAH", "Att-RAH-no-reserve", "Att-RAH-no-priority"}
@@ -423,6 +484,13 @@ def main():
         else:
             print(f"No MLP-ContextPair checkpoint at {args.mlp_ctx}; skipping.", flush=True)
             algos = [a for a in algos if a != "MLP-ContextPair"]
+    if "GNN-ContextPair" in algos:
+        if os.path.exists(args.gnn_ctx):
+            gnn_ctx = GNNContextPairHybrid()
+            gnn_ctx.load(args.gnn_ctx)
+        else:
+            print(f"No GNN-ContextPair checkpoint at {args.gnn_ctx}; skipping.", flush=True)
+            algos = [a for a in algos if a != "GNN-ContextPair"]
 
     os.makedirs(RESULTS, exist_ok=True)
     write_header = not os.path.exists(args.out) or os.path.getsize(args.out) == 0
@@ -450,6 +518,7 @@ def main():
                         urg_pair=urg_pair,
                         att_ctx=att_ctx,
                         mlp_ctx=mlp_ctx,
+                        gnn_ctx=gnn_ctx,
                     )
                 )
             elapsed = time.time() - t0

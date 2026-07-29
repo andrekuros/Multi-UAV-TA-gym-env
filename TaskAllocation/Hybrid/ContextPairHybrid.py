@@ -56,8 +56,8 @@ def build_context_summary(env, tok: dict, raw: bool = False) -> np.ndarray:
     imbalance = abs(left - right) / n_tasks
     ctx = np.asarray(
         [
-            min(n_urgent / 8.0, 1.0),
-            min(len(tasks) / 32.0, 1.0),
+            n_urgent / n_tasks,
+            min(len(tasks) / float(n_agents), 4.0) / 4.0,
             free / n_agents,
             fighters / n_agents,
             left / n_tasks,

@@ -21,6 +21,7 @@ if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
 
 from TaskAllocation.Hybrid.ContextPairHybrid import ContextPairHybrid
+from TaskAllocation.Hybrid.GNNPairHybrid import GNNContextPairHybrid
 from TaskAllocation.Hybrid.PairCostHybrid import PairCostHybrid
 from TaskAllocation.OptimizationBased.HungarianAllocator import HungarianAllocator
 from experiments.paper_eval import make_config, _events, _open_tasks
@@ -156,6 +157,21 @@ def run_rl_episode(env, policy: PairCostHybrid, hung: HungarianAllocator, explor
 
 
 def make_policy(args):
+    if args.gnn:
+        if not args.context:
+            raise SystemExit("--gnn requires --context (GNN-ContextPair)")
+        if args.mlp:
+            raise SystemExit("--gnn and --mlp are mutually exclusive")
+        return GNNContextPairHybrid(
+            max_tasks=args.max_tasks,
+            max_agents=args.max_agents,
+            d_model=args.d_model,
+            nhead=args.nhead,
+            n_layers=args.n_layers,
+            lr=args.lr,
+            raw_features=args.raw,
+            il_warmup=args.il_warmup,
+        )
     cls = ContextPairHybrid if args.context else PairCostHybrid
     return cls(
         use_attention=not args.mlp,
@@ -180,9 +196,14 @@ def main():
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--mlp", action="store_true")
     parser.add_argument(
+        "--gnn",
+        action="store_true",
+        help="Use GNN-ContextPair (bipartite MP edge scorer; requires --context)",
+    )
+    parser.add_argument(
         "--context",
         action="store_true",
-        help="Use Att/MLP ContextPair (context encoder + edge scores)",
+        help="Use Att/MLP/GNN ContextPair (context encoder + edge scores)",
     )
     parser.add_argument("--out", default=None)
     parser.add_argument("--init", default=None, help="Checkpoint to load (required for sensible RL phase)")
@@ -207,7 +228,9 @@ def main():
 
     torch.manual_seed(args.seed)
 
-    if args.context:
+    if args.gnn:
+        tag = "GNNContextPair"
+    elif args.context:
         tag = "MLPContextPair" if args.mlp else "AttContextPair"
     else:
         tag = "MLPPair" if args.mlp else "AttPair"

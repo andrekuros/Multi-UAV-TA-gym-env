@@ -118,7 +118,8 @@ class MultiUAVEnv(ParallelEnv):
         self.agents_config = self.config.agents
         self.n_agents = sum(self.config.agents.values()) 
         self.random_init_pos = self.config.random_init_pos
-        self.max_agents = 20                
+        # Pad for scaled WPS suites (up to ~40 agents) plus attrition/spawn headroom
+        self.max_agents = max(48, self.n_agents + 8)
         
         self.possible_agents = [] 
         for agent_type, n_agents in self.agents_config.items():
@@ -141,8 +142,9 @@ class MultiUAVEnv(ParallelEnv):
         self.agent_selector = agent_selector(self.possible_agents)
         self.current_agent = self.agent_selector.next()
                 
-        self.max_tasks = 40 + 1
         self.n_tasks = sum(self.config.tasks.values()) + 1
+        # Preserve legacy WPS_attn popup headroom (41 - 13 = 28); scale suites grow with fleet
+        self.max_tasks = self.n_tasks + 28
         
         self.tasks_config = self.config.tasks               
         

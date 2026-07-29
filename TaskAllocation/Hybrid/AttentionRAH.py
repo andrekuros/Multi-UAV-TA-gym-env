@@ -155,7 +155,7 @@ def build_att_tokens(env, max_tasks: int = 32, max_agents: int = 16, raw: bool =
             agent_feats[i] = base + [1.0 if atype == "F2" else 0.0]
         else:
             agent_feats[i] = base + [
-                min(n_known_urgent / 8.0, 1.0),
+                min(n_known_urgent / max(len(open_tasks), 1), 1.0),
                 1.0 if atype == "F2" else 0.0,
             ]
         agent_mask[i] = False
