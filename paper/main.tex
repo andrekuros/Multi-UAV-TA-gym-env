@@ -31,11 +31,11 @@ We show two co-equal results.
 First, that gap is primarily \emph{informational}: under idealized full COP (AWACS), Local-Hungarian equals Global; increasing sensing radius or shortening team cueing delay closes the gap monotonically, whereas oversizing the fleet under incomplete COP raises idle fraction with little Local gain.
 Second, under the incomplete-COP mask, hybrid \emph{edge-cost shaping} for Local-Hungarian (Urgency-Pair and matched Att / MLP / GNN ContextPair) improves mean \(S_{\mathrm{WPS}}\) on WPS\_attn (\(N{=}100\); paired bootstrap 95\% CIs exclude zero), while Local-CBBA and Local-PI do not; Att, MLP, GNN, and Urgency remain mutually indistinguishable under matched optimization and three training seeds.
 Architecture and scale transfers do not separate attention from MLP.
-Results are simulation-only.
+Results are simulation-only; an open PettingZoo WPS environment, scenario registry, and eval harness accompany the manuscript.
 \end{abstract}
 
 \begin{IEEEkeywords}
-Unmanned aerial vehicles, task allocation, Hungarian algorithm, hybrid learning, partial observability, time windows, mission management
+Unmanned aerial vehicles, task allocation, Hungarian algorithm, hybrid learning, partial observability, time windows, mission management, open-source software, simulation
 \end{IEEEkeywords}
 
 \section{Introduction}
@@ -53,13 +53,15 @@ Aerospace command-and-control (C2) settings often violate those assumptions:
 We refer to this family as \textbf{WPS} (Windowed Pop-up Strike).
 The fair classical competitor is \textbf{Local-Hungarian}: Hungarian matching restricted to each UAV's known-task set (incomplete COP).
 \textbf{Global-Hungarian} ignores sensing limits and is reported only as an omniscient-COP oracle.
+The open simulation stack that implements these masks is summarized in Sec.~\ref{sec:env}.
 
 \paragraph{Contribution statement.}
-We characterize the Local--Global \(S_{\mathrm{WPS}}\) gap as a COP / information problem (AWACS equality, sensing and cueing sweeps, oversized-fleet idle), and show that under incomplete COP the practical mitigation is visibility-masked edge-cost shaping for Local-Hungarian---not a particular encoder architecture or classical market replanner under the same mask.
+We release an open incomplete-COP WPS simulation stack for multi-UAV assignment, characterize the Local--Global \(S_{\mathrm{WPS}}\) gap as a COP / information problem (AWACS equality, sensing and cueing sweeps, oversized-fleet idle), and show that under incomplete COP the practical mitigation is visibility-masked edge-cost shaping for Local-Hungarian---not a particular encoder architecture or classical market replanner under the same mask.
 
 \paragraph{Contributions.}
 \begin{enumerate}
-  \item A WPS scenario family with scores \(S_{\mathrm{WPS}}\)/\(S_{\mathrm{ESC}}\) and COP diagnostics: full-COP AWACS, sensing-radius and team-cueing sweeps, and fixed-load fleet oversizing with idle reporting.
+  \item An open PettingZoo multi-UAV environment with a locked WPS scenario registry, explicit visibility masks (\texttt{agent\_known\_ids}), classical/hybrid allocator plug-ins, eval scripts, and an optional 3D replay dashboard for qualitative inspection.
+  \item COP diagnostics on that stack: full-COP AWACS, sensing-radius and team-cueing sweeps, and fixed-load fleet oversizing with idle reporting, alongside scores \(S_{\mathrm{WPS}}\)/\(S_{\mathrm{ESC}}\).
   \item Hybrid context$\rightarrow$edge$\rightarrow$Hungarian modules (Att- / MLP- / GNN-ContextPair, Urgency-Pair) trained by mask-aware imitation of Global-Hungarian, evaluated against Local-Hungarian, Local-CBBA-Replan, and Local-PI under a shared visibility mask.
   \item Matched Att / MLP / GNN / Urgency negatives (including an optimizer-confound retraction and scale transfer), establishing hybrid shaping rather than architecture as the mitigation claim on WPS\_attn; WPS\_hard remains a boundary where simpler pair heads do not beat Local.
 \end{enumerate}
@@ -86,6 +88,10 @@ End-to-end policies that select discrete assignments, including attention over t
 When matching structure is available, hybrids that learn scores for a classical solver are a recurring pattern.
 We adopt that pattern under partial observability: networks output priorities (or locks/pair scores), while conflict resolution remains classical.
 Prior TBTA experiments in a PettingZoo environment~\cite{terry2021pettingzoo} motivate keeping Hungarian as the assignment engine.
+
+\textbf{Open simulators and assignment benchmarks.}
+PettingZoo and related multi-agent APIs provide general MARL interfaces~\cite{terry2021pettingzoo}, but rarely encode aerospace incomplete-COP disclosure, perishable windows, and a shared classical/hybrid allocator contract.
+Our release couples a WPS scenario registry to a visibility-masked assignment API so Local-Hungarian, market baselines, and cost-shaping hybrids are compared under the same \(\mathcal{K}_{a,t}\) mask, with optional 3D replay for qualitative mission inspection.
 
 \section{System Model and WPS Scenarios}
 \subsection{Agents, tasks, and information}
@@ -118,6 +124,36 @@ WPS\_attn\_AWACS & 12 UAV & 0 & 0 & yes & 22 \\
 \bottomrule
 \end{tabular}
 \end{table}
+
+\subsection{Simulation environment and software framework}
+\label{sec:env}
+Quantitative results use an open multi-UAV stack released with the manuscript.
+Episodes run in a PettingZoo \texttt{ParallelEnv} (\texttt{MultiUAVEnv}) configured by \texttt{agentEnvOptions} and a locked scenario registry (Table~\ref{tab:suites}).
+Geometry and line-of-sight helpers are accelerated in a Rust \texttt{core\_sim} module; training and batch evaluation remain headless.
+
+Incomplete COP is first-class: each agent maintains \(\mathcal{K}_{a,t}\) via sensing radius \(R_{\mathrm{sense}}\), cueing delay \(d\), and \texttt{share\_knowledge}.
+The env exposes \texttt{agent\_visibility\_map()}, which Local allocators consume as \texttt{agent\_known\_ids} so unknown agent--task edges are masked.
+Global-Hungarian omits the mask (oracle).
+Hybrids only reshape edge scores or priorities, then call the same Hungarian engine under the mask.
+Market baselines (Local-CBBA-Replan, Local-PI) use the identical visibility interface and comparable replan triggers.
+Episode outcomes feed evaluation scores \(S_{\mathrm{WPS}}\) / \(S_{\mathrm{ESC}}\) (Section~V).
+
+Figure~\ref{fig:framework} summarizes the software stack.
+Figure~\ref{fig:envui} shows the optional React / Three.js replay dashboard used for qualitative inspection of assignments, threats, and windows; it is not part of the training loop.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{figures/fig_framework.png}
+\caption{Open WPS simulation stack: scenario registry, PettingZoo env with Rust geometry assist, visibility-masked allocators, scores, and optional 3D replay.}
+\label{fig:framework}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{figures/fig_env_ui.png}
+\caption{3D replay dashboard for a WPS\_escort episode (seed~0): agents, tasks/threats, metrics, dynamics flags, and event log. Used for qualitative review only.}
+\label{fig:envui}
+\end{figure}
 
 \section{Methods}
 \subsection{Baselines}
@@ -372,10 +408,17 @@ Omitted for anonymous review.
 \label{app:repro}
 \textbf{Environment.}
 PettingZoo parallel API~\cite{terry2021pettingzoo}; WPS flags disable early termination so late pop-ups remain in horizon.
+Code: open repository accompanying the manuscript (\texttt{MultiUAVEnv}, \texttt{experiments/paper\_scenarios.py}, \texttt{experiments/wps\_eval.py}).
 \textbf{Fairness.}
 All Local methods use the same \(\mathcal{K}_{a,t}\) mask and comparable event-driven replanning.
+\textbf{Suites.}
+Primary tables use WPS\_attn; COP diagnostics use WPS\_attn\_AWACS, WPS\_attn\_COP (sense/cue sweeps), and oversized clones OS18/OS24.
+\textbf{Checkpoints.}
+Raw ContextPair IL checkpoints named by encoder and seed (e.g., \texttt{policy\_AttContextPairRaw\_WPS\_attn.pth}); GNN uses the \texttt{Gnn} suffix.
+\textbf{Replay UI.}
+\texttt{python experiments/generate\_simulation\_replay.py --scenario WPS\_escort} writes a JSON log; the FastAPI server and React frontend play it back for qualitative review (Fig.~\ref{fig:envui}).
 \textbf{Code.}
-Experiment scripts and scenario registry accompany the manuscript; checkpoints are regenerated by published train scripts.
+Experiment scripts and scenario registry regenerate tables; UI screenshots are not required to reproduce numerical results.
 
 \section{Interface extensions}
 \label{app:ext}
