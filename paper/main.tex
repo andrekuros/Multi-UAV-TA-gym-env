@@ -20,7 +20,8 @@
   % Update before submission (ORCID required by TAES)
   Anonymous~Author
   \thanks{ORCID: 0000-0000-0000-0000 (replace before submission).
-  Code: \url{https://github.com/andrekuros/Multi-UAV-TA-gym-env}.}
+  Code and experiment scripts will be released upon publication (URL withheld for double-blind review).}
+  % CAMERA-READY: Code: \url{https://github.com/andrekuros/Multi-UAV-TA-gym-env}.
 }
 
 \maketitle
@@ -32,7 +33,8 @@ We show two co-equal results.
 First, that gap is primarily \emph{informational}: under idealized full COP (AWACS), Local-Hungarian equals Global; increasing sensing radius or shortening team cueing delay closes the gap monotonically, whereas oversizing the fleet under incomplete COP raises idle fraction with little Local gain.
 Second, under the incomplete-COP mask, hybrid \emph{edge-cost shaping} for Local-Hungarian (Urgency-Pair and matched Att / MLP / GNN ContextPair) improves mean \(S_{\mathrm{WPS}}\) on WPS\_attn (\(N{=}100\); paired bootstrap 95\% CIs exclude zero), while Local-CBBA and Local-PI do not; Att, MLP, GNN, and Urgency remain mutually indistinguishable under matched optimization and three training seeds.
 Architecture and scale transfers do not separate attention from MLP.
-Results are simulation-only; code is available at \url{https://github.com/andrekuros/Multi-UAV-TA-gym-env}.
+Results are simulation-only; code and experiment scripts will be released upon publication (URL withheld for double-blind review).
+% CAMERA-READY: code is available at \url{https://github.com/andrekuros/Multi-UAV-TA-gym-env}.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -57,11 +59,13 @@ The fair classical competitor is \textbf{Local-Hungarian}: Hungarian matching re
 The open simulation stack that implements these masks is summarized in Sec.~\ref{sec:env}.
 
 \paragraph{Contribution statement.}
-We release an open incomplete-COP WPS simulation stack for multi-UAV assignment, characterize the Local--Global \(S_{\mathrm{WPS}}\) gap as a COP / information problem (AWACS equality, sensing and cueing sweeps, oversized-fleet idle), and show that under incomplete COP the practical mitigation is visibility-masked edge-cost shaping for Local-Hungarian---not a particular encoder architecture or classical market replanner under the same mask.
+We characterize the Local--Global \(S_{\mathrm{WPS}}\) gap as a COP / information problem (AWACS equality, sensing and cueing sweeps, oversized-fleet idle), and show that under incomplete COP the practical mitigation is visibility-masked edge-cost shaping for Local-Hungarian---not a particular encoder architecture or classical market replanner under the same mask.
+An open WPS simulation stack enables fair masked baselines and reproducible evaluation (enabling artifact; release upon publication).
 
 \paragraph{Contributions.}
 \begin{enumerate}
-  \item An open PettingZoo multi-UAV environment with a locked WPS scenario registry, explicit visibility masks (\texttt{agent\_known\_ids}), classical/hybrid allocator plug-ins, eval scripts, and an optional 3D replay dashboard (\url{https://github.com/andrekuros/Multi-UAV-TA-gym-env}).
+  \item \textbf{Enabling artifact:} an open PettingZoo multi-UAV environment with a locked WPS scenario registry, explicit visibility masks (\texttt{agent\_known\_ids}), classical/hybrid allocator plug-ins, eval scripts, and an optional 3D replay dashboard (URL withheld for double-blind review; released upon publication).
+  % CAMERA-READY: (\url{https://github.com/andrekuros/Multi-UAV-TA-gym-env}).
   \item COP diagnostics on that stack: full-COP AWACS, sensing-radius and team-cueing sweeps, and fixed-load fleet oversizing with idle reporting, alongside scores \(S_{\mathrm{WPS}}\)/\(S_{\mathrm{ESC}}\).
   \item Hybrid context$\rightarrow$edge$\rightarrow$Hungarian modules (Att- / MLP- / GNN-ContextPair, Urgency-Pair) trained by mask-aware imitation of Global-Hungarian, evaluated against Local-Hungarian, Local-CBBA-Replan, and Local-PI under a shared visibility mask.
   \item Matched Att / MLP / GNN / Urgency negatives (including an optimizer-confound retraction and scale transfer), establishing hybrid shaping rather than architecture as the mitigation claim on WPS\_attn; WPS\_hard remains a boundary where simpler pair heads do not beat Local.
@@ -84,10 +88,15 @@ We retain CBBA/PI as Local baselines but evaluate them under the same incomplete
 Mixed-integer trajectory planning illustrates the cost of enforcing collision and timing constraints when models are centralized~\cite{richards2002aircraft}.
 Our focus is discrete assignment under delayed disclosure rather than continuous trajectory optimization.
 
+\textbf{Communication and incomplete information in UAV assignment.}
+Market and learning allocators are sensitive to non-ideal links (delay, loss, bit errors) and communication-aware policies~\cite{cao2025communication,raja2021communication,xiong2026cata}.
+Time-sensitive CBBA variants address replanning under operational tempo~\cite{chen2021cbba}.
+Unlike studies that emphasize message protocols or transmission gating under shared task catalogs, we fix a visibility mask \(\mathcal{K}_{a,t}\) (sensing radius / cueing delay / share flag) and compare classical and hybrid solvers under that \emph{same} incomplete COP.
+
 \textbf{Learning and hybrids.}
 End-to-end policies that select discrete assignments, including attention over tokens~\cite{vaswani2017attention}, must jointly solve scoring and combinatorial feasibility.
 When matching structure is available, hybrids that learn scores for a classical solver are a recurring pattern.
-We adopt that pattern under partial observability: networks output priorities (or locks/pair scores), while conflict resolution remains classical.
+We adopt that pattern under partial observability: networks output pair scores, while conflict resolution remains classical.
 Prior TBTA experiments in a PettingZoo environment~\cite{terry2021pettingzoo} motivate keeping Hungarian as the assignment engine.
 
 \textbf{Open simulators and assignment benchmarks.}
@@ -100,6 +109,19 @@ Let \(\mathcal{A}_t\) be the set of live UAVs and \(\mathcal{T}_t\) the set of o
 Each agent \(a\in\mathcal{A}_t\) maintains a known-task set \(\mathcal{K}_{a,t}\subseteq\mathcal{T}_t\) updated by sensing radius \(R_{\mathrm{sense}}\) and threat-disclosure delay \(d\).
 A \emph{local} allocator may assign \(a\) only to tasks in \(\mathcal{K}_{a,t}\) (incomplete COP).
 Heterogeneous fighter/recon types constrain capability; intercept and escort tasks may require multiple agents.
+
+\paragraph{Local assignment problem.}
+At each replan, Local-Hungarian seeks a conflict-free matching on the visibility-valid bipartite graph
+with edge costs \(c(a,t)\) built from travel distance and capability fit (and optional shaping terms in Sec.~\ref{sec:methods}):
+\begin{equation}
+\min_{\pi}\;\sum_{(a,t)\in\pi} c(a,t)
+\quad\text{s.t.}\quad
+t\in\mathcal{K}_{a,t}\ \forall (a,t)\in\pi,
+\label{eq:localassign}
+\end{equation}
+with capacity constraints induced by live agents and open tasks.
+Global-Hungarian drops the \(t\in\mathcal{K}_{a,t}\) restriction (oracle COP).
+Episode quality is scored by \(S_{\mathrm{WPS}}\) (Sec.~\ref{sec:metrics}), which privileges on-time completions over misses and is \emph{not} identical to the myopic Hungarian objective in~\eqref{eq:localassign}.
 
 \subsection{Mission dynamics}
 Episodes combine static strike/recon missions with dynamic threats that spawn intercepts and online arrivals.
@@ -128,8 +150,9 @@ WPS\_attn\_AWACS & 12 UAV & 0 & 0 & yes & 22 \\
 
 \subsection{Simulation environment and software framework}
 \label{sec:env}
-Quantitative results use an open multi-UAV stack released with the manuscript at
-\url{https://github.com/andrekuros/Multi-UAV-TA-gym-env}~\cite{multi_uav_ta_gym}.
+Quantitative results use an open multi-UAV stack released with the manuscript
+(URL withheld for double-blind review; released upon publication)~\cite{multi_uav_ta_gym}.
+% CAMERA-READY: at \url{https://github.com/andrekuros/Multi-UAV-TA-gym-env}~\cite{multi_uav_ta_gym}.
 Episodes run in a PettingZoo \texttt{ParallelEnv} (\texttt{MultiUAVEnv}) configured by \texttt{agentEnvOptions} and a locked scenario registry (Table~\ref{tab:suites}).
 Geometry and line-of-sight helpers are accelerated in a Rust \texttt{core\_sim} module; training and batch evaluation remain headless.
 
@@ -148,7 +171,7 @@ The env exposes \texttt{agent\_visibility\_map()}, which Local allocators consum
 Global-Hungarian omits the mask (oracle).
 Hybrids only reshape edge scores or priorities, then call the same Hungarian engine under the mask.
 Market baselines (Local-CBBA-Replan, Local-PI) use the identical visibility interface and comparable replan triggers.
-Episode outcomes feed evaluation scores \(S_{\mathrm{WPS}}\) / \(S_{\mathrm{ESC}}\) (Section~V).
+Episode outcomes feed evaluation scores \(S_{\mathrm{WPS}}\) / \(S_{\mathrm{ESC}}\) (Sec.~\ref{sec:metrics}).
 
 Figure~\ref{fig:framework} summarizes the software stack.
 Figure~\ref{fig:envui} shows the optional React / Three.js replay dashboard used for qualitative inspection of assignments, threats, and windows; it is not part of the training loop.
@@ -163,57 +186,42 @@ Figure~\ref{fig:envui} shows the optional React / Three.js replay dashboard used
 \begin{figure}[t]
 \centering
 \includegraphics[width=\columnwidth]{figures/fig_env_ui.png}
-\caption{3D replay dashboard for a WPS\_escort episode (seed~0): agents, tasks/threats, metrics, dynamics flags, and event log. Used for qualitative review only.}
+\caption{3D replay dashboard for qualitative inspection of a WPS\_escort episode (seed~0): agents, tasks/threats, metrics, and event log. Not used for quantitative scores.}
 \label{fig:envui}
 \end{figure}
 
 \section{Methods}
+\label{sec:methods}
 \subsection{Baselines}
 Local-Cap-Greedy, Local-CBBA-Replan~\cite{choi2009cbba,chen2021cbba}, Local-PI~\cite{zhao2016pi}, and Local-Hungarian share the visibility mask (\texttt{agent\_known\_ids}) and comparable replan triggers.
 Global-Hungarian omits the mask (oracle).
-Escort experiments additionally use Local-PI-Coalition and Local-CBBA-Coalition under multi-slot residual matching (Appendix~\ref{app:ext}).
-
-\subsection{MLP-RAH and Att-RAH (task-priority interface)}
-As a legacy interface, MLP-RAH / Att-RAH map state to per-task priorities \(w\in[0,1]^{|\mathcal{T}_t|}\) and reserve \(\rho\), reshaping
-\begin{equation}
-c(a,t)=\mathrm{dist}(a,t)-\alpha\,\mathrm{cap}(a,t)-\beta\,w_t-\gamma\,\mathrm{urgency}(t)
-\label{eq:cost}
-\end{equation}
-on known pairs only.
-Att-RAH uses a 2-layer Transformer encoder over agent/task tokens; MLP-RAH uses a flat MLP.
-We retain this interface as an ablation; the primary WPS\_attn campaign uses bipartite edge scores.
 
 \subsection{Pair-cost hybrids (primary interface)}
-Att-ContextPair, MLP-ContextPair, and GNN-ContextPair output scores \(s(a,t)\) on visibility-valid edges and inject
+The primary learned interface outputs scores \(s(a,t)\) on visibility-valid edges and injects
 \(c'(a,t)=c_{\mathrm{base}}(a,t)-s(a,t)\) into Local-Hungarian (\(|s|\le 0.35\)).
-All three consume the same agent/task tokens plus a situation summary (engineered 8-D, or mission clock only in the raw ablation).
+Att-ContextPair, MLP-ContextPair, and GNN-ContextPair consume the same agent/task tokens plus a situation summary (engineered 8-D, or mission clock only in the raw ablation).
 \textbf{Att-ContextPair} uses self- and cross-attention with a context-biased pair head~\cite{vaswani2017attention}.
 \textbf{MLP-ContextPair} is a capacity-matched MLP on concatenated edge features and the same summary.
 \textbf{GNN-ContextPair} runs \(L{=}2\) bipartite message-passing layers on the visibility-valid agent--task adjacency (pure PyTorch; no external GNN library), then the same context-biased pair head.
 \textbf{Urgency-Pair} uses engineered urgency/scarcity/distance residuals (no learning).
 To test whether relational encoders \emph{discover} context rather than reading it off engineered inputs, we also train a \textbf{raw} variant in which every team aggregate is deleted from the inputs: task scarcity, known-by count, nearest-specialist distance and region identifier are removed from the task tokens, the known-urgent count is removed from the agent tokens, and the situation summary is reduced to the mission clock.
-Encoders then see only per-entity attributes and must infer contention themselves.
-Training: Phase~A imitates Global-Hungarian on \emph{visible} edges (900 episodes on WPS\_attn); Phase~B RL fine-tune is admitted only if Phase~A beats Local on \(N{=}100\) (gate); deployed checkpoints are best-of IL/RL by confirmatory eval.
+
+\paragraph{Training and IL--metric gap.}
+Phase~A imitates Global-Hungarian on \emph{visible} edges (900 episodes on WPS\_attn) with mini-batches of 8 replan states and linear learning-rate warmup over the first 50 updates (identical for Att / MLP / GNN).
+Phase~B RL fine-tune is admitted only if Phase~A beats Local on \(N{=}100\); deployed checkpoints are best-of IL/RL by confirmatory eval.
+An earlier single-state update rule is reported in Sec.~\ref{sec:optconfound} because it materially changed the Att-versus-MLP conclusion.
+Each encoder--feature-set cell is trained with three seeds (0--2).
+Inference uses periodic replanning (interval 20) plus event triggers.
+Importantly, imitation targets myopic Global matching on visible edges, whereas reported quality is \(S_{\mathrm{WPS}}\) (Sec.~\ref{sec:metrics}).
+The shaping claim does not require perfect IL--metric alignment: zero-parameter Urgency-Pair still improves \(S_{\mathrm{WPS}}\) over Local under the same mask (Table~\ref{tab:attn}).
 Simpler Att-Pair / MLP-Pair heads without the explicit context summary are reported on WPS\_hard as a related campaign.
 
-\subsection{Timed commits (Att-Commit)}
-Att-Commit, MLP-Commit, and Urgency-Commit output task priorities and per-agent commit locks.
-Locked agents keep their assignment until the commit horizon expires; Local-Hungarian runs only on free agents under the same visibility mask.
-Training and evaluation use WPS\_commit (Appendix~\ref{app:ext}).
-
-\subsection{Coalition escort (Att-Coalition)}
-For WPS\_escort, Att-Coalition / MLP-Coalition / Urgency-Coalition score agent--task pairs for coalition (multi-slot residual) Hungarian matching, analogous to Att-Pair but with escort features.
-Classical escort baselines include Coalition-Hungarian, Local-CBBA-Coalition, and Local-PI-Coalition~\cite{zhao2016pi}.
-
-\subsection{Training}
-ContextPair on WPS\_attn: 900 imitation episodes then gated RL (350 episodes) with Adam; validation every 40 episodes on Local-policy \(S_{\mathrm{WPS}}\).
-Imitation uses mini-batches of 8 replan states with linear learning-rate warmup over the first 50 updates, identical for Att / MLP / GNN; an earlier single-state update rule is reported in Sec.~\ref{sec:optconfound} because it materially changed the Att-versus-MLP conclusion.
-Each encoder--feature-set cell is trained with three seeds (0--2) and evaluated independently.
-WPS\_hard Att-Pair / MLP-Pair: shorter IL$\rightarrow$RL as previously reported.
-Inference uses periodic replanning (interval 20) plus event triggers.
-Further details appear in Appendix~\ref{app:repro}.
+\subsection{Legacy and extension interfaces}
+Task-priority RAH (MLP/Att), timed commits, and coalition escort change the decision interface while retaining classical conflict resolution under the same visibility mask.
+We treat them as ablations and extensions; algorithms, training, and tables appear in Appendix~\ref{app:ext}.
 
 \section{Evaluation Metrics}
+\label{sec:metrics}
 We treat \(S_{\mathrm{WPS}}\) as an \emph{evaluation score} encoding preference for on-time completions over misses, with a small travel regularizer aligned to WPS\_hard weights:
 \begin{equation}
 S_{\mathrm{WPS}}
@@ -254,7 +262,8 @@ COP diagnostics use Local / Global / Urgency-Pair; the shaping campaign pools At
 On WPS\_attn, Global-Hungarian improves \(S_{\mathrm{WPS}}\) by \(\approx 196\) points over Local-Hungarian (Table~\ref{tab:attn}).
 Table~\ref{tab:awacs} removes sensing limits and cueing delay while keeping the same mission load (\texttt{share\_knowledge=True}, \(R{=}0\), \(d{=}0\)).
 Local-Hungarian then equals Global exactly (\(\Delta{=}0\)), so the incomplete-COP gap is informational: the same myopic Hungarian engine closes the gap once the mask is lifted.
-Urgency-Pair and ContextPair checkpoints (zero-shot from incomplete-COP training) still improve slightly over Local under full COP; Local-CBBA and Local-PI fall behind Local when the mask no longer constrains them.
+Urgency-Pair, MLP-, and GNN-ContextPair (zero-shot from incomplete-COP training) still improve over Local under full COP with CIs excluding zero; Att-ContextPair's CI versus Local includes zero under AWACS (\([-4,+40]\) in Table~\ref{tab:awacs}).
+Local-CBBA and Local-PI fall behind Local when the mask no longer constrains them.
 
 \begin{table}[t]
 \centering
@@ -346,7 +355,7 @@ Two controls make this reading concrete.
 First, an earlier single-state imitation update produced \(\widehat{\Delta}_{\mathrm{Att-MLP}}\approx-20\) with a CI excluding zero; mini-batches and warmup---optimizer alone---removed that effect, so we retract it as an optimization confound.
 Second, deleting engineered team aggregates leaves attention statistically unchanged on seed 0, consistent with recovering equivalent information from raw tokens.
 
-A scale-transfer control (train at 12 agents with pads \(A{=}48\), \(T{=}64\); eval at \(\approx\)30--40 agents) likewise fails to separate Att from MLP or from Urgency-Pair, though both encoders still beat Local at every scale.
+A scale-transfer control (Table~\ref{tab:scale}) likewise fails to separate Att from MLP or from Urgency-Pair, though both encoders still beat Local at L/XL.
 
 \begin{table}[t]
 \centering
@@ -371,8 +380,8 @@ Inputs & Encoder & seed 0 & seed 1 & seed 2 \\
 \end{table}
 
 \subsection{Related suite (WPS\_hard)}
-Table~\ref{tab:hard} reports simpler Att-Pair / MLP-Pair heads on WPS\_hard: all CIs versus Local-Hungarian include zero.
-Edge shaping helps under multi-front stress (WPS\_attn) but is not automatic on WPS\_hard.
+Table~\ref{tab:hard} reports simpler Att-Pair / MLP-Pair heads (\emph{not} ContextPair) on WPS\_hard: all CIs versus Local-Hungarian include zero.
+Edge shaping helps under multi-front stress (WPS\_attn) but is not automatic for these pair heads on WPS\_hard.
 
 \begin{table}[t]
 \centering
@@ -392,11 +401,32 @@ Global (oracle) & $-130.8\pm118$ & 0.58 & 9.3 & $[+52,+91]$ \\
 \end{tabular}
 \end{table}
 
+\subsection{Scale transfer (pad control)}
+As a further architecture control, Att- and MLP-ContextPair trained on WPS\_attn (12 agents) with large token pads (\(A{=}48\), \(T{=}64\)) transfer zero-shot to larger clones WPS\_attn\_L ($\approx$30 agents) and WPS\_attn\_XL ($\approx$40 agents).
+Table~\ref{tab:scale} reports pooled Att$-$MLP contrasts under that pad-transfer protocol (separate from the primary FINAL eval in Table~\ref{tab:attn}).
+Both encoders beat Local at L/XL, but Att$-$MLP CIs include zero and neither separates from Urgency-Pair.
+
+\begin{table}[t]
+\centering
+\caption{Zero-shot scale transfer (raw ContextPair, pad \(48/64\), three training seeds pooled). Primary FINAL WPS\_attn numbers are in Table~\ref{tab:attn}.}
+\label{tab:scale}
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lccc}
+\toprule
+Suite & Att$-$MLP & 95\% CI & vs Local \\
+\midrule
+WPS\_attn\_L & $+4.0$ & $[-13.2,+22.0]$ & both beat Local \\
+WPS\_attn\_XL & $-3.0$ & $[-24.8,+19.9]$ & both beat Local \\
+\bottomrule
+\end{tabular}
+\end{table}
+
 \section{Discussion and Limitations}
 Two mission-management levers dominate this study (Sec.~\ref{sec:cop}).
 \textbf{COP quality} sets the Local--Global ceiling: AWACS equality and the sensing/cueing sweeps show that incomplete information---not Hungarian solver quality---explains most of the oracle gap, and oversizing fleets without better sensing/sharing yields idle airframes.
 \textbf{Hybrid edge shaping} under the mask recovers a smaller but reliable fraction of that gap on WPS\_attn for Urgency-Pair and ContextPair alike; Local-CBBA / Local-PI do not.
 Encoder architecture (Att / MLP / GNN) is not the lever once optimization and seeds are matched.
+The IL objective (Global matching on visible edges) is not identical to \(S_{\mathrm{WPS}}\); we therefore emphasize Urgency-Pair and paired CIs rather than treating imitation loss as a proxy for mission score.
 
 The retracted Att$-$MLP effect of Sec.~\ref{sec:optconfound} is a methodological lesson: architecture comparisons at a single seed with a shared optimizer can manufacture false claims of magnitude comparable to genuine shaping gains.
 
@@ -421,8 +451,9 @@ Omitted for anonymous review.
 \textbf{Environment.}
 PettingZoo parallel API~\cite{terry2021pettingzoo}; WPS flags disable early termination so late pop-ups remain in horizon.
 \textbf{Code release.}
-\url{https://github.com/andrekuros/Multi-UAV-TA-gym-env}~\cite{multi_uav_ta_gym}
+Code and experiment scripts will be released upon publication (URL withheld for double-blind review)~\cite{multi_uav_ta_gym}
 (\texttt{MultiUAVEnv}, \texttt{experiments/paper\_scenarios.py}, \texttt{experiments/wps\_eval.py}, hybrid modules under \texttt{TaskAllocation/}).
+% CAMERA-READY: \url{https://github.com/andrekuros/Multi-UAV-TA-gym-env}
 \textbf{Fairness.}
 All Local methods use the same \(\mathcal{K}_{a,t}\) mask and comparable event-driven replanning.
 \textbf{Suites.}
@@ -434,12 +465,26 @@ Raw ContextPair IL checkpoints named by encoder and seed (e.g., \texttt{policy\_
 \textbf{Reproduction.}
 Experiment scripts and scenario registry regenerate tables; UI screenshots are not required to reproduce numerical results.
 
-\section{Interface extensions}
+\section{Interface extensions and legacy hybrids}
 \label{app:ext}
-Timed commits (WPS\_commit) and coalition escort (WPS\_escort) change the decision interface while keeping classical conflict resolution.
+\subsection{Task-priority RAH (legacy)}
+MLP-RAH / Att-RAH map state to per-task priorities \(w\in[0,1]^{|\mathcal{T}_t|}\) and reserve \(\rho\), reshaping
+\begin{equation}
+c(a,t)=\mathrm{dist}(a,t)-\alpha\,\mathrm{cap}(a,t)-\beta\,w_t-\gamma\,\mathrm{urgency}(t)
+\label{eq:cost}
+\end{equation}
+on known pairs only.
+Att-RAH uses a 2-layer Transformer encoder; MLP-RAH uses a flat MLP.
+We retain this interface only as a historical ablation; the primary campaign uses ContextPair edge scores (Sec.~\ref{sec:methods}).
+
+\subsection{Timed commits and coalition escort}
+Timed commits (WPS\_commit) and coalition escort (WPS\_escort) change the decision interface while keeping classical conflict resolution under the same visibility mask.
+Att-Commit / MLP-Commit / Urgency-Commit output priorities and per-agent commit locks; Local-Hungarian rematches only free agents.
+Escort uses multi-slot residual matching with Coalition-Hungarian, Local-CBBA-Coalition, and Local-PI-Coalition~\cite{zhao2016pi}.
 Tables~\ref{tab:commit}--\ref{tab:escort} summarize means.
 Att-Commit, MLP-Commit, and Urgency-Commit show no significant pairwise separation on \(S_{\mathrm{WPS}}\) (CIs versus MLP and Urgency include zero).
-On escort (replan interval 12), MLP-Coalition achieves the best learned mean \(S_{\mathrm{ESC}}\); Att-Coalition is significantly worse than the matched MLP and does not significantly exceed Local-CBBA-Coalition.
+On escort (replan interval 12), MLP-Coalition achieves the best learned mean \(S_{\mathrm{ESC}}\); Att-Coalition is significantly worse than the matched MLP.
+That escort gap is suite-specific and is \emph{not} part of the WPS\_attn ContextPair claim.
 
 \begin{table}[t]
 \centering
@@ -481,23 +526,41 @@ MLP-Coalition & $-283.9\pm144$ \\
 
 \section{Metric weight sensitivity}
 \label{app:sens}
-We recompute \(S_{\mathrm{WPS}}\) under alternate weights from per-episode components using \texttt{experiments/wps\_metric\_sensitivity.py}.
-Table~\ref{tab:sens} reports paired Att-Pair versus Local-Hungarian differences on WPS\_hard (\(N{=}100\)).
-In all variants the paired bootstrap 95\% CI includes zero (Att-Pair mean remains worse), so the null primary contrast is not an artifact of the default miss or distance coefficients alone.
+We recompute \(S_{\mathrm{WPS}}\) under alternate weights from per-episode components on the primary WPS\_attn suite (\(N{=}100\)).
+Table~\ref{tab:sens} reports paired Urgency-Pair versus Local-Hungarian differences; Table~\ref{tab:sensmlp} reports MLP-ContextPair (seed~0 raw) versus Local.
+In all variants the paired bootstrap 95\% CI excludes zero, so the primary incomplete-COP shaping gain is not an artifact of the default miss or distance coefficients alone.
+A prior check on WPS\_hard Att-Pair versus Local likewise left that related-suite null unchanged under the same weight perturbations.
 
 \begin{table}[t]
 \centering
-\caption{WPS\_hard metric-weight sensitivity. Paired mean \(\Delta S_{\mathrm{WPS}}\) (Att-Pair $-$ Local-Hungarian) and bootstrap 95\% CI (\(N{=}100\)).}
+\caption{WPS\_attn metric-weight sensitivity. Paired mean \(\Delta S_{\mathrm{WPS}}\) (Urgency-Pair $-$ Local-Hungarian) and bootstrap 95\% CI (\(N{=}100\)).}
 \label{tab:sens}
 \setlength{\tabcolsep}{3pt}
 \begin{tabular}{lccc}
 \toprule
 Variant & \((b,p,c)\) & mean \(\Delta\) & 95\% CI \\
 \midrule
-Default & \((12,30,0.01)\) & $-13.9$ & $[-31.1,+4.2]$ \\
-Miss $-20\%$ & \((12,24,0.01)\) & $-10.4$ & $[-24.9,+4.6]$ \\
-Miss $+20\%$ & \((12,36,0.01)\) & $-17.4$ & $[-37.7,+3.6]$ \\
-No distance & \((12,30,0)\) & $-13.9$ & $[-31.1,+4.2]$ \\
+Default & \((12,30,0.01)\) & $+41.8$ & $[+22.0,+61.3]$ \\
+Miss $-20\%$ & \((12,24,0.01)\) & $+35.9$ & $[+18.8,+52.9]$ \\
+Miss $+20\%$ & \((12,36,0.01)\) & $+47.8$ & $[+25.0,+70.0]$ \\
+No distance & \((12,30,0)\) & $+41.8$ & $[+22.0,+61.3]$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\caption{WPS\_attn metric-weight sensitivity. Paired mean \(\Delta S_{\mathrm{WPS}}\) (MLP-ContextPair $-$ Local-Hungarian, seed~0) and bootstrap 95\% CI (\(N{=}100\)).}
+\label{tab:sensmlp}
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lccc}
+\toprule
+Variant & \((b,p,c)\) & mean \(\Delta\) & 95\% CI \\
+\midrule
+Default & \((12,30,0.01)\) & $+52.3$ & $[+30.1,+74.6]$ \\
+Miss $-20\%$ & \((12,24,0.01)\) & $+44.8$ & $[+25.8,+63.8]$ \\
+Miss $+20\%$ & \((12,36,0.01)\) & $+59.8$ & $[+34.4,+85.3]$ \\
+No distance & \((12,30,0)\) & $+52.3$ & $[+30.1,+74.6]$ \\
 \bottomrule
 \end{tabular}
 \end{table}

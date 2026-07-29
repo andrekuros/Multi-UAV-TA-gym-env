@@ -1,17 +1,11 @@
 """
-Recompute S_WPS under alternate weights for Att-RAH vs Local-Hungarian.
-
-Preferred input: episode-level CSV with columns
-  algorithm, seed, n_on_time, n_missed_windows, total_distance, max_coord
-  (or S components if already logged).
-
-Fallback: if only mean S_WPS is available, print a note that full sensitivity
-requires episode logs from wps_eval.py.
+Recompute S_WPS under alternate weights from episode CSVs.
 
 Usage:
   python experiments/wps_metric_sensitivity.py \\
-    --csv experiments/results/wps_final_eval_episodes.csv \\
-    --out experiments/results/wps_metric_sensitivity.md
+    --csv experiments/results/wps_attn_final_s0_episodes.csv \\
+    --case WPS_attn --algo Urgency-Pair --baseline Local-Hungarian \\
+    --out experiments/results/WPS_ATTN_SENS.md
 """
 from __future__ import annotations
 
@@ -19,7 +13,7 @@ import argparse
 import csv
 import os
 from collections import defaultdict
-from typing import Dict, List, Tuple
+from typing import Dict, List
 
 import numpy as np
 
@@ -47,114 +41,78 @@ def load_rows(path: str) -> List[dict]:
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--csv", default=os.path.join(ROOT, "experiments", "results", "wps_final_eval_episodes.csv"))
-    parser.add_argument("--out", default=os.path.join(ROOT, "experiments", "results", "wps_metric_sensitivity.md"))
-    parser.add_argument("--case", default="WPS_hard")
+    parser.add_argument("--csv", default=os.path.join(ROOT, "experiments", "results", "wps_attn_final_s0_episodes.csv"))
+    parser.add_argument("--out", default=os.path.join(ROOT, "experiments", "results", "WPS_ATTN_SENS.md"))
+    parser.add_argument("--case", default="WPS_attn")
+    parser.add_argument("--algo", default="Urgency-Pair", help="Treatment algorithm")
+    parser.add_argument("--baseline", default="Local-Hungarian")
     args = parser.parse_args()
 
     variants = [
-        ("default", 12.0, 30.0, 0.01),
-        ("miss_minus_20pct", 12.0, 24.0, 0.01),
-        ("miss_plus_20pct", 12.0, 36.0, 0.01),
-        ("no_distance", 12.0, 30.0, 0.0),
+        ("Default", 12.0, 30.0, 0.01),
+        ("Miss $-20\\%$", 12.0, 24.0, 0.01),
+        ("Miss $+20\\%$", 12.0, 36.0, 0.01),
+        ("No distance", 12.0, 30.0, 0.0),
     ]
 
     if not os.path.isfile(args.csv):
-        msg = (
-            f"# WPS metric sensitivity\n\n"
-            f"Episode CSV not found at `{args.csv}`.\n\n"
-            f"Regenerate with `wps_eval.py` exporting per-episode "
-            f"`n_on_time`, `n_missed_windows`, `total_distance`, `max_coord` "
-            f"for Att-RAH and Local-Hungarian on {args.case}.\n"
-        )
-        os.makedirs(os.path.dirname(args.out), exist_ok=True)
-        with open(args.out, "w", encoding="utf-8") as f:
-            f.write(msg)
-        print(msg)
-        return
+        raise SystemExit(f"Missing {args.csv}")
 
     rows = load_rows(args.csv)
-    # Filter case if present
     if rows and "case" in rows[0]:
         rows = [r for r in rows if r.get("case", args.case) == args.case]
 
     needed = {"n_on_time", "n_missed_windows", "total_distance"}
     if not rows or not needed.issubset(rows[0].keys()):
-        msg = (
-            "# WPS metric sensitivity\n\n"
-            "CSV found but missing component columns "
-            f"{sorted(needed)}. Cannot reweight offline.\n"
-        )
-        with open(args.out, "w", encoding="utf-8") as f:
-            f.write(msg)
-        print(msg)
-        return
+        raise SystemExit(f"CSV missing component columns {sorted(needed)}")
 
     by_algo_seed: Dict[str, Dict[int, dict]] = defaultdict(dict)
     for r in rows:
-        algo = r["algorithm"]
-        seed = int(float(r.get("seed", r.get("episode", 0))))
-        by_algo_seed[algo][seed] = r
+        by_algo_seed[r["algorithm"]][int(float(r.get("seed", 0)))] = r
 
-    att_name = next(
-        (a for a in by_algo_seed if a in ("Att-RAH", "Att-Pair") or "Att-RAH" in a or a.startswith("Att-Pair")),
-        None,
-    )
-    if att_name is None:
-        att_name = next((a for a in by_algo_seed if a.startswith("Att-") and "Commit" not in a and "Coalition" not in a), None)
-    loc_name = next((a for a in by_algo_seed if "Local-Hung" in a or a == "Local-Hungarian"), None)
-    if not att_name or not loc_name:
-        print("Could not find Att-RAH / Local-Hungarian in CSV algorithms:", list(by_algo_seed))
-        return
+    if args.algo not in by_algo_seed or args.baseline not in by_algo_seed:
+        raise SystemExit(f"Need {args.algo} and {args.baseline}; have {list(by_algo_seed)}")
 
     lines = [
         f"# WPS metric sensitivity ({args.case})",
         "",
-        f"Algorithms: {att_name} vs {loc_name}",
+        rf"Paired \(\Delta S_{{\mathrm{{WPS}}}}\) = {args.algo} $-$ {args.baseline} under alternate weights.",
+        f"Source: `{os.path.basename(args.csv)}`, N={len(set(by_algo_seed[args.algo]) & set(by_algo_seed[args.baseline]))}.",
         "",
-        "| Variant | (b,p,c) | mean Δ | 95% CI | excludes 0 |",
-        "|---------|---------|--------|--------|------------|",
+        "| Variant | $(b,p,c)$ | mean $\\Delta$ | 95\\% CI | excludes 0 |",
+        "|---|---|---:|---|---|",
     ]
 
-    seeds = sorted(set(by_algo_seed[att_name]) & set(by_algo_seed[loc_name]))
+    seeds = sorted(set(by_algo_seed[args.algo]) & set(by_algo_seed[args.baseline]))
+    rows_tex = []
     for name, b, p, c in variants:
         diffs = []
         for s in seeds:
-            ra = by_algo_seed[att_name][s]
-            rl = by_algo_seed[loc_name][s]
+            ra = by_algo_seed[args.algo][s]
+            rl = by_algo_seed[args.baseline][s]
             max_c = float(ra.get("max_coord", rl.get("max_coord", 1000.0)))
-            sa = s_wps(
-                float(ra["n_on_time"]),
-                float(ra["n_missed_windows"]),
-                float(ra["total_distance"]),
-                max_c,
-                b,
-                p,
-                c,
-            )
-            sl = s_wps(
-                float(rl["n_on_time"]),
-                float(rl["n_missed_windows"]),
-                float(rl["total_distance"]),
-                max_c,
-                b,
-                p,
-                c,
-            )
+            sa = s_wps(float(ra["n_on_time"]), float(ra["n_missed_windows"]), float(ra["total_distance"]), max_c, b, p, c)
+            sl = s_wps(float(rl["n_on_time"]), float(rl["n_missed_windows"]), float(rl["total_distance"]), max_c, b, p, c)
             diffs.append(sa - sl)
         mean, lo, hi = bootstrap_ci(np.asarray(diffs, dtype=float))
-        excl = not (lo <= 0.0 <= hi)
-        lines.append(
-            f"| {name} | ({b:g},{p:g},{c:g}) | {mean:.2f} | [{lo:.2f},{hi:.2f}] | {excl} |"
-        )
+        excl = "yes" if not (lo <= 0.0 <= hi) else "no"
+        lines.append(f"| {name} | $({b:g},{p:g},{c:g})$ | ${mean:+.1f}$ | $[{lo:+.1f},{hi:+.1f}]$ | {excl} |")
+        rows_tex.append((name, b, p, c, mean, lo, hi))
 
-    lines.append("")
-    lines.append(f"n_seeds={len(seeds)}")
-    text = "\n".join(lines) + "\n"
+    lines += ["", f"n_episodes={len(seeds)}", ""]
+    text = "\n".join(lines)
     os.makedirs(os.path.dirname(args.out), exist_ok=True)
     with open(args.out, "w", encoding="utf-8") as f:
-        f.write(text)
-    print(text.encode("ascii", errors="replace").decode("ascii"))
+        f.write(text + "\n")
+    print(text)
+
+    # Also print a TeX-ready snippet path
+    tex_path = args.out.replace(".md", "_tex_rows.txt")
+    with open(tex_path, "w", encoding="utf-8") as f:
+        for name, b, p, c, mean, lo, hi in rows_tex:
+            f.write(f"{name} & $({b:g},{p:g},{c:g})$ & ${mean:+.1f}$ & $[{lo:+.1f},{hi:+.1f}]$ \\\\\n")
+    print(f"Wrote {args.out}")
+    print(f"Wrote {tex_path}")
 
 
 if __name__ == "__main__":
