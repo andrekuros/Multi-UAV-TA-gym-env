@@ -8,6 +8,7 @@ Logs/
 .agents/
 core_sim/target/
 *.png
+!paper/figures/*.png
 implementation_plan.md
 
 
