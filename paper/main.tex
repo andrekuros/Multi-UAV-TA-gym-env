@@ -76,25 +76,28 @@ An open WPS simulation stack enables fair masked baselines and reproducible eval
 Gerkey and Matari{\'c}~\cite{gerkey2004formal} and Korsah \emph{et al.}~\cite{korsah2013comprehensive} organize multi-robot task allocation (MRTA) by single- versus multi-task robots and instantaneous versus time-extended assignment.
 Poudel and Moh~\cite{poudel2022survey} survey UAV task-assignment algorithms across centralized, distributed, market-based, and learning families.
 Following that survey spine, Table~\ref{tab:positioning} situates representative solvers by information model and allocation core; we complement communication-protocol studies by fixing a shared visibility mask \(\mathcal{K}_{a,t}\) and comparing classical versus hybrid scorers under that mask.
+We use the C2 term \emph{common operating picture} (COP)~\cite{mcneese2006cop,yu2023cop} for the team knowledge state that assignment papers often describe instead as local sensing, delayed disclosure, or communication-limited information.
 
-\begin{table}[t]
+\begin{table*}[t]
 \centering
-\caption{Positioning relative to representative UAV / multi-robot assignment work (not an exhaustive survey). ``Relation'' states how this paper aligns or differs.}
+\caption{Positioning relative to representative UAV / multi-robot assignment and COP-aware coordination work (not an exhaustive survey). ``Relation'' states how this paper aligns or differs.}
 \label{tab:positioning}
-\setlength{\tabcolsep}{2.5pt}
-\begin{tabular}{p{1.55cm}p{1.55cm}p{1.35cm}p{1.55cm}p{2.0cm}}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{p{2.6cm}p{2.8cm}p{2.2cm}p{2.6cm}p{4.4cm}}
 \toprule
-Work & Info model & Windows & Core & Relation to us \\
+Work & Info model & Windows / timing & Allocation core & Relation to this work \\
 \midrule
 Choi et al.~\cite{choi2009cbba}; Chen et al.~\cite{chen2021cbba} & Distributed consensus; time-sensitive replan & Dynamic tempo & CBBA / market & Local-CBBA baseline under our \(\mathcal{K}_{a,t}\) mask \\
 Zhao et al.~\cite{zhao2016pi} & Typically shared catalog & Schedule impact & PI scoring & Local-PI baseline under the same mask \\
+Shima et al.~\cite{shima2006multiple} & Centralized / cooperating UAVs & Coupled tasks & Genetic assignment & Classical multi-UAV coupling; no WPS visibility mask \\
 Raja et al.~\cite{raja2021communication} & Comm-constrained consensus & Mission tasks & Decentralized CBBA & Emphasizes link limits; we fix disclosure mask, vary solvers \\
 Cao et al.~\cite{cao2025communication} & Non-ideal links (delay/loss) & Visit missions & Distributed TA comparison & Link fidelity focus; we hold mask fixed for fair hybrids \\
 Xiong et al.~\cite{xiong2026cata} & Comm-aware swarm & Multiobjective & Learned policy & Learning+comms; we keep classical matching + edge shaping \\
-This work & Local sense / cue delay / share (COP) & Hard WPS windows & Hung.\ + Urgency / ContextPair & Same \(\mathcal{K}_{a,t}\) for all methods; COP diagnostics \\
+McNeese et al.~\cite{mcneese2006cop}; Yu et al.~\cite{yu2023cop} & Explicit COP construct & Team C2 / MARL & COP formation / sharing & Motivate COP language; we evaluate assignment under a fixed incomplete COP \\
+This work & Local sense / cue delay / share (incomplete COP) & Hard WPS windows & Hung.\ + Urgency / ContextPair & Same \(\mathcal{K}_{a,t}\) for all methods; COP diagnostics + hybrid shaping \\
 \bottomrule
 \end{tabular}
-\end{table}
+\end{table*}
 
 \textbf{Market-based and classical UAV assignment.}
 Market methods, including CBBA~\cite{choi2009cbba}, support distributed multi-UAV assignment~\cite{dias2006market,poudel2022survey}.
@@ -109,6 +112,7 @@ Our focus is discrete assignment under delayed disclosure rather than continuous
 
 \textbf{Communication and incomplete information.}
 Market and learning allocators are sensitive to non-ideal links and communication-aware policies~\cite{cao2025communication,raja2021communication,xiong2026cata}.
+C2 and multi-agent work that names the COP construct explicitly~\cite{mcneese2006cop,yu2023cop} motivates treating team knowledge as a first-class object.
 Unlike studies that emphasize message protocols or transmission gating under shared task catalogs, we fix \(\mathcal{K}_{a,t}\) (sensing radius / cueing delay / share flag) and compare classical and hybrid solvers under that \emph{same} incomplete information model.
 
 \textbf{Learning and hybrids.}
@@ -194,12 +198,12 @@ Episode outcomes feed evaluation scores \(S_{\mathrm{WPS}}\) / \(S_{\mathrm{ESC}
 Figure~\ref{fig:framework} summarizes the software stack.
 Figure~\ref{fig:envui} shows the optional React / Three.js replay dashboard used for qualitative inspection of assignments, threats, and windows; it is not part of the training loop.
 
-\begin{figure}[t]
+\begin{figure*}[t]
 \centering
-\includegraphics[width=\columnwidth]{figures/fig_framework.png}
-\caption{Open WPS simulation stack: scenario registry, PettingZoo env with Rust geometry assist, visibility-masked allocators, scores, and optional 3D replay.}
+\includegraphics[width=\textwidth]{figures/fig_framework.png}
+\caption{Open WPS simulation stack: locked scenario registry, PettingZoo env with Rust geometry assist, visibility / incomplete-COP mask \(\mathcal{K}_{a,t}\), classical and hybrid allocators under the same contract, evaluation scores, optional 3D replay, and headless training/eval.}
 \label{fig:framework}
-\end{figure}
+\end{figure*}
 
 \begin{figure}[t]
 \centering
