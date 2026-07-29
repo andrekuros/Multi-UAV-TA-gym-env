@@ -14,7 +14,7 @@
 
 \begin{document}
 
-\title{Hybrid Cost Shaping for Multi-UAV Task Allocation under Delayed Sensing and Perishable Mission Windows}
+\title{Incomplete COP and Hybrid Cost Shaping for Multi-UAV Task Allocation under Perishable Mission Windows}
 
 \author{
   % Update before submission (ORCID required by TAES)
@@ -25,14 +25,13 @@
 \maketitle
 
 \begin{abstract}
-Aerospace multi-UAV mission management often reduces task allocation to bipartite matching when the team shares a complete common operating picture (COP) and costs are dominated by travel and capability fit.
-Under time-critical strike and reconnaissance conditions with \emph{delayed cueing}, \emph{local sensing}, \emph{hard mission windows}, burst arrivals, and attrition---here termed Windowed Pop-up Strike (WPS)---visibility-masked myopic matching leaves a large gap to an omniscient COP oracle.
-We study hybrids that retain Local-Hungarian while shaping \emph{visibility-masked agent--task edge scores} with matched attention, MLP, and bipartite GNN context encoders, plus an urgency-pair control and classical Local-CBBA / Local-PI baselines under the same incomplete-COP mask.
-On the multi-front stress suite WPS\_attn (\(N{=}100\)), Urgency-Pair and the learned ContextPair variants (Att / MLP / GNN) all improve mean \(S_{\mathrm{WPS}}\) over Local-Hungarian (paired bootstrap 95\% CIs exclude zero), while Local-CBBA and Local-PI do not.
-Across three training seeds, matched Att / MLP / GNN contrasts are indistinguishable from zero, and no learned encoder separates from the zero-parameter urgency control.
-Removing hand-engineered team aggregates from the encoder inputs does not create an architecture advantage; scale transfer to larger fleets likewise fails to separate Att from MLP.
-On WPS\_hard, simpler Att-Pair / MLP-Pair shaping does not significantly beat Local-Hungarian.
-Results are simulation-only; Global-Hungarian remains an information upper bound.
+Aerospace multi-UAV mission management often reduces task allocation to bipartite matching when the team shares a complete common operating picture (COP).
+Under time-critical strike and reconnaissance with \emph{local sensing}, \emph{delayed cueing}, \emph{hard mission windows}, burst arrivals, and attrition---Windowed Pop-up Strike (WPS)---visibility-masked Local-Hungarian leaves a large gap to an omniscient Global-Hungarian oracle.
+We show two co-equal results.
+First, that gap is primarily \emph{informational}: under idealized full COP (AWACS), Local-Hungarian equals Global; increasing sensing radius or shortening team cueing delay closes the gap monotonically, whereas oversizing the fleet under incomplete COP raises idle fraction with little Local gain.
+Second, under the incomplete-COP mask, hybrid \emph{edge-cost shaping} for Local-Hungarian (Urgency-Pair and matched Att / MLP / GNN ContextPair) improves mean \(S_{\mathrm{WPS}}\) on WPS\_attn (\(N{=}100\); paired bootstrap 95\% CIs exclude zero), while Local-CBBA and Local-PI do not; Att, MLP, GNN, and Urgency remain mutually indistinguishable under matched optimization and three training seeds.
+Architecture and scale transfers do not separate attention from MLP.
+Results are simulation-only.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -56,13 +55,13 @@ The fair classical competitor is \textbf{Local-Hungarian}: Hungarian matching re
 \textbf{Global-Hungarian} ignores sensing limits and is reported only as an omniscient-COP oracle.
 
 \paragraph{Contribution statement.}
-We show that visibility-masked edge-cost shaping for Local-Hungarian improves mean \(S_{\mathrm{WPS}}\) over Local-Hungarian on WPS\_attn under paired bootstrap 95\% CIs (Urgency-Pair / MLP- / Att- / GNN-ContextPair), that classical Local-CBBA and Local-PI under the same mask do not match that gain, and that under matched capacity, matched optimization, and three training seeds the shaping gain is not architecture-specific: Att, MLP, and bipartite GNN are mutually indistinguishable and do not separate from an engineered urgency control.
+We characterize the Local--Global \(S_{\mathrm{WPS}}\) gap as a COP / information problem (AWACS equality, sensing and cueing sweeps, oversized-fleet idle), and show that under incomplete COP the practical mitigation is visibility-masked edge-cost shaping for Local-Hungarian---not a particular encoder architecture or classical market replanner under the same mask.
 
 \paragraph{Contributions.}
 \begin{enumerate}
-  \item An aerospace-oriented WPS scenario family and scores \(S_{\mathrm{WPS}}\)/\(S_{\mathrm{ESC}}\) under incomplete COP, with on-time and miss reported as secondary mission tradeoffs alongside the primary scalar \(S_{\mathrm{WPS}}\).
-  \item Hybrid context$\rightarrow$edge$\rightarrow$Hungarian modules (Att-ContextPair, MLP-ContextPair, GNN-ContextPair, Urgency-Pair) trained by mask-aware imitation of Global-Hungarian, with Att-Pair / commit / escort interfaces as related ablations.
-  \item Paired-seed evaluation (\(N{=}100\)) against Local-Hungarian, Local-CBBA-Replan, and Local-PI under a shared visibility mask: edge shaping beats Local on WPS\_attn; Att / MLP / GNN superiority over each other or over Urgency is not supported; WPS\_hard remains a hard Local baseline for simpler pair heads.
+  \item A WPS scenario family with scores \(S_{\mathrm{WPS}}\)/\(S_{\mathrm{ESC}}\) and COP diagnostics: full-COP AWACS, sensing-radius and team-cueing sweeps, and fixed-load fleet oversizing with idle reporting.
+  \item Hybrid context$\rightarrow$edge$\rightarrow$Hungarian modules (Att- / MLP- / GNN-ContextPair, Urgency-Pair) trained by mask-aware imitation of Global-Hungarian, evaluated against Local-Hungarian, Local-CBBA-Replan, and Local-PI under a shared visibility mask.
+  \item Matched Att / MLP / GNN / Urgency negatives (including an optimizer-confound retraction and scale transfer), establishing hybrid shaping rather than architecture as the mitigation claim on WPS\_attn; WPS\_hard remains a boundary where simpler pair heads do not beat Local.
 \end{enumerate}
 
 \section{Related Work}
@@ -99,25 +98,23 @@ Heterogeneous fighter/recon types constrain capability; intercept and escort tas
 Episodes combine static strike/recon missions with dynamic threats that spawn intercepts and online arrivals.
 Configurable parameters include \(R_{\mathrm{sense}}\), \(d\), window length \(W\), burst size, fail rate, and evaluation weights.
 Table~\ref{tab:suites} summarizes locked suites.
-WPS\_hard is the primary confirmatory suite; WPS\_attn stresses multi-front asymmetry; WPS\_commit and WPS\_escort are interface extensions (Appendix~\ref{app:ext}).
-\begin{itemize}
-  \item \textbf{WPS\_commit:} dual-front arrivals, timed \texttt{commit\_horizon}, and rematch penalty folded into \(S_{\mathrm{WPS}}\).
-  \item \textbf{WPS\_escort:} moving escort tasks, multi-fighter residual slots, and escort score \(S_{\mathrm{ESC}}\) (Section~V).
-\end{itemize}
+WPS\_attn is the primary multi-front stress suite (incomplete COP); WPS\_attn\_AWACS is the full-COP diagnostic; WPS\_hard is a related boundary suite; WPS\_commit and WPS\_escort are interface extensions (Appendix~\ref{app:ext}).
+Under local-only sensing (\texttt{share\_knowledge=False}), discovery is radius-limited and cueing delay does not broadcast; team cueing uses \texttt{share\_knowledge=True} with \(R_{\mathrm{sense}}{=}0\).
 
 \begin{table}[t]
 \centering
-\caption{WPS suite parameters (primary: WPS\_hard).}
+\caption{WPS suite parameters (primary: WPS\_attn; AWACS = full COP).}
 \label{tab:suites}
 \setlength{\tabcolsep}{2.5pt}
-\begin{tabular}{lcccc}
+\begin{tabular}{lccccc}
 \toprule
-Suite & Fleet & \(R_{\mathrm{sense}}\) & \(d\) & \(W\) \\
+Suite & Fleet & \(R_{\mathrm{sense}}\) & \(d\) & share & \(W\) \\
 \midrule
-WPS\_easy & 8 UAV & 250 & 8 & 40 \\
-WPS\_hard & 8 UAV & 120 & 15 & 25 \\
-WPS\_burst & 8 UAV & 150 & 12 & 20 \\
-WPS\_attn & 12 UAV & 90 & 18 & 22 \\
+WPS\_easy & 8 UAV & 250 & 8 & no & 40 \\
+WPS\_hard & 8 UAV & 120 & 15 & no & 25 \\
+WPS\_burst & 8 UAV & 150 & 12 & no & 20 \\
+WPS\_attn & 12 UAV & 90 & 18 & no & 22 \\
+WPS\_attn\_AWACS & 12 UAV & 0 & 0 & yes & 22 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -136,7 +133,7 @@ c(a,t)=\mathrm{dist}(a,t)-\alpha\,\mathrm{cap}(a,t)-\beta\,w_t-\gamma\,\mathrm{u
 \end{equation}
 on known pairs only.
 Att-RAH uses a 2-layer Transformer encoder over agent/task tokens; MLP-RAH uses a flat MLP.
-We retain this interface as an ablation; the primary WPS\_hard campaign below uses bipartite edge scores.
+We retain this interface as an ablation; the primary WPS\_attn campaign uses bipartite edge scores.
 
 \subsection{Pair-cost hybrids (primary interface)}
 Att-ContextPair, MLP-ContextPair, and GNN-ContextPair output scores \(s(a,t)\) on visibility-valid edges and inject
@@ -201,20 +198,79 @@ A legacy completion-mass score is recorded only as a secondary diagnostic.
 \section{Experiments}
 \subsection{Protocol}
 Unless noted, each method--suite pair uses \(N{=}100\) episodes with seeds \(0,\ldots,99\).
-For comparisons to Local-Hungarian we report the paired mean difference and a percentile bootstrap 95\% CI (2000 resamples).
-The primary confirmatory contrast is ContextPair / Urgency-Pair versus Local-Hungarian on WPS\_attn.
-WPS\_hard pair-head results are reported as a related suite.
+For comparisons to Local-Hungarian we report the paired mean difference and a percentile bootstrap 95\% CI (2000--4000 resamples).
+COP diagnostics use Local / Global / Urgency-Pair; the shaping campaign pools Att / MLP / GNN over three training seeds (raw ContextPair IL).
 
-\subsection{Primary results (WPS\_attn)}
-Table~\ref{tab:attn} reports the locked final comparison under a shared incomplete-COP mask.
-Urgency-Pair and the learned ContextPair variants (Att / MLP / GNN; pooled over three training seeds, raw features) all improve \(S_{\mathrm{WPS}}\) over Local-Hungarian with CIs excluding zero; on-time rises and misses fall in parallel.
-Local-CBBA-Replan and Local-PI do \emph{not} significantly beat Local-Hungarian on this suite.
-Global-Hungarian remains \(\approx 196\) points above Local.
-No pairwise contrast among Urgency / Att / MLP / GNN excludes zero (e.g., pooled GNN$-$MLP \(\approx -2.3\), GNN$-$Urgency \(\approx +9.9\)).
+\subsection{COP gap: information, not solver quality}
+\label{sec:cop}
+On WPS\_attn, Global-Hungarian improves \(S_{\mathrm{WPS}}\) by \(\approx 196\) points over Local-Hungarian (Table~\ref{tab:attn}).
+Table~\ref{tab:awacs} removes sensing limits and cueing delay while keeping the same mission load (\texttt{share\_knowledge=True}, \(R{=}0\), \(d{=}0\)).
+Local-Hungarian then equals Global exactly (\(\Delta{=}0\)), so the incomplete-COP gap is informational: the same myopic Hungarian engine closes the gap once the mask is lifted.
+Urgency-Pair and ContextPair checkpoints (zero-shot from incomplete-COP training) still improve slightly over Local under full COP; Local-CBBA and Local-PI fall behind Local when the mask no longer constrains them.
 
 \begin{table}[t]
 \centering
-\caption{WPS\_attn final comparison (\(N{=}100\)). Learned rows: mean over three training seeds (raw ContextPair IL). Classical rows: single eval. Paired \(\Delta S_{\mathrm{WPS}}\) 95\% CI vs Local-Hungarian (pooled for learned).}
+\caption{WPS\_attn\_AWACS full COP (\(N{=}100\)). Local equals Global; paired \(\Delta S_{\mathrm{WPS}}\) vs Local.}
+\label{tab:awacs}
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lccc}
+\toprule
+Method & \(S_{\mathrm{WPS}}\) & \(\Delta\) vs Local & vs incomplete \\
+\midrule
+Local-Hung. & $-277.1$ & --- & $+196$ \\
+Global (oracle) & $-277.1$ & $0.0$ & $0.0$ \\
+Urgency-Pair & $-241.6$ & $[+17,+53]$ & $+189$ \\
+MLP-ContextPair & $-239.7$ & $[+15,+61]$ & $+181$ \\
+Att-ContextPair & $-258.4$ & $[-4,+40]$ & $+170$ \\
+GNN-ContextPair & $-229.5$ & $[+25,+71]$ & $+190$ \\
+Local-CBBA & $-408.4$ & $[-155,-108]$ & $+61$ \\
+Local-PI & $-403.6$ & $[-151,-101]$ & $+72$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Figure~\ref{fig:cop} varies COP quality continuously.
+Under local-only sensing (\(d{=}18\), no share), increasing \(R_{\mathrm{sense}}\) from 60 to 250 raises Local from \(-512\) toward Global (\(-277\)), with Global flat.
+Under team cueing (\(R{=}0\), share), shortening delay from 18 to 0 shrinks the Local--Global gap from \(\approx 342\) to \(0\) (AWACS endpoint).
+A local-only delay panel (share off) is flat: without broadcast, cueing delay does not change the COP---a negative control of the sensing model.
+At large radius, Urgency-Pair can exceed myopic Global, consistent with window-aware costs beyond travel/capability matching.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{figures/fig_cop_sweep.png}
+\caption{COP quality closes the Local--Global \(S_{\mathrm{WPS}}\) gap. Left: local sensing radius. Right: team cueing delay (share on, \(R{=}0\)).}
+\label{fig:cop}
+\end{figure}
+
+Table~\ref{tab:oversized} fixes the WPS\_attn task/threat load and increases fleet size (\(12/18/24\)).
+Local-Hungarian gains little (\(12{\to}24\): \(+6.3\)) while idle fraction rises (\(0.30{\to}0.42\)); Global improves substantially (\(-277{\to}-71\)).
+Without a better COP, extra airframes mostly idle; with full information they convert into mission value.
+
+\begin{table}[t]
+\centering
+\caption{Oversized fleets under incomplete COP (\(N{=}100\)). Idle = reserve idle fraction.}
+\label{tab:oversized}
+\setlength{\tabcolsep}{2.5pt}
+\begin{tabular}{rcccc}
+\toprule
+Fleet & Local \(S\) & idle & Global \(S\) & Urgency \(S\) \\
+\midrule
+12 & $-472.8$ & 0.30 & $-277.1$ & $-431.0$ \\
+18 & $-463.6$ & 0.33 & $-151.5$ & $-425.6$ \\
+24 & $-466.5$ & 0.42 & $-71.3$ & $-435.1$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Hybrid edge shaping under the mask}
+Table~\ref{tab:attn} reports the locked incomplete-COP comparison on WPS\_attn.
+Urgency-Pair and ContextPair (Att / MLP / GNN; pooled over three training seeds, raw features) all improve \(S_{\mathrm{WPS}}\) over Local-Hungarian with CIs excluding zero; on-time rises and misses fall in parallel.
+Local-CBBA-Replan and Local-PI do \emph{not} significantly beat Local-Hungarian under the same mask.
+No pairwise contrast among Urgency / Att / MLP / GNN excludes zero (e.g., pooled GNN$-$MLP \(\approx -2.3\), Att$-$MLP \(\approx -6.4\)).
+
+\begin{table}[t]
+\centering
+\caption{WPS\_attn incomplete-COP comparison (\(N{=}100\)). Learned rows: mean over three training seeds (raw ContextPair IL). Paired \(\Delta S_{\mathrm{WPS}}\) 95\% CI vs Local-Hungarian.}
 \label{tab:attn}
 \setlength{\tabcolsep}{3pt}
 \begin{tabular}{lcccc}
@@ -222,32 +278,31 @@ No pairwise contrast among Urgency / Att / MLP / GNN excludes zero (e.g., pooled
 Method & \(S_{\mathrm{WPS}}\) & on-time & miss & \(\Delta S\) 95\% CI \\
 \midrule
 Local-Hung. & $-472.8\pm127$ & 0.28 & 18.6 & --- \\
-Local-CBBA & $-465.1\pm135$ & 0.28 & 18.3 & $[-13.1,+28.6]$ \\
-Local-PI & $-475.6\pm144$ & 0.28 & 18.6 & $[-28.2,+22.6]$ \\
-Urgency-Pair & $-431.0\pm123$ & 0.32 & 17.6 & $[+22.0,+61.3]$ \\
+Local-CBBA & $-465.9\pm135$ & 0.28 & 18.4 & $[-17.2,+24.8]$ \\
+Local-PI & $-475.6\pm144$ & 0.28 & 18.6 & $[-27.9,+23.3]$ \\
+Urgency-Pair & $-431.0\pm123$ & 0.32 & 17.6 & $[+22.2,+61.2]$ \\
 Att-ContextPair & $-425.1$ & 0.32 & 17.5 & $[+28.7,+66.8]$ \\
 MLP-ContextPair & $-418.8$ & 0.33 & 17.3 & $[+33.5,+74.3]$ \\
 GNN-ContextPair & $-421.1$ & 0.33 & 17.3 & $[+32.2,+72.4]$ \\
-Global (oracle) & $-277.1\pm135$ & 0.46 & 14.1 & $[+170,+223]$ \\
+Global (oracle) & $-277.1\pm135$ & 0.46 & 14.1 & $[+168,+223]$ \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\subsection{Attention versus MLP under matched controls}
+\subsection{Architecture and optimization controls}
 \label{sec:optconfound}
-Table~\ref{tab:seeds} resolves the architecture question over three training seeds and both input feature sets.
-The paired Att$-$MLP contrast has a 95\% CI containing zero in all six cells, and the pooled contrasts (\(-6.4\) raw, \(+6.7\) engineered) are likewise indistinguishable from zero.
-The point estimate changes sign between feature sets and between seeds within the engineered set, which is the expected behavior of an effect that is small relative to training noise rather than an architectural property.
+Table~\ref{tab:seeds} resolves Att versus MLP over three training seeds and both input feature sets.
+The paired Att$-$MLP contrast has a 95\% CI containing zero in all six cells; pooled contrasts (\(-6.4\) raw, \(+6.7\) engineered) are likewise indistinguishable from zero.
 
 Two controls make this reading concrete.
-First, an earlier version of this study updated the imitation loss on one replan state at a time; under that rule the same comparison produced \(\widehat{\Delta}_{\mathrm{Att-MLP}}\approx-20\) with a CI excluding zero, i.e.\ an apparently significant MLP advantage.
-Replacing single-state updates with mini-batches and warmup---a change to the optimizer alone, with both architectures, both feature sets, and all evaluation seeds held fixed---removed that effect.
-We therefore retract it: it measured an optimization confound that penalized the Transformer, not a property of set attention.
-Second, deleting the engineered team aggregates leaves attention statistically unchanged (\(-3.6\), CI \([-27.4,+18.8]\) on seed 0), consistent with the encoder recovering equivalent information from the raw tokens; the visible effect of the deletion is on stability, with across-seed standard deviation falling from \(8.9\)/\(11.7\) to \(2.7\)/\(2.1\) for Att/MLP.
+First, an earlier single-state imitation update produced \(\widehat{\Delta}_{\mathrm{Att-MLP}}\approx-20\) with a CI excluding zero; mini-batches and warmup---optimizer alone---removed that effect, so we retract it as an optimization confound.
+Second, deleting engineered team aggregates leaves attention statistically unchanged on seed 0, consistent with recovering equivalent information from raw tokens.
+
+A scale-transfer control (train at 12 agents with pads \(A{=}48\), \(T{=}64\); eval at \(\approx\)30--40 agents) likewise fails to separate Att from MLP or from Urgency-Pair, though both encoders still beat Local at every scale.
 
 \begin{table}[t]
 \centering
-\caption{WPS\_attn Att-versus-MLP over three training seeds (\(N{=}100\) evaluation episodes each). Left: mean \(S_{\mathrm{WPS}}\) per training seed. Right: paired Att$-$MLP difference with bootstrap 95\% CI. No cell excludes zero.}
+\caption{WPS\_attn Att-versus-MLP over three training seeds (\(N{=}100\)). No Att$-$MLP cell excludes zero.}
 \label{tab:seeds}
 \setlength{\tabcolsep}{3pt}
 \begin{tabular}{llccc}
@@ -269,7 +324,7 @@ Inputs & Encoder & seed 0 & seed 1 & seed 2 \\
 
 \subsection{Related suite (WPS\_hard)}
 Table~\ref{tab:hard} reports simpler Att-Pair / MLP-Pair heads on WPS\_hard: all CIs versus Local-Hungarian include zero.
-Thus edge shaping helps under multi-front stress (WPS\_attn) but is not automatic on WPS\_hard.
+Edge shaping helps under multi-front stress (WPS\_attn) but is not automatic on WPS\_hard.
 
 \begin{table}[t]
 \centering
@@ -289,63 +344,25 @@ Global (oracle) & $-130.8\pm118$ & 0.58 & 9.3 & $[+52,+91]$ \\
 \end{tabular}
 \end{table}
 
-\begin{figure}[t]
-\centering
-\includegraphics[width=\columnwidth]{figures/fig_wps_swps.png}
-\caption{Mean \(S_{\mathrm{WPS}}\) on WPS\_hard (\(N{=}100\) episodes per method).}
-\label{fig:swps}
-\end{figure}
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=\columnwidth]{figures/fig_wps_ontime.png}
-\caption{On-time completion rate on WPS\_hard (\(N{=}100\)).}
-\label{fig:ontime}
-\end{figure}
-
-\subsection{Ablations and cross-suite checks}
-On WPS\_attn, attention neither beats nor loses to the matched MLP context encoder once optimization is held fixed and seeds are varied (Table~\ref{tab:seeds}), and removing engineered relational inputs does not change that.
-On WPS\_hard, simpler pair heads without the context summary do not significantly beat Local-Hungarian (Table~\ref{tab:hard}).
-Commit/escort interface extensions likewise do not establish attention-specific gains (Appendix~\ref{app:ext}).
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=\columnwidth]{figures/fig_wps_oracle_gap.png}
-\caption{Gap to Global-Hungarian on \(S_{\mathrm{WPS}}\) remains large under incomplete COP.}
-\label{fig:gap}
-\end{figure}
-
 \section{Discussion and Limitations}
-On WPS\_attn, visibility-masked edge-cost shaping improves \(S_{\mathrm{WPS}}\) and secondary on-time/miss metrics over Local-Hungarian under paired bootstrap CIs.
-The gain is shared by the engineered Urgency-Pair control and by Att / MLP / GNN ContextPair encoders, and no pairwise contrast among those four excludes zero, so the result supports \emph{hybrid cost shaping} rather than set attention, message passing, or learning as such.
-Local-CBBA and Local-PI under the same mask do not recover the shaping gain on WPS\_attn.
-On WPS\_hard, myopic Local-Hungarian remains competitive against simpler pair heads.
-The large Global oracle gap indicates incomplete COP still dominates encoder choice.
+Two mission-management levers dominate this study (Sec.~\ref{sec:cop}).
+\textbf{COP quality} sets the Local--Global ceiling: AWACS equality and the sensing/cueing sweeps show that incomplete information---not Hungarian solver quality---explains most of the oracle gap, and oversizing fleets without better sensing/sharing yields idle airframes.
+\textbf{Hybrid edge shaping} under the mask recovers a smaller but reliable fraction of that gap on WPS\_attn for Urgency-Pair and ContextPair alike; Local-CBBA / Local-PI do not.
+Encoder architecture (Att / MLP / GNN) is not the lever once optimization and seeds are matched.
 
-The retracted Att$-$MLP effect of Sec.~\ref{sec:optconfound} carries a methodological lesson beyond this study.
-Architecture comparisons in learned allocation are frequently reported at a single training seed with a shared optimizer configuration, and Transformers and MLPs do not respond identically to batch size or warmup.
-Here an optimizer detail produced a significant architecture claim in the wrong direction, of a magnitude comparable to the genuine effect of edge shaping itself.
-Matched optimization and multiple seeds should be treated as prerequisites for such claims, not refinements.
-
-A further negative control tests whether set attention separates under fleet scale-up.
-We trained Att-ContextPair and MLP-ContextPair on WPS\_attn (12 agents) with large token pads (\(A{=}48\), \(T{=}64\)), raw features, and the matched batched imitation protocol, then evaluated zero-shot on WPS\_attn\_L ($\approx$30 agents) and WPS\_attn\_XL ($\approx$40 agents) with three training seeds.
-Both encoders continue to improve \(S_{\mathrm{WPS}}\) over Local-Hungarian at every scale (pooled CIs exclude zero), but the paired Att$-$MLP contrast includes zero on all suites---including WPS\_attn\_XL (pooled mean $\approx -3$, CI crossing zero)---and neither encoder separates from Urgency-Pair.
-Scale alone is therefore insufficient to claim an attention advantage for this hybrid interface.
+The retracted Att$-$MLP effect of Sec.~\ref{sec:optconfound} is a methodological lesson: architecture comparisons at a single seed with a shared optimizer can manufacture false claims of magnitude comparable to genuine shaping gains.
 
 \textbf{Limitations.}
-Results are limited to discrete-time simulation without flight or hardware-in-the-loop validation.
-\(S_{\mathrm{WPS}}\) is a scalarization of mission tradeoffs (on-time, miss, distance); Appendix~\ref{app:sens} reports weight sensitivity.
-Training budgets are fixed; RL did not improve confirmatory Att/MLP scores over imitation.
-Three training seeds bound but do not eliminate seed sensitivity, and checkpoints are selected by best validation score, which biases individual cells upward; the Att$-$MLP contrasts are affected symmetrically.
-Scale transfer covers up to $\approx$40 agents under the same multi-front WPS stress; larger fleets, coupled constraints (precedence, decoys), and structured matching losses remain untested.
-Secondary suites are not multiplicity-adjusted.
+Simulation only; AWACS is idealized full COP; sensing and cueing sweeps are 1-D; idle uses env \texttt{reserve\_idle\_fraction}.
+\(S_{\mathrm{WPS}}\) scalarization sensitivity is in Appendix~\ref{app:sens}.
+RL Phase~B did not improve confirmatory Att/MLP over imitation.
+Three seeds bound but do not eliminate seed sensitivity.
 Communication impairments beyond knowledge masking are not modeled.
 
 \section{Conclusion}
-Under WPS\_attn, context-aware edge shaping for Local-Hungarian significantly improves \(S_{\mathrm{WPS}}\) over visibility-masked Local-Hungarian, but the improvement is not attributable to a particular encoder: across three seeds, matched Att, MLP, and bipartite GNN ContextPair are mutually indistinguishable and do not separate from an engineered urgency rule, while Local-CBBA and Local-PI do not beat Local-Hungarian.
-Zero-shot transfer to $\approx$30--40 agent clones likewise fails to separate Att from MLP.
-Under WPS\_hard, simpler Att-Pair / MLP-Pair shaping does not significantly beat Local-Hungarian.
-For aerospace mission management, retain classical assignment under incomplete COP and require paired gains---under matched optimization, matched non-attention / non-GNN controls, multiple training seeds, and classical market baselines---before claiming architectural advantages.
+Under WPS, the Local--Global assignment gap is primarily a COP problem: full information makes Local-Hungarian equal Global-Hungarian, and improving sensing radius or cueing delay closes the gap, whereas extra UAVs under incomplete COP mostly idle.
+Under incomplete COP, visibility-masked edge-cost shaping for Local-Hungarian significantly improves \(S_{\mathrm{WPS}}\) on WPS\_attn, but the gain is shared by Urgency-Pair and matched Att / MLP / GNN ContextPair and is not recovered by Local-CBBA or Local-PI.
+For aerospace C2, invest first in sensing and sharing, then in cost shaping under the mask, and require matched non-attention controls before claiming architectural advantages.
 
 \section*{Acknowledgments}
 Omitted for anonymous review.

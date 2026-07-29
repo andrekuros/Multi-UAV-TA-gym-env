@@ -123,6 +123,62 @@ CASE_SPECS: Dict[str, Dict[str, Any]] = {
         "dual_region_bursts": True,
         "share_knowledge": False,
     },
+    # Full COP / AWACS+ground radar: same WPS_attn stress, instant team-wide detection
+    "WPS_attn_AWACS": {
+        "label": "WPS Attn + full COP (AWACS/ground)",
+        "agents": {"F1": 4, "F2": 2, "R1": 4, "R2": 2},
+        "tasks": {"Att": 4, "Rec": 8, "Hold": 0},
+        "fail_rate": 0.08,
+        "threats_list": [("T1", 8), ("T2", 6)],
+        "arrival_rate": 0.18,
+        "sense_radius": 0.0,
+        "threat_delay": 0,
+        "hard_windows": True,
+        "window_length": 22,
+        "burst_mode": True,
+        "burst_size": 4,
+        "miss_penalty": 30.0,
+        "on_time_bonus": 12.0,
+        "dual_region_bursts": True,
+        "share_knowledge": True,
+    },
+    # Oversized fleets: same task/threat load as WPS_attn, more UAVs (efficiency diagnostic)
+    "WPS_attn_OS18": {
+        "label": "WPS Attn oversized 18 agents (1.5x)",
+        "agents": {"F1": 6, "F2": 3, "R1": 6, "R2": 3},
+        "tasks": {"Att": 4, "Rec": 8, "Hold": 0},
+        "fail_rate": 0.08,
+        "threats_list": [("T1", 8), ("T2", 6)],
+        "arrival_rate": 0.18,
+        "sense_radius": 90.0,
+        "threat_delay": 18,
+        "hard_windows": True,
+        "window_length": 22,
+        "burst_mode": True,
+        "burst_size": 4,
+        "miss_penalty": 30.0,
+        "on_time_bonus": 12.0,
+        "dual_region_bursts": True,
+        "share_knowledge": False,
+    },
+    "WPS_attn_OS24": {
+        "label": "WPS Attn oversized 24 agents (2x)",
+        "agents": {"F1": 8, "F2": 4, "R1": 8, "R2": 4},
+        "tasks": {"Att": 4, "Rec": 8, "Hold": 0},
+        "fail_rate": 0.08,
+        "threats_list": [("T1", 8), ("T2", 6)],
+        "arrival_rate": 0.18,
+        "sense_radius": 90.0,
+        "threat_delay": 18,
+        "hard_windows": True,
+        "window_length": 22,
+        "burst_mode": True,
+        "burst_size": 4,
+        "miss_penalty": 30.0,
+        "on_time_bonus": 12.0,
+        "dual_region_bursts": True,
+        "share_knowledge": False,
+    },
     # Scale clones of WPS_attn (~2.5× / ~3.3× fleet) for ContextPair transfer eval
     "WPS_attn_L": {
         "label": "WPS Attn L (~30 agents)",
@@ -209,6 +265,58 @@ CASE_SPECS: Dict[str, Dict[str, Any]] = {
         "escort_agent_types": ("F1", "F2"),
     },
 }
+
+# COP-quality 1D sweeps (base = WPS_attn mission load; share_knowledge=False)
+# Sense: R in {60,90,150,250} at d=18; Delay: d in {0,6,12,18} at R=90.
+# Unique cells: R60, R90(=d18), R150, R250, d0, d6, d12.
+import copy as _copy
+
+_WPS_ATTN_BASE = CASE_SPECS["WPS_attn"]
+for _r in (60, 90, 150, 250):
+    _k = f"WPS_attn_COP_R{_r}"
+    _s = _copy.deepcopy(_WPS_ATTN_BASE)
+    _s["sense_radius"] = float(_r)
+    _s["threat_delay"] = 18
+    _s["share_knowledge"] = False
+    _s["label"] = f"WPS Attn COP R={_r} d=18"
+    CASE_SPECS[_k] = _s
+for _d in (0, 6, 12, 18):
+    _k = f"WPS_attn_COP_d{_d}"
+    _s = _copy.deepcopy(_WPS_ATTN_BASE)
+    _s["sense_radius"] = 90.0
+    _s["threat_delay"] = int(_d)
+    _s["share_knowledge"] = False
+    _s["label"] = f"WPS Attn COP R=90 d={_d}"
+    CASE_SPECS[_k] = _s
+
+COP_SWEEP_CASES = [
+    "WPS_attn_COP_R60",
+    "WPS_attn_COP_R90",
+    "WPS_attn_COP_R150",
+    "WPS_attn_COP_R250",
+    "WPS_attn_COP_d0",
+    "WPS_attn_COP_d6",
+    "WPS_attn_COP_d12",
+    # d18 == R90 under share_knowledge=False; omitted to avoid duplicate eval
+]
+
+# Cueing-delay sweep: team broadcast (share_knowledge=True), no local radius.
+# Under share=False, threat_delay is inactive (discovery is radius-only).
+for _d in (0, 6, 12, 18):
+    _k = f"WPS_attn_COP_cue_d{_d}"
+    _s = _copy.deepcopy(_WPS_ATTN_BASE)
+    _s["sense_radius"] = 0.0
+    _s["threat_delay"] = int(_d)
+    _s["share_knowledge"] = True
+    _s["label"] = f"WPS Attn COP cueing d={_d} (share)"
+    CASE_SPECS[_k] = _s
+
+COP_CUE_CASES = [
+    "WPS_attn_COP_cue_d0",
+    "WPS_attn_COP_cue_d6",
+    "WPS_attn_COP_cue_d12",
+    "WPS_attn_COP_cue_d18",
+]
 
 # Aliases matching older eval names
 CASE_SPECS["scal_None"] = CASE_SPECS["static_strike"]

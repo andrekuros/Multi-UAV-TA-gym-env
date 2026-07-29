@@ -31,7 +31,7 @@ from TaskAllocation.MarketBased.CBBA_Replan import CBBAReplan
 from TaskAllocation.MarketBased.PerformanceImpact import PerformanceImpact
 from TaskAllocation.OptimizationBased.HungarianAllocator import HungarianAllocator
 from experiments.paper_eval import make_config, _open_tasks, _events
-from experiments.paper_scenarios import CASE_SPECS, WPS_ENV_FLAGS
+from experiments.paper_scenarios import CASE_SPECS, COP_CUE_CASES, COP_SWEEP_CASES, WPS_ENV_FLAGS
 from mUAV_TA.DroneEnv import MultiUAVEnv
 
 RESULTS = os.path.join(ROOT, "experiments", "results")
@@ -318,6 +318,12 @@ def main():
             "WPS",
             "WPS_hard",
             "WPS_attn",
+            "WPS_attn_AWACS",
+            "WPS_attn_OS18",
+            "WPS_attn_OS24",
+            "WPS_oversized",
+            "WPS_attn_COP",
+            "WPS_attn_COP_cue",
             "WPS_attn_L",
             "WPS_attn_XL",
             "WPS_scale",
@@ -388,6 +394,18 @@ def main():
         cases = ["WPS_hard"]
     elif args.suite == "WPS_attn":
         cases = ["WPS_attn"]
+    elif args.suite == "WPS_attn_AWACS":
+        cases = ["WPS_attn_AWACS"]
+    elif args.suite == "WPS_attn_OS18":
+        cases = ["WPS_attn_OS18"]
+    elif args.suite == "WPS_attn_OS24":
+        cases = ["WPS_attn_OS24"]
+    elif args.suite == "WPS_oversized":
+        cases = ["WPS_attn", "WPS_attn_OS18", "WPS_attn_OS24"]
+    elif args.suite == "WPS_attn_COP":
+        cases = list(COP_SWEEP_CASES)
+    elif args.suite == "WPS_attn_COP_cue":
+        cases = list(COP_CUE_CASES)
     elif args.suite == "WPS_attn_L":
         cases = ["WPS_attn_L"]
     elif args.suite == "WPS_attn_XL":
@@ -403,10 +421,15 @@ def main():
 
     pad_agents = int(args.max_agents) if args.max_agents else 16
     pad_tasks = int(args.max_tasks) if args.max_tasks else 32
-    # Scaled WPS_attn clones need pads that cover the live fleet
-    if args.suite in ("WPS_attn_L", "WPS_attn_XL", "WPS_scale") or any(
-        c in ("WPS_attn_L", "WPS_attn_XL") for c in cases
-    ):
+    # Scaled / oversized WPS_attn clones need pads that cover the live fleet
+    if args.suite in (
+        "WPS_attn_L",
+        "WPS_attn_XL",
+        "WPS_scale",
+        "WPS_attn_OS18",
+        "WPS_attn_OS24",
+        "WPS_oversized",
+    ) or any(c in ("WPS_attn_L", "WPS_attn_XL", "WPS_attn_OS18", "WPS_attn_OS24") for c in cases):
         pad_agents = max(pad_agents, 48)
         pad_tasks = max(pad_tasks, 64)
 
@@ -615,6 +638,7 @@ def main():
                         "total_distance": s["total_distance"],
                         "max_coord": s.get("max_coord", 1000.0),
                         "on_time_rate": s["on_time_rate"],
+                        "reserve_idle_fraction": s.get("reserve_idle_fraction", 0.0),
                     }
                 )
         with open(args.episodes_out, "w", newline="", encoding="utf-8") as f:
