@@ -59,7 +59,7 @@ The fair classical competitor is \textbf{Local-Hungarian}: Hungarian matching re
 The open simulation stack that implements these masks is summarized in Sec.~\ref{sec:env}.
 
 \paragraph{Contribution statement.}
-We characterize the Local--Global \(S_{\mathrm{WPS}}\) gap as a COP / information problem (AWACS equality, sensing and cueing sweeps, oversized-fleet idle), and show that under incomplete COP the practical mitigation is visibility-masked edge-cost shaping for Local-Hungarian---not a particular encoder architecture or classical market replanner under the same mask.
+We characterize the Local--Global \(S_{\mathrm{WPS}}\) gap as an information / COP problem (AWACS equality, sensing and cueing sweeps, oversized-fleet idle), and show that under the visibility mask the practical mitigation is edge-cost shaping for Local-Hungarian---not a particular encoder architecture or classical market replanner under the same mask.
 An open WPS simulation stack enables fair masked baselines and reproducible evaluation (enabling artifact; release upon publication).
 
 \paragraph{Contributions.}
@@ -72,26 +72,44 @@ An open WPS simulation stack enables fair masked baselines and reproducible eval
 \end{enumerate}
 
 \section{Related Work}
-\textbf{MRTA taxonomies and classical solvers.}
+\textbf{Taxonomies and survey spine.}
 Gerkey and Matari{\'c}~\cite{gerkey2004formal} and Korsah \emph{et al.}~\cite{korsah2013comprehensive} organize multi-robot task allocation (MRTA) by single- versus multi-task robots and instantaneous versus time-extended assignment.
+Poudel and Moh~\cite{poudel2022survey} survey UAV task-assignment algorithms across centralized, distributed, market-based, and learning families.
+Following that survey spine, Table~\ref{tab:positioning} situates representative solvers by information model and allocation core; we complement communication-protocol studies by fixing a shared visibility mask \(\mathcal{K}_{a,t}\) and comparing classical versus hybrid scorers under that mask.
+
+\begin{table}[t]
+\centering
+\caption{Positioning relative to representative UAV / multi-robot assignment work (not an exhaustive survey). ``Relation'' states how this paper aligns or differs.}
+\label{tab:positioning}
+\setlength{\tabcolsep}{2.5pt}
+\begin{tabular}{p{1.55cm}p{1.55cm}p{1.35cm}p{1.55cm}p{2.0cm}}
+\toprule
+Work & Info model & Windows & Core & Relation to us \\
+\midrule
+Choi et al.~\cite{choi2009cbba}; Chen et al.~\cite{chen2021cbba} & Distributed consensus; time-sensitive replan & Dynamic tempo & CBBA / market & Local-CBBA baseline under our \(\mathcal{K}_{a,t}\) mask \\
+Zhao et al.~\cite{zhao2016pi} & Typically shared catalog & Schedule impact & PI scoring & Local-PI baseline under the same mask \\
+Raja et al.~\cite{raja2021communication} & Comm-constrained consensus & Mission tasks & Decentralized CBBA & Emphasizes link limits; we fix disclosure mask, vary solvers \\
+Cao et al.~\cite{cao2025communication} & Non-ideal links (delay/loss) & Visit missions & Distributed TA comparison & Link fidelity focus; we hold mask fixed for fair hybrids \\
+Xiong et al.~\cite{xiong2026cata} & Comm-aware swarm & Multiobjective & Learned policy & Learning+comms; we keep classical matching + edge shaping \\
+This work & Local sense / cue delay / share (COP) & Hard WPS windows & Hung.\ + Urgency / ContextPair & Same \(\mathcal{K}_{a,t}\) for all methods; COP diagnostics \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Market-based and classical UAV assignment.}
+Market methods, including CBBA~\cite{choi2009cbba}, support distributed multi-UAV assignment~\cite{dias2006market,poudel2022survey}.
+Extensions address time-sensitive replanning~\cite{chen2021cbba} and schedule-impact scoring (performance impact, PI)~\cite{zhao2016pi}.
+Genetic and optimization-based formulations target cooperating uninhabited vehicles under coupling constraints~\cite{shima2006multiple}.
 The Hungarian algorithm~\cite{kuhn1955hungarian} remains a standard bipartite engine.
 Unlike open-information benchmarks, our Local baselines enforce the same visibility mask as the learned hybrids.
 
-\textbf{Market-based and UAV mission assignment.}
-Market methods, including CBBA~\cite{choi2009cbba}, support distributed multi-UAV assignment~\cite{dias2006market,poudel2022survey}.
-Extensions address time-sensitive replanning~\cite{chen2021cbba} and schedule-impact scoring (performance impact, PI)~\cite{zhao2016pi}.
-Genetic and optimization-based UAV assignment formulations target cooperating uninhabited vehicles under coupling constraints~\cite{shima2006multiple}.
-Recent aerospace work studies communication-aware and learning-augmented swarm allocation~\cite{xiong2026cata}.
-We retain CBBA/PI as Local baselines but evaluate them under the same incomplete-COP mask as Hungarian hybrids.
-
-\textbf{Planning under timing and information constraints.}
-Mixed-integer trajectory planning illustrates the cost of enforcing collision and timing constraints when models are centralized~\cite{richards2002aircraft}.
+\textbf{Planning under timing constraints.}
+Mixed-integer trajectory planning illustrates the cost of enforcing collision and timing when models are centralized~\cite{richards2002aircraft}.
 Our focus is discrete assignment under delayed disclosure rather than continuous trajectory optimization.
 
-\textbf{Communication and incomplete information in UAV assignment.}
-Market and learning allocators are sensitive to non-ideal links (delay, loss, bit errors) and communication-aware policies~\cite{cao2025communication,raja2021communication,xiong2026cata}.
-Time-sensitive CBBA variants address replanning under operational tempo~\cite{chen2021cbba}.
-Unlike studies that emphasize message protocols or transmission gating under shared task catalogs, we fix a visibility mask \(\mathcal{K}_{a,t}\) (sensing radius / cueing delay / share flag) and compare classical and hybrid solvers under that \emph{same} incomplete COP.
+\textbf{Communication and incomplete information.}
+Market and learning allocators are sensitive to non-ideal links and communication-aware policies~\cite{cao2025communication,raja2021communication,xiong2026cata}.
+Unlike studies that emphasize message protocols or transmission gating under shared task catalogs, we fix \(\mathcal{K}_{a,t}\) (sensing radius / cueing delay / share flag) and compare classical and hybrid solvers under that \emph{same} incomplete information model.
 
 \textbf{Learning and hybrids.}
 End-to-end policies that select discrete assignments, including attention over tokens~\cite{vaswani2017attention}, must jointly solve scoring and combinatorial feasibility.
@@ -100,14 +118,14 @@ We adopt that pattern under partial observability: networks output pair scores, 
 Prior TBTA experiments in a PettingZoo environment~\cite{terry2021pettingzoo} motivate keeping Hungarian as the assignment engine.
 
 \textbf{Open simulators and assignment benchmarks.}
-PettingZoo and related multi-agent APIs provide general MARL interfaces~\cite{terry2021pettingzoo}, but rarely encode aerospace incomplete-COP disclosure, perishable windows, and a shared classical/hybrid allocator contract.
+PettingZoo and related multi-agent APIs provide general MARL interfaces~\cite{terry2021pettingzoo}, but rarely encode aerospace disclosure limits, perishable windows, and a shared classical/hybrid allocator contract.
 Our release couples a WPS scenario registry to a visibility-masked assignment API so Local-Hungarian, market baselines, and cost-shaping hybrids are compared under the same \(\mathcal{K}_{a,t}\) mask, with optional 3D replay for qualitative mission inspection.
 
 \section{System Model and WPS Scenarios}
 \subsection{Agents, tasks, and information}
 Let \(\mathcal{A}_t\) be the set of live UAVs and \(\mathcal{T}_t\) the set of open tasks at discrete time \(t\).
 Each agent \(a\in\mathcal{A}_t\) maintains a known-task set \(\mathcal{K}_{a,t}\subseteq\mathcal{T}_t\) updated by sensing radius \(R_{\mathrm{sense}}\) and threat-disclosure delay \(d\).
-A \emph{local} allocator may assign \(a\) only to tasks in \(\mathcal{K}_{a,t}\) (incomplete COP).
+A \emph{local} allocator may assign \(a\) only to tasks in \(\mathcal{K}_{a,t}\) (incomplete information / incomplete COP).
 Heterogeneous fighter/recon types constrain capability; intercept and escort tasks may require multiple agents.
 
 \paragraph{Local assignment problem.}
@@ -120,14 +138,14 @@ t\in\mathcal{K}_{a,t}\ \forall (a,t)\in\pi,
 \label{eq:localassign}
 \end{equation}
 with capacity constraints induced by live agents and open tasks.
-Global-Hungarian drops the \(t\in\mathcal{K}_{a,t}\) restriction (oracle COP).
+Global-Hungarian drops the \(t\in\mathcal{K}_{a,t}\) restriction (omniscient-COP oracle).
 Episode quality is scored by \(S_{\mathrm{WPS}}\) (Sec.~\ref{sec:metrics}), which privileges on-time completions over misses and is \emph{not} identical to the myopic Hungarian objective in~\eqref{eq:localassign}.
 
 \subsection{Mission dynamics}
 Episodes combine static strike/recon missions with dynamic threats that spawn intercepts and online arrivals.
 Configurable parameters include \(R_{\mathrm{sense}}\), \(d\), window length \(W\), burst size, fail rate, and evaluation weights.
 Table~\ref{tab:suites} summarizes locked suites.
-WPS\_attn is the primary multi-front stress suite (incomplete COP); WPS\_attn\_AWACS is the full-COP diagnostic; WPS\_hard is a related boundary suite; WPS\_commit and WPS\_escort are interface extensions (Appendix~\ref{app:ext}).
+WPS\_attn is the primary multi-front stress suite (incomplete information); WPS\_attn\_AWACS is the full-COP diagnostic; WPS\_hard is a related boundary suite; WPS\_commit and WPS\_escort are interface extensions (Appendix~\ref{app:ext}).
 Under local-only sensing (\texttt{share\_knowledge=False}), discovery is radius-limited and cueing delay does not broadcast; team cueing uses \texttt{share\_knowledge=True} with \(R_{\mathrm{sense}}{=}0\).
 
 \begin{table}[t]
@@ -261,8 +279,8 @@ COP diagnostics use Local / Global / Urgency-Pair; the shaping campaign pools At
 \label{sec:cop}
 On WPS\_attn, Global-Hungarian improves \(S_{\mathrm{WPS}}\) by \(\approx 196\) points over Local-Hungarian (Table~\ref{tab:attn}).
 Table~\ref{tab:awacs} removes sensing limits and cueing delay while keeping the same mission load (\texttt{share\_knowledge=True}, \(R{=}0\), \(d{=}0\)).
-Local-Hungarian then equals Global exactly (\(\Delta{=}0\)), so the incomplete-COP gap is informational: the same myopic Hungarian engine closes the gap once the mask is lifted.
-Urgency-Pair, MLP-, and GNN-ContextPair (zero-shot from incomplete-COP training) still improve over Local under full COP with CIs excluding zero; Att-ContextPair's CI versus Local includes zero under AWACS (\([-4,+40]\) in Table~\ref{tab:awacs}).
+Local-Hungarian then equals Global exactly (\(\Delta{=}0\)), so the Local--Global gap is informational: the same myopic Hungarian engine closes the gap once the mask is lifted.
+Urgency-Pair, MLP-, and GNN-ContextPair (zero-shot from incomplete-information training) still improve over Local under full COP with CIs excluding zero; Att-ContextPair's CI versus Local includes zero under AWACS (\([-4,+40]\) in Table~\ref{tab:awacs}).
 Local-CBBA and Local-PI fall behind Local when the mask no longer constrains them.
 
 \begin{table}[t]
@@ -289,7 +307,7 @@ Local-PI & $-403.6$ & $[-151,-101]$ & $+72$ \\
 Figure~\ref{fig:cop} varies COP quality continuously.
 Under local-only sensing (\(d{=}18\), no share), increasing \(R_{\mathrm{sense}}\) from 60 to 250 raises Local from \(-512\) toward Global (\(-277\)), with Global flat.
 Under team cueing (\(R{=}0\), share), shortening delay from 18 to 0 shrinks the Local--Global gap from \(\approx 342\) to \(0\) (AWACS endpoint).
-A local-only delay panel (share off) is flat: without broadcast, cueing delay does not change the COP---a negative control of the sensing model.
+A local-only delay panel (share off) is flat: without broadcast, cueing delay does not change team knowledge---a negative control of the sensing model.
 At large radius, Urgency-Pair can exceed myopic Global, consistent with window-aware costs beyond travel/capability matching.
 
 \begin{figure}[t]
@@ -320,14 +338,14 @@ Fleet & Local \(S\) & idle & Global \(S\) & Urgency \(S\) \\
 \end{table}
 
 \subsection{Hybrid edge shaping under the mask}
-Table~\ref{tab:attn} reports the locked incomplete-COP comparison on WPS\_attn.
+Table~\ref{tab:attn} reports the locked incomplete-information comparison on WPS\_attn.
 Urgency-Pair and ContextPair (Att / MLP / GNN; pooled over three training seeds, raw features) all improve \(S_{\mathrm{WPS}}\) over Local-Hungarian with CIs excluding zero; on-time rises and misses fall in parallel.
 Local-CBBA-Replan and Local-PI do \emph{not} significantly beat Local-Hungarian under the same mask.
 No pairwise contrast among Urgency / Att / MLP / GNN excludes zero (e.g., pooled GNN$-$MLP \(\approx -2.3\), Att$-$MLP \(\approx -6.4\)).
 
 \begin{table}[t]
 \centering
-\caption{WPS\_attn incomplete-COP comparison (\(N{=}100\)). Learned rows: mean over three training seeds (raw ContextPair IL). Paired \(\Delta S_{\mathrm{WPS}}\) 95\% CI vs Local-Hungarian.}
+\caption{WPS\_attn incomplete-information comparison (\(N{=}100\)). Learned rows: mean over three training seeds (raw ContextPair IL). Paired \(\Delta S_{\mathrm{WPS}}\) 95\% CI vs Local-Hungarian.}
 \label{tab:attn}
 \setlength{\tabcolsep}{3pt}
 \begin{tabular}{lcccc}
@@ -420,6 +438,10 @@ WPS\_attn\_XL & $-3.0$ & $[-24.8,+19.9]$ & both beat Local \\
 \bottomrule
 \end{tabular}
 \end{table}
+
+\subsection{Interface extensions (pointer)}
+Timed-commit and coalition-escort suites change the decision interface while keeping classical conflict resolution under the same visibility mask.
+Appendix~\ref{app:ext} reports those results: Commit heads show no significant pairwise separation on \(S_{\mathrm{WPS}}\), and the escort Att-versus-MLP gap is suite-specific rather than part of the WPS\_attn ContextPair claim.
 
 \section{Discussion and Limitations}
 Two mission-management levers dominate this study (Sec.~\ref{sec:cop}).
