@@ -19,7 +19,8 @@
 \author{
   % Update before submission (ORCID required by TAES)
   Anonymous~Author
-  \thanks{ORCID: 0000-0000-0000-0000 (replace before submission). Code and experiment scripts accompany this manuscript.}
+  \thanks{ORCID: 0000-0000-0000-0000 (replace before submission).
+  Code: \url{https://github.com/andrekuros/Multi-UAV-TA-gym-env}.}
 }
 
 \maketitle
@@ -31,7 +32,7 @@ We show two co-equal results.
 First, that gap is primarily \emph{informational}: under idealized full COP (AWACS), Local-Hungarian equals Global; increasing sensing radius or shortening team cueing delay closes the gap monotonically, whereas oversizing the fleet under incomplete COP raises idle fraction with little Local gain.
 Second, under the incomplete-COP mask, hybrid \emph{edge-cost shaping} for Local-Hungarian (Urgency-Pair and matched Att / MLP / GNN ContextPair) improves mean \(S_{\mathrm{WPS}}\) on WPS\_attn (\(N{=}100\); paired bootstrap 95\% CIs exclude zero), while Local-CBBA and Local-PI do not; Att, MLP, GNN, and Urgency remain mutually indistinguishable under matched optimization and three training seeds.
 Architecture and scale transfers do not separate attention from MLP.
-Results are simulation-only; an open PettingZoo WPS environment, scenario registry, and eval harness accompany the manuscript.
+Results are simulation-only; code is available at \url{https://github.com/andrekuros/Multi-UAV-TA-gym-env}.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -60,7 +61,7 @@ We release an open incomplete-COP WPS simulation stack for multi-UAV assignment,
 
 \paragraph{Contributions.}
 \begin{enumerate}
-  \item An open PettingZoo multi-UAV environment with a locked WPS scenario registry, explicit visibility masks (\texttt{agent\_known\_ids}), classical/hybrid allocator plug-ins, eval scripts, and an optional 3D replay dashboard for qualitative inspection.
+  \item An open PettingZoo multi-UAV environment with a locked WPS scenario registry, explicit visibility masks (\texttt{agent\_known\_ids}), classical/hybrid allocator plug-ins, eval scripts, and an optional 3D replay dashboard (\url{https://github.com/andrekuros/Multi-UAV-TA-gym-env}).
   \item COP diagnostics on that stack: full-COP AWACS, sensing-radius and team-cueing sweeps, and fixed-load fleet oversizing with idle reporting, alongside scores \(S_{\mathrm{WPS}}\)/\(S_{\mathrm{ESC}}\).
   \item Hybrid context$\rightarrow$edge$\rightarrow$Hungarian modules (Att- / MLP- / GNN-ContextPair, Urgency-Pair) trained by mask-aware imitation of Global-Hungarian, evaluated against Local-Hungarian, Local-CBBA-Replan, and Local-PI under a shared visibility mask.
   \item Matched Att / MLP / GNN / Urgency negatives (including an optimizer-confound retraction and scale transfer), establishing hybrid shaping rather than architecture as the mitigation claim on WPS\_attn; WPS\_hard remains a boundary where simpler pair heads do not beat Local.
@@ -127,11 +128,22 @@ WPS\_attn\_AWACS & 12 UAV & 0 & 0 & yes & 22 \\
 
 \subsection{Simulation environment and software framework}
 \label{sec:env}
-Quantitative results use an open multi-UAV stack released with the manuscript.
+Quantitative results use an open multi-UAV stack released with the manuscript at
+\url{https://github.com/andrekuros/Multi-UAV-TA-gym-env}~\cite{multi_uav_ta_gym}.
 Episodes run in a PettingZoo \texttt{ParallelEnv} (\texttt{MultiUAVEnv}) configured by \texttt{agentEnvOptions} and a locked scenario registry (Table~\ref{tab:suites}).
 Geometry and line-of-sight helpers are accelerated in a Rust \texttt{core\_sim} module; training and batch evaluation remain headless.
 
+\paragraph{Simulation model.}
+The world is a planar mission area of fixed width/height; agent and task positions are 2-D (with a constant display altitude in the replay UI).
+Each UAV type (\(F1/F2\) fighters, \(R1/R2\) recon) has a type-dependent maximum speed, engagement range, and capability vector over task classes (attack, recon, intercept, hold/escort).
+Discrete time steps advance navigation toward the assigned task at the agent's max speed; upon arrival the agent executes a type-dependent task duration before becoming free for rematch.
+Tasks include static strike/recon missions and dynamic intercepts spawned from threat groups: with configured arrival and fail rates, burst arrivals, and optional dual-front regions.
+Hard windows attach a deadline of length \(W\) at task creation; on-time completion and misses update \(S_{\mathrm{WPS}}\).
+Attrition removes agents according to type-dependent fail multipliers when a fail event fires.
+
+\paragraph{Incomplete COP and allocator API.}
 Incomplete COP is first-class: each agent maintains \(\mathcal{K}_{a,t}\) via sensing radius \(R_{\mathrm{sense}}\), cueing delay \(d\), and \texttt{share\_knowledge}.
+Under local-only sensing, pop-ups are discovered when an agent comes within \(R_{\mathrm{sense}}\); under team cueing, tasks broadcast after delay \(d\).
 The env exposes \texttt{agent\_visibility\_map()}, which Local allocators consume as \texttt{agent\_known\_ids} so unknown agent--task edges are masked.
 Global-Hungarian omits the mask (oracle).
 Hybrids only reshape edge scores or priorities, then call the same Hungarian engine under the mask.
@@ -408,7 +420,9 @@ Omitted for anonymous review.
 \label{app:repro}
 \textbf{Environment.}
 PettingZoo parallel API~\cite{terry2021pettingzoo}; WPS flags disable early termination so late pop-ups remain in horizon.
-Code: open repository accompanying the manuscript (\texttt{MultiUAVEnv}, \texttt{experiments/paper\_scenarios.py}, \texttt{experiments/wps\_eval.py}).
+\textbf{Code release.}
+\url{https://github.com/andrekuros/Multi-UAV-TA-gym-env}~\cite{multi_uav_ta_gym}
+(\texttt{MultiUAVEnv}, \texttt{experiments/paper\_scenarios.py}, \texttt{experiments/wps\_eval.py}, hybrid modules under \texttt{TaskAllocation/}).
 \textbf{Fairness.}
 All Local methods use the same \(\mathcal{K}_{a,t}\) mask and comparable event-driven replanning.
 \textbf{Suites.}
@@ -417,7 +431,7 @@ Primary tables use WPS\_attn; COP diagnostics use WPS\_attn\_AWACS, WPS\_attn\_C
 Raw ContextPair IL checkpoints named by encoder and seed (e.g., \texttt{policy\_AttContextPairRaw\_WPS\_attn.pth}); GNN uses the \texttt{Gnn} suffix.
 \textbf{Replay UI.}
 \texttt{python experiments/generate\_simulation\_replay.py --scenario WPS\_escort} writes a JSON log; the FastAPI server and React frontend play it back for qualitative review (Fig.~\ref{fig:envui}).
-\textbf{Code.}
+\textbf{Reproduction.}
 Experiment scripts and scenario registry regenerate tables; UI screenshots are not required to reproduce numerical results.
 
 \section{Interface extensions}
